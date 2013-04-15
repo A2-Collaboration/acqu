@@ -46,25 +46,26 @@ private:
   UShort_t* fTDC;                   // -> stored TDC value
   UShort_t** fTDCM;                 // -> stored multihit TDC value
   Bool_t fIsMultiTDC;               // multi-hit or not
-  Double_t fTimeLowThr;             // valid time window
+  Double_t fTimeLowThr;             // valis time window
   Double_t fTimeHighThr;
   // Time over threshold
-  Double_t fToThr0;                 // offset
-  Double_t fToThr1;                 // conversion gain
-  UShort_t* fTDCtothr;              // -> TDC value
+  Double_t fToThr0; // offset
+  Double_t fToThr1; // conversion gain
+  UShort_t* fTDCtothr; // -> TDC value
   //
   TimeWalk_t* fWalk;            // time walk correction
   Double_t* fEnergy;            // energy MeV
   Double_t* fTime;              // time ns
-  Double_t** fTimeM;            // multihit time ns
-  Double_t fTimeOvThr;          // pulse time over threshold
-  Double_t fEnergyScale;        // global energy scale factor
+  Double_t** fTimeM;            // multihit time ns  
+  Double_t fTimeOvThr; 			// pulse time over threshold
+  Double_t fEnergyScale; 		// global energy scale factor
   Int_t fMode;                  // ADC, TDC, ADC+TDC
   Int_t fNMultihit;             // analysis of multiple hits in TDC
   Int_t fNhit;                  // # TDC hits
   Int_t fIadc;                  // ADC index
   Int_t fItdc;                  // TDC index
   Bool_t fIsIgnored;            // ignore this element
+  Double_t* fEnergyScalePtr;    // DO NOT MOVE THIS DECLARATION!
 public:
   HitD2A_t( char*, UInt_t, TA2Detector* );
   virtual ~HitD2A_t();
@@ -162,6 +163,7 @@ inline Bool_t HitD2A_t::CheckEnergy( )
   chan -= fA0;                                   // pedestal subtract
   energy = fA1*chan;                             // linear scale
   if( fA2 ) energy += fA2*chan*chan;             // quadratic correction
+  fEnergyScale = *fEnergyScalePtr;
   energy *= fEnergyScale;                        // global scale factor
   // check ADC thr.
   if( (energy < fEnergyLowThr) || (energy > fEnergyHighThr) ) return EFalse;
@@ -230,27 +232,27 @@ inline Bool_t HitD2A_t::CheckTime( )
   else{
     *fTime = (Double_t)ENullADC;
     return kFALSE;
-  }  
+  }
 }
-//---------------------------------------------------------------------------
+
 inline Bool_t HitD2A_t::CheckToThr(Double_t t)
 {
   // Get time over threshold
   // Single hit TDC (or analyse only 1 hit from multihit TDC)
   Double_t tothr;
   if( !fIsMultiTDC){
-    if( *fTDCtothr ==  (UShort_t)ENullADC ) return kFALSE; // channel not def.
+    if( *fTDCtothr == (UShort_t)ENullADC ) return kFALSE; // channel not def.
     tothr = (Double_t)(*fTDCtothr);
   }
   else{
     Short_t* madc = (Short_t*)fTDCtothr;
-    if( *madc == (Short_t)ENullStore ) return kFALSE;      // channel not def.
+    if( *madc == (Short_t)ENullStore ) return kFALSE; // channel not def.
     tothr = (Double_t)(*madc);
   }
-  tothr -= t;                            // trailing edge - leading edge
-  tothr -= fToThr0;                      // subtract offset
-  fTimeOvThr = fToThr1*tothr;            // convertion gain
+  tothr -= t; // trailing edge - leading edge
+  tothr -= fToThr0; // subtract offset
+  fTimeOvThr = fToThr1*tothr; // convertion gain
   return kTRUE;
 }
-   
+
 #endif

@@ -16,14 +16,21 @@
 #ifndef __TA2UserControl_h__
 #define __TA2UserControl_h__
 
+
+#include "TROOT.h"
+#include "TInterpreter.h"
+#include "TAcquRoot.h"
 #include "TA2Control.h"
+#include "TA2Analysis.h"
+#include "TA2UserAnalysis.h"
 
-class TA2UserControl : public TA2Control {
+R__EXTERN class TA2UserAnalysis* gUAN;
 
-protected:
-public:
-  TA2UserControl( const char*, int*, char**, void* = NULL, int = -1, 
-		  Bool_t = 0 );
+class TA2UserControl : public TA2Control
+{
+ protected:
+ public:
+  TA2UserControl(const char*, int*, char**, void* = NULL, int = -1, Bool_t = 0);
   virtual void CreateAnalyser();
 
   ClassDef(TA2UserControl,1)

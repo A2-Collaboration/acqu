@@ -45,7 +45,7 @@ ROOTCFLAGS   := $(shell root-config --auxcflags)
 # Compile/Link Flags
 #
 CXXFLAGS      = $(acqu_debug) -c -Wall -fPIC $(ROOTCFLAGS)
-LDXXFLAGS = $(acqu_debug) -shared -o $(UL)/$@
+LDXXFLAGS = $(acqu_debug) -shared -L$(OSCAR)/lib -lOSCAR -o $(UL)/$@
 #INCFLAGS  = -I$(IR)
 #
 CLEANMOD = $B/AcquRoot $B/AcquMC
@@ -134,7 +134,7 @@ AcquRoot: MainAcquRoot.o libUserRoot.so
 	$(CCCOMP) $(acqu_debug)  $(UO)/MainAcquRoot.o \
 	$L/libAcquRoot.so $(UL)/libUserRoot.so \
 	$L/libAcquDAQ.so $(CAENVME_LIB) \
-	$(ROOTLIBS) -lThread -L$(OSCAR)/lib -lOSCAR \
+	$(ROOTLIBS) -L$(OSCAR)/lib -lOSCAR -lThread \
 	-o $(B)/AcquRoot
 	@echo "$@ done"
 	@echo "##-----------------------------------------------------------"

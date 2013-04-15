@@ -42,14 +42,14 @@ HitD2A_t::HitD2A_t( char* line, UInt_t nelem, TA2Detector* det )
   Double_t* timeptr = det->GetTime();
   Double_t** timeMptr = det->GetTimeM();
   TVector3** posptr = det->GetPosition();
-  fEnergyScale = det->GetEnergyScale();   // global scale factor
+  fEnergyScalePtr = det->GetEnergyScalePtr();
+  fEnergyScale = det->GetEnergyScale();
 
   // Default "turn off" variables
   fIadc = fItdc = iadc = ENullADC;
-  fADC = fTDC = fTDCtothr = NULL;
+  fADC = fTDC = NULL;
   fTDCM = NULL;
   fIsMultiADC = fIsMultiTDC = EFalse;
-  fA0 = fA1 = fA2 = fT0 = fT1 = fT2 = 0.0;
   fWalk = NULL;
   fMode = 0;
   fNMultihit = 0;
@@ -169,7 +169,7 @@ void HitD2A_t::SetWalk( Char_t* line )
   fWalk->SetWalk( wp );
 }
 
-//---------------------------------------------------------------------------
+
 void HitD2A_t::SetToThr( Char_t* line, TA2Detector* det )
 {
   // Store Time-over-threshold TDC parameters
@@ -184,7 +184,7 @@ void HitD2A_t::SetToThr( Char_t* line, TA2Detector* det )
   // Normal TDC
   if( n == 1 ){
     UShort_t* adc = det->GetADC();
-    fTDCtothr =  adc + iadc;
+    fTDCtothr = adc + iadc;
   }
   // Multihit TDC
   else if( n == 2 ){

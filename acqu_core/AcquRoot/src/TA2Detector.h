@@ -18,11 +18,7 @@
 //--Rev 	JRM Annand...30th Oct 2008   4v3 Multi hit TDC processing
 //--Rev 	JRM Annand... 3rd Dec 2008   Walk correction input
 //--Rev 	JRM Annand... 1st Sep 2009   delete[], fNelem++...HitD2A
-//--Rev 	JRM Annand...22nd Dec 2009   Cleanup bug fix
-//--Rev 	DL Hornidge..27th Jan 2011   fixed array-termination bug
-//--Rev 	JRM Annand... 6th Jul 2011   PostInit (A.Mushkarenkov)
-//--Rev 	JRM Annand... 6th Oct 2012   DecodeBasic bug fix time hits
-//--Update	JRM Annand... 7th Mar 2013   DecodeBasic filter out time = -1
+//--Update	JRM Annand...22nd Dec 2009   Cleanup bug fix
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -171,6 +167,7 @@ public:
   Int_t* GetRawEnergyHits(){ return fRawEnergyHits; }  // QDC hits
   Double_t GetTotalEnergy(){ return fTotalEnergy; }// accumulated energy 
   Double_t GetEnergyScale(){ return fEnergyScale; }// overall energy scaling 
+  Double_t* GetEnergyScalePtr(){ return &fEnergyScale; }// overall energy scaling 
   Double_t GetTimeOffset(){ return fTimeOffset; }  // overall time offset
   UInt_t GetNhits(){ return fNhits; }              // No. hits in event
   UInt_t GetNhitsM(Int_t m){ return fNhitsM[m]; }  // No. hits multiplicity m
@@ -224,7 +221,6 @@ inline void TA2Detector::DecodeBasic( )
     for( UInt_t m=0; m<fNMultihit; m++ ) fNhitsM[m] = 0;
   }
   UShort_t datum;
-  Short_t tdatum;
   fTotalEnergy = 0.0;
   UInt_t j;
   HitD2A_t* elem;
@@ -242,8 +238,8 @@ inline void TA2Detector::DecodeBasic( )
 	  fRawEnergyHits[fNADChits++] = j;
       }
       if( fIsTime ){
-	tdatum = elem->GetRawTDCValue(); 
-	if( (abs(tdatum) < (UShort_t)ENullStore) && ((UShort_t)tdatum != 0xffff) )
+	datum = elem->GetRawTDCValue(); 
+	if( datum < (UShort_t)ENullStore )
 	  fRawTimeHits[fNTDChits++] = j;
       }
     }

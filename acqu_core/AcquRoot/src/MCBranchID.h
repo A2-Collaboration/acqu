@@ -2,7 +2,7 @@
 //--Update	D Glazier... 24th Aug 2007 extra branches from G4A2
 //--Description
 //                *** Acqu++ <-> Root ***
-// Online/Offline Analysis of Sub-Atomic Physics Experimental Data
+// Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
 //
 // MCBranchID
 //
@@ -60,10 +60,9 @@ enum{ EI_npart, EI_dircos, EI_plab, EI_elab, EI_idpart, EI_vertex, EI_beam,
       EI_vhits, EI_eveto, EI_iveto, EI_tot, EI_leak,
       EI_ntaps, EI_ictaps, EI_ectapsl, EI_ectapfs, EI_tctaps, EI_evtaps,
       EI_nvtaps, EI_ivtaps, EI_tcryst, EI_tveto,
-      EI_nmwpc, EI_imwpc, EI_mposx, EI_mposy, EI_mposz,
+      EI_nmwpc, EI_imwpc, EI_mposx, EI_mposy, EI_mposz, EI_emwpc,
       EI_scatt, EI_kinet,
       EI_ntof, EI_tofi, EI_tofe, EI_toft, EI_tofx, EI_tofy, EI_tofz,
 };
-
 
 #endif

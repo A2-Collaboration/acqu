@@ -13,15 +13,25 @@
 // Allow user defined analyses....enter analysis class in Map_t kKnownAnalysis
 // and in CreateAnalyser() method
 
-#include "TROOT.h"
-#include "TA2UserControl.h"
-#include "TInterpreter.h"
-#include "TAcquRoot.h"
-#include "TA2Analysis.h"
-#include "TA2UserAnalysis.h"
+//<<<<<<< HEAD
+//#include "TROOT.h"
+//#include "TA2UserControl.h"
+//#include "TInterpreter.h"
+//#include "TAcquRoot.h"
+//#include "TA2Analysis.h"
+//#include "TA2UserAnalysis.h"
 
 // Recognised apparatus classes. Anything not in this table must be
 // instantiated outside of TA2Analysis and then added
+//=======
+#include "TA2UserControl.h"
+
+//Global pointer to main class
+TA2UserAnalysis* gUAN = NULL;
+
+//Recognised apparatus classes.
+//Anything not in this table must be instantiated outside of TA2Analysis and then added
+//>>>>>>> user/schumann
 enum{ EA2Analysis, EA2UserAnalysis };
 static const Map_t kKnownAnalysis[] = {
   {"TA2Analysis",      EA2Analysis},
@@ -32,36 +42,38 @@ static const Map_t kKnownAnalysis[] = {
 ClassImp(TA2UserControl)
 
 //--------------------------------------------------------------------------
-TA2UserControl::TA2UserControl
-( const char* appClassName, int* argc, char** argv, 
-  void* options, int numOptions, Bool_t noLogo ) :
-  TA2Control( appClassName, argc, argv, options, numOptions, noLogo )
+
+TA2UserControl::TA2UserControl(const char* appClassName, int* argc, char** argv, void* options, int numOptions, Bool_t noLogo )
+               :TA2Control(appClassName, argc, argv, options, numOptions, noLogo)
 {
-  // Create the Acqu-Root interface (global pointer gAR) and
-  // the Acqu-Root analyser (global pointer gAN)
+  //This resolves an odd error with the uninitialised fFiles pointer in TApplication...
+  GetOptions(0, NULL);
 }
 
 //---------------------------------------------------------------------------
 void TA2UserControl::CreateAnalyser()
 {
-  // Create a user-defined analysis class
-  // Add line with analysis name and key to kKnownAnalysis Map_t at
-  // the top of TA2UserControl.cc and make entry to create the
-  // specific analysis class in the in the switch(analysis){} block below
+  //Create a user-defined analysis class
+  //Add line with analysis name and key to kKnownAnalysis Map_t at
+  //the top of TA2UserControl.cc and make entry to create the
+  //specific analysis class in the in the switch(analysis){} block below
 
   Int_t analysis = GetAnalyser(kKnownAnalysis);
   switch(analysis){
   default:
-    printf(" FATAL ARROR: Unknown analysis class" );
+    printf(" FATAL ARROR: Unknown analysis class");
     gAN = NULL;
+    gUAN = NULL;
     break;
   case EA2Analysis:
-    // Create the base analyser 
-    gAN = new TA2Analysis( "Base-Analysis" );
+    //Create the base analyser
+    gAN = new TA2Analysis("Base-Analysis");
+    gUAN = NULL;
     break;
   case EA2UserAnalysis:
-    // Analysis of neutral meson events
-    gAN = new TA2UserAnalysis( "Meson-Analysis" );
+    //Analysis of neutral meson events
+    gAN = new TA2UserAnalysis("Meson-Analysis");
+    gUAN = (TA2UserAnalysis*)gAN;
     break;
   }
 }

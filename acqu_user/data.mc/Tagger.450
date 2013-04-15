@@ -1,0 +1,34 @@
+#------------------------------------------------------------------------------
+#                     Configuration file for TA2KensTagger
+#          (AcquRoot 4v4 user package Ken's Tagger apparatus class)
+#------------------------------------------------------------------------------
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Set-up of magnetic field and MAMI electron beam energy (needed for correct
+#calculation of emitted photon energy).
+#         NMR field   MAMI beam energy   MAMI beam polarisation
+#January 2011:
+Magnet:   0.5380      450.3             0.825
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Detector systems in Tagger apparatus
+#         Name       Class Name      Setup file
+Detector: Ladder     TA2Ladder       Tagger_Ladder_Average.450
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Standard AcquRoot options
+Reconstruct:
+ParticleID:   128
+Initialise:
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Misc: IsSimulation 1
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Display some basic histograms
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#

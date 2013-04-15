@@ -3,7 +3,7 @@
 //--Update
 //--Description
 //                *** Acqu++ <-> Root ***
-// Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
+// Online/Offline Analysis of Sub-Atomic Physics Experimental Data
 //
 // ROOT dictionary specification
 // All classes linked in libUserRoot.so must included in the ROOT
@@ -18,5 +18,6 @@
 // Monte Carlo classes
 #pragma link C++ class TMCUserGenerator+;
 #pragma link C++ class TMCUserParticle+;
+#pragma link C++ class TMCHe4Phase+;
 
 #endif

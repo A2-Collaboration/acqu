@@ -101,6 +101,10 @@ class TA2Particle : public TObject
   Int_t fApparati;
   Int_t fDetectors;
   Bool_t fUnclear;
+  Int_t    fIintersMwpc[2]; //Indexes of intersections in the internal (0) and external (1) MWPC
+  Double_t fTrackEnergy;    //Sum of MWPCs intersections pulse amplitudes
+  Double_t fTrackTime;      //To-do 
+  //
  public:
   TA2Particle();
   TA2Particle(TDatabasePDG* pPDG); // Use fParticleID->GetPDG() of TA2Apparatus class
@@ -185,6 +189,10 @@ class TA2Particle : public TObject
   Bool_t HasDetector(Int_t pDetector);
   Bool_t HasDetectorA(Int_t pDetector){ return (fDetectors & pDetector); }
   Bool_t IsUnclear(){ return fUnclear; }
+  const Int_t  &GetTrackIntersect(const Int_t iCh) const { return fIintersMwpc[iCh]; }
+  const Int_t* GetTrackIntersects() const { return fIintersMwpc; }
+  const Double_t &GetTrackEnergy() const { return fTrackEnergy; }
+  const Double_t &GetTrackTime()   const { return fTrackTime; }
   void SetTime(Double_t pTime){ fTime = pTime; }
   void SetVetoIndex(Int_t pVetoIndex){ fVetoIndex = pVetoIndex; }
   void SetCentralIndex(Int_t pCentralIndex){ fCentralIndex = pCentralIndex; }
@@ -238,6 +246,10 @@ class TA2Particle : public TObject
   void SetPhiDg(Double_t pPhi){ fP4.SetPhi(pPhi * TMath::DegToRad()); }
   void SetThetaDg(Double_t pTheta){ fP4.SetTheta(pTheta * TMath::DegToRad()); }
   void SetPDG(TDatabasePDG* pPDG){ fPDG = pPDG; }
+  void SetTrackIntersects(const Int_t i0, const Int_t i1) { fIintersMwpc[0] = i0; fIintersMwpc[1] = i1; }
+  void SetTrackIntersect(const Int_t iCh, const Int_t i) { fIintersMwpc[iCh] = i; }
+  void SetTrackEnergy(const Double_t &e) { fTrackEnergy = e; }
+  void SetTrackTime(const Double_t &t) { fTrackTime = t; }
   void Reset();
   TA2Particle Add(TA2Particle pParticle);
   TA2Particle Add(TA2Particle* pParticle){ if(pParticle) return Add(*pParticle); else return *this; }

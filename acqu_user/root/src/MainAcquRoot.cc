@@ -2,7 +2,7 @@
 //--Update	JRM Annand... 8th Jan 2004..TA2Control mod.
 //--Description
 //                *** Acqu++ <-> Root ***
-// Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
+// Online/Offline Analysis of Sub-Atomic Physics Experimental Data
 //
 // Main program to run the system
 //

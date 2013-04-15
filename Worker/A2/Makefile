@@ -79,7 +79,7 @@ libWorker.so: $(MCObj)
 Worker: Worker.o libWorker.so
 	$(CCCOMP) $(O)/Worker.o $(L)/libWorker.so \
 	$(ROOTLIBS) -lThread \
-	-o $(B)/Worker
+	-o $(B)/WorkerA2
 	@echo "$@ done"
 	@echo "--------------------------------------------------------------------------------"
 

@@ -1,34 +1,19 @@
-TProcessor.o /home/schumans/Worker/A2/deps/TProcessor.d : /home/schumans/Worker/A2/src/TProcessor.cc \
- /home/schumans/Worker/A2/src/TProcessor.h \
- /opt/cern/root/include/root/TROOT.h \
- /opt/cern/root/include/root/TDirectory.h \
- /opt/cern/root/include/root/TNamed.h \
- /opt/cern/root/include/root/TObject.h \
- /opt/cern/root/include/root/Rtypes.h \
- /opt/cern/root/include/root/RConfig.h \
- /opt/cern/root/include/root/RVersion.h \
- /opt/cern/root/include/root/DllImport.h \
- /opt/cern/root/include/root/Rtypeinfo.h \
- /opt/cern/root/include/root/snprintf.h \
- /opt/cern/root/include/root/strlcpy.h \
- /opt/cern/root/include/root/TGenericClassInfo.h \
- /opt/cern/root/include/root/TSchemaHelper.h \
- /opt/cern/root/include/root/TStorage.h \
- /opt/cern/root/include/root/TVersionCheck.h \
- /opt/cern/root/include/root/Riosfwd.h \
- /opt/cern/root/include/root/TBuffer.h \
- /opt/cern/root/include/root/TString.h \
- /opt/cern/root/include/root/TRefCnt.h \
- /opt/cern/root/include/root/TMathBase.h \
- /opt/cern/root/include/root/TList.h \
- /opt/cern/root/include/root/TSeqCollection.h \
- /opt/cern/root/include/root/TCollection.h \
- /opt/cern/root/include/root/TIterator.h \
- /opt/cern/root/include/root/TDatime.h \
- /opt/cern/root/include/root/TUUID.h \
- /opt/cern/root/include/root/TSystem.h \
- /opt/cern/root/include/root/TInetAddress.h \
- /opt/cern/root/include/root/TTimer.h \
- /opt/cern/root/include/root/TSysEvtHandler.h \
- /opt/cern/root/include/root/TQObject.h \
- /opt/cern/root/include/root/TTime.h /opt/cern/root/include/root/TNamed.h
+TProcessor.o /home/ott/acqu/Worker/A2/deps/TProcessor.d : /home/ott/acqu/Worker/A2/src/TProcessor.cc \
+ /home/ott/acqu/Worker/A2/src/TProcessor.h /opt/root/include/root/TROOT.h \
+ /opt/root/include/root/TDirectory.h /opt/root/include/root/TNamed.h \
+ /opt/root/include/root/TObject.h /opt/root/include/root/Rtypes.h \
+ /opt/root/include/root/RConfig.h /opt/root/include/root/RVersion.h \
+ /opt/root/include/root/DllImport.h /opt/root/include/root/Rtypeinfo.h \
+ /opt/root/include/root/snprintf.h /opt/root/include/root/strlcpy.h \
+ /opt/root/include/root/TGenericClassInfo.h \
+ /opt/root/include/root/TSchemaHelper.h /opt/root/include/root/TStorage.h \
+ /opt/root/include/root/TVersionCheck.h /opt/root/include/root/Riosfwd.h \
+ /opt/root/include/root/TBuffer.h /opt/root/include/root/TString.h \
+ /opt/root/include/root/TMathBase.h /opt/root/include/root/TList.h \
+ /opt/root/include/root/TSeqCollection.h \
+ /opt/root/include/root/TCollection.h /opt/root/include/root/TIterator.h \
+ /opt/root/include/root/TDatime.h /opt/root/include/root/TUUID.h \
+ /opt/root/include/root/TSystem.h /opt/root/include/root/TInetAddress.h \
+ /opt/root/include/root/TTimer.h /opt/root/include/root/TSysEvtHandler.h \
+ /opt/root/include/root/TQObject.h /opt/root/include/root/TTime.h \
+ /opt/root/include/root/TNamed.h

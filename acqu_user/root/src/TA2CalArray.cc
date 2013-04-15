@@ -8,7 +8,7 @@
 //--Update	JRM Annand ..17th Nov 2007  ReadDecoded total energy fix
 //--Description
 //                *** Acqu++ <-> Root ***
-// Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
+// Online/Offline Analysis of Sub-Atomic Physics Experimental Data
 //
 // TA2CalArray
 //
@@ -19,21 +19,62 @@
 
 #include "TA2CalArray.h"
 
+enum
+{
+  ECAEnergyResolution=1900, ECATimeResolution, ECAThetaResolution, ECAPhiResolution,
+  ECAClusterUCLA,
+  ECAScaleFile
+};
+
+static const Map_t kCalArrayKeys[] =
+{
+  {"Energy-Resolution:",   ECAEnergyResolution},
+  {"Time-Resolution:",     ECATimeResolution},
+  {"Theta-Resolution:",    ECAThetaResolution},
+  {"Phi-Resolution:",      ECAPhiResolution},
+  {"Max-Cluster:",         EClustDetMaxCluster},
+  {"Next-Neighbour:",      EClustDetNeighbour},
+  {"Cluster-UCLA:",        ECAClusterUCLA},
+  {"Scale-File:",          ECAScaleFile},
+  {NULL,            -1}
+};
+
 ClassImp(TA2CalArray)
 
 //---------------------------------------------------------------------------
-TA2CalArray::TA2CalArray( const char* name, TA2System* apparatus )
-  :TA2ClusterDetector(name, apparatus)
+TA2CalArray::TA2CalArray(const char* name, TA2System* apparatus)
+            :TA2ClusterDetector(name, apparatus)
 {
   // Do not allocate any "new" memory here...Root will wipe
   // Set private variables to zero/false/undefined state
   // Pass kLaddKeys (command-control keywords) and
   // kLaddHist (names of histograms) to progenitor classes
-  
-  fRandom = new TRandom3(123);
+
+  fTryHits = NULL;
+  fTempHits2 = NULL;
+
+  fUseSigmaEnergy       = 0;
+  fUseSigmaTime         = 0;
+  fUseClusterDecodeUCLA = 0;
+  fSigmaEnergyFactor    = -1.0;
+  fSigmaEnergyPower     = -1.0;
+  fSigmaTime            = -1.0;
+  fSigmaTheta           = -1.0;
+  fSigmaPhi             = -1.0;
+  fEthresh              = 0.0;
+
+  ScaleRuns = 0;
+  ScaleVal[0] = 1.0;
+  UseScales = false;
+  CurrentRun[0] = '\0';
+
+  fRandom = new TRandom();
+
+  AddCmdList(kCalArrayKeys);                  // for SetConfig()
 }
 
 //---------------------------------------------------------------------------
+
 TA2CalArray::~TA2CalArray()
 {
   // Free up all allocated memory
@@ -42,8 +83,106 @@ TA2CalArray::~TA2CalArray()
   DeleteClusterArrays();
 }
 
+//---------------------------------------------------------------------------
+
+void TA2CalArray::SetConfig(char* line, int key)
+{
+  FILE* ScalFile;
+
+  // Load CalArray parameters from file or command line
+  // CalArray specific configuration
+  switch(key)
+  {
+  case ECAScaleFile:
+    if(sscanf(line, "%s", ScaleFile) < 1)
+    {
+      PrintError(line,"<TA2CalArray Scale File>");
+      break;
+    }
+    printf("NaI energy scale values from:\n %s\n", ScaleFile);
+    ScalFile = fopen(ScaleFile, "r");
+    ScaleRuns = 0;
+    while(!feof(ScalFile))
+      if(fscanf(ScalFile, "%s %lf", ScaleRun[ScaleRuns], &ScaleVal[ScaleRuns])==2)
+      {
+        ScaleRuns++;
+        if(ScaleRuns > MAXRUNS) break;
+      }
+    fclose(ScalFile);
+    UseScales = true;
+    break;
+  case ECAClusterUCLA:
+    // Set Clustering Algorithm to UCLA version
+    fUseClusterDecodeUCLA = 1;
+    break;
+  case ECAEnergyResolution:
+    // Energy Resolution Read-in Line
+    if(sscanf(line, "%lf%lf%d", &fSigmaEnergyFactor, &fSigmaEnergyPower, &fUseSigmaEnergy) < 3)
+      PrintError(line,"<TA2CalArray Energy Resolution>");
+    break;
+  case ECATimeResolution:
+    // Time resolution read-in line
+    if(sscanf(line, "%lf%d", &fSigmaTime, &fUseSigmaTime) < 2)
+      PrintError(line,"<TA2CalArray Time Resolution>");
+    break;
+  case ECAThetaResolution:
+    // Time resolution read-in line
+    if(sscanf(line, "%lf", &fSigmaTheta) < 1)
+      PrintError(line,"<TA2CalArray Theta Resolution>");
+    break;
+  case ECAPhiResolution:
+    // Time resolution read-in line
+    if(sscanf(line, "%lf", &fSigmaPhi) < 1)
+      PrintError(line,"<TA2CalArray Phi Resolution>");
+    break;
+  case EClustDetMaxCluster:
+    // Max number of clusters
+    if(sscanf( line, "%d%lf", &fMaxCluster, &fClEthresh ) < 1)
+    {
+      PrintError(line,"<Parse UCLA # clusters>");
+      break;
+    }
+    if(fUseClusterDecodeUCLA)
+      {
+	fUseClusterDecodeUCLA = 1;
+	fEthresh = fClEthresh;
+	fClusterUCLA = new HitClusterUCLA_t*[fNelement+1];
+	fCluster = (HitCluster_t**)fClusterUCLA;
+	fClustHit = new UInt_t[fMaxCluster+1];
+	fTryHits = new UInt_t[fNelement+1];
+	fTempHits = new UInt_t[fNelement+1];
+	fTempHits2 = new UInt_t[fNelement+1];
+	fNClustHitOR = new UInt_t[fNelement+1];
+	fTheta = new Double_t[fNelement+1];
+	fPhi = new Double_t[fNelement+1];
+	fClEnergyOR = new Double_t[fNelement+1];
+	fClTimeOR = new Double_t[fNelement+1];
+	fClCentFracOR = new Double_t[fNelement+1];
+	fClRadiusOR = new Double_t[fNelement+1];
+	fNCluster = 0;
+      } else TA2ClusterDetector::SetConfig(line, key);
+    break;
+  case EClustDetNeighbour:
+    // Nearest neighbout input
+    if(fUseClusterDecodeUCLA)
+      {
+	if( fNCluster < fNelement )
+	  fClusterUCLA[fNCluster] = new HitClusterUCLA_t(line,fNCluster,fClustSizeFactor);
+	fNCluster++;
+      }
+    else TA2ClusterDetector::SetConfig(line, key);
+    break;
+  default:
+    // Command not found...possible pass to next config
+    TA2ClusterDetector::SetConfig(line, key);
+    break;
+  }
+  return;
+}
+
 //-----------------------------------------------------------------------------
-void TA2CalArray::ParseDisplay( char* line )
+
+void TA2CalArray::ParseDisplay(char* line)
 {
   // Input private histogram spec to general purpose parse
   // and setup routine
@@ -60,16 +199,28 @@ void TA2CalArray::ParseDisplay( char* line )
 }
 
 //---------------------------------------------------------------------------
+
 void TA2CalArray::PostInit()
 {
   // Some further initialisation after all setup parameters read in
   // Start with alignment offsets
   // Create space for various output arrays
+
+  if(fUseClusterDecodeUCLA) printf("Using UCLA ClusterDecode for Crystal Ball NaI array\n");
+
+  fEnergyAll = new Double_t[fNelem+1];
+
+  //Store global energy scale value
+  fEnergyGlobal = fEnergyScale;
+
   TA2ClusterDetector::PostInit();
 }
 
 //---------------------------------------------------------------------------
-void TA2CalArray::SaveDecoded( )
+
+void TA2CalArray::SaveDecoded()
 {
   // Save decoded info to Root Tree file
 }
+
+//---------------------------------------------------------------------------

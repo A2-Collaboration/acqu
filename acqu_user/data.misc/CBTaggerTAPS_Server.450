@@ -1,0 +1,35 @@
+#------------------------------------------------------------------------------
+#                 Configuration file for MC data processing
+#             (AcquRoot 4v4 user package demonstration analysis)
+#------------------------------------------------------------------------------
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Number of Input streams (sources of data), record length to write data
+#and switch 0/1 = no/yes to control data write
+#               No. of streams Record Len  Save Data
+Input-Streams:  1              32768       0
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Optional directory spec. If not specified 'File-Name's must contain the full
+#directory path
+File-Directory: /data/disk1/2011_02_pi0_transverse_asymmetries/
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Specify each input stream
+#From disk file, ACQU (Mk1) format, save any output to file (save=1)
+#input data record length, output data record length
+#               Source  Format  Save?  RecLen   Buffers  Swap  MarkID
+Stream-Spec:    File    Mk1     0      32768    32      0     400
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#List of data files to analyse
+#           File Name     First rec  Last rec
+#February 2011 data:
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#450 MeV Compton, Butanol
+File-Name:  CB_35700.dat  0          0
+#- - - - - - - - - - - -  - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#

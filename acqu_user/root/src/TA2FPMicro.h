@@ -18,9 +18,9 @@
 
 class TA2FPMicro : public TA2Detector {
  protected:
-  Int_t* fFPhits;
-  Int_t fNFPhits;
   Int_t fNFPelem;
+  Int_t fNFPhits;
+  Int_t* fFPhits; //[fNFPelem]
  public:
   TA2FPMicro( const char*, TA2System* );// Normal use
   virtual ~TA2FPMicro();

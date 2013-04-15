@@ -5,3 +5,5 @@
 /Thread*.txt
 *.log
 /result/
+/root/src/
+/root/src/UserDict.*

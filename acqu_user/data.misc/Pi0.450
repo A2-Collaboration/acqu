@@ -1,0 +1,210 @@
+#------------------------------------------------------------------------------
+#                  Configuration file for TA2MesonPhysics
+#             (AcquRoot 4v4 user package demonstration physics)
+#------------------------------------------------------------------------------
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Target information: position (x,y,z) and mass in MeV
+Target: 0.0  0.0  0.0    938.2720    11188.1740
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Maximum number of detected particles to be accepted from different apparati.
+#This defines sizes of internal arrays; so don't select these numbers too
+#small...
+#             Tagger  Ball  TAPS
+Permutations: 256     32    16
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Standard AcquRoot option
+ParticleID:  256
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Standard AcquRoot option
+Initialise:
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Enable Trigger decoding for multiplicities M1 to M4
+#This decodes either hardware information from ADCs 0 and 1, or
+#evaluates software trigger implementation, if acitvated.
+#        M1  M2  M3  M4
+Trigger:  0   1   1   1
+#
+#Software implementation/simulation of L1 and L2 trigger, options are:
+#1.       CB energy sum threshold in MeV (L1 trigger)
+#2.       CB energy sum threshold deviation in MeV (L1 trigger)
+#3.       Number of inner TAPS rings not contributing to multiplicity,
+#         0 accepts all,
+#         1 disables the 1st inner ring (6x4 PbWO4s)
+#         2 disables also the 2nd inner ring (12x4 PbWO4s)
+#         3 and higher completely disables TAPS contribution
+#4. to 7. Prescaling factors for M1-4 events, i.e. skipped events
+#         between two accepted events (L2 trigger)
+#         0     accepts all events of this multiplicity,
+#         65535 supresses this multiplicity as the hardware does
+#4.       M1 prescale
+#5.       M2 prescale
+#6.       M3 prescale
+#7.       M4 prescale
+#8.       TAPS crystals per block (64 or 73)
+#               1.       2.       3.   4.     5.     6.     7.     8.
+*TriggerParam:   0.000    0.000    2    65535  0      0      0      73
+*SumModel:  data/Trigger_SumModel.txt
+#
+#Text files describing the single crystal behaviour fo L1 and L2 triggers:
+#ThresBaF2: points to a text file containing the LED discriminator thresholds
+#           for each BaF2 crystal (needed for L2 trigger)
+#ThresNaI:  points to a text file containing the discriminator thresholds
+#           (high threshold) for each NaI(Tl) crystal (needed for L2 trigger)
+#ThresNaI:  points to a text file containing the relative energy calibration
+#           for each NaI(Tl) crystal (needed for L1 trigger)
+*ThresBaF2: data/TAPS_BaF2_Thres.txt
+*ThresNaI:  data/CB_NaI_Thres.txt
+*GainsNaI:  data/CB_NaI_Gain.txt
+*ScaleNaI: 1.000
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Options to control single meson analysis (cut windows, etc.):
+#- Invariant mass (2 photons) range to be accepted as meson (pi0/eta)
+#- Missing mass (from beam, proton target and reconstructed meson) range
+#  to be accepted as recoil nucleon
+#- Beam energy threshold for meson production reaction. Do not use the
+#  exact value but stay a bit below, because of tagger energy resolution
+#- Particle ID code for reconstructed meson (111=pi0, 221=eta)
+#Example pi0->2gamma analysis:
+Misc: InvariantMass 115.0  155.0
+Misc: MissingMass   900.0  980.0
+Misc: Threshold     130.0 1600.0
+Misc: MesonID 111
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Enable output of TA2Particles in ROOT tree file
+*Misc: OutputFile A2Events.root
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Tagger prompt/random handling: Text file containing time window definitions
+#for prompt and random hits. These times are valid for the EventTime histogram
+#(see below) which gives the time difference between tagged photon time and
+#detected time in CB/TAPS
+Misc: TimeWindows data/Pi0_Cut_Time.txt
+*Misc: TimeWindows data/Eta_Cut_NoTime.txt
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Trigger spectra: CB energy sum (L1), CB/TAPS combined multiplicity (L2),
+#                 energy in each of 45 CB blocks (16 crystals each)
+Display: 1D ESum 750 0 1500
+Display: 1D Mult  20 0   20
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Event time as calculated from time difference between tagged photon and
+#detected photons in CB/TAPS
+Display: 1D EventTime  300 -150 150
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Number of detected particles
+Display: 1D NTagged 256   0 256
+Display: 1D NPhoton  16   0  16
+Display: 1D NProton   8   0   8
+Display: 1D NPiPlus   8   0   8
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Invariant mass of 2 photons
+Display: 1D MesonMinv   800    0  800
+Display: 1D MesonMfit 10000  130  140
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Missing mass from beam, proton target and reconstructed meson
+#W1 and W2 indicate different (prompt/random) time windows
+Display: 1D MesonMmissW1  1000  650 1150
+Display: 1D MesonMmissW2  1000  650 1150
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Some properties (polar angle, cluster size, central detector, veto detector,
+#veto energy) of photons and protons detected in CB and TAPS. Demonstrates
+#some possibilities of TA2Particle
+Display: 1D PhotonThetaCB 180 0 180 0 1
+Display: 1D ProtonThetaCB 180 0 180
+Display: 1D PhotonThetaTAPS 180 0 180 0 1
+Display: 1D ProtonThetaTAPS 180 0 180
+Display: 1D PhotonPhiCB 360 -180 180 0 1
+Display: 1D ProtonPhiCB 360 -180 180
+Display: 1D PhotonPhiTAPS 360 -180 180 0 1
+Display: 1D ProtonPhiTAPS 360 -180 180
+Display: 1D PhotonSizeCB 30 0 30 0 1
+Display: 1D ProtonSizeCB 30 0 30
+Display: 1D PhotonSizeTAPS 30 0 30 0 1
+Display: 1D ProtonSizeTAPS 30 0 30
+Display: 1D PhotonCentralCB 720 0 720 0 1
+Display: 1D ProtonCentralCB 720 0 720
+Display: 1D PhotonCentralTAPS 384 0 384 0 1
+Display: 1D ProtonCentralTAPS 384 0 384
+Display: 1D ProtonVetoCB 24 0 24
+Display: 1D ProtonVetoTAPS 384 0 384
+Display: 1D ProtonDeltaECB 100 0 10
+Display: 1D ProtonDeltaETAPS 100 0 10
+#
+Display: 2D PhotonEnergyCB 400 0 800  0 PhotonSizeCB 30 0 30  0
+Display: 2D PhotonEnergyCB 400 0 800  1 PhotonSizeCB 30 0 30  1
+Display: 2D ProtonEnergyCB 400 0 800 -1 ProtonSizeCB 30 0 30 -1
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Some distributions for reconstructed g p -> p meson reactions in CM frame
+#(proton & meson energies, azimuthal angles, polar angles, total CM energy W)
+#W1 and W2 indicate different (prompt/random) time windows
+Display: 1D CMEProtonW1  2000 0 2000
+Display: 1D CMEProtonW2  2000 0 2000
+Display: 1D CMThetaProtonW1  180 0 180
+Display: 1D CMThetaProtonW2  180 0 180
+Display: 1D CMPhiProtonW1  360 -180 180
+Display: 1D CMPhiProtonW2  360 -180 180
+Display: 1D CMEMesonW1  800 0 800
+Display: 1D CMEMesonW2  800 0 800
+Display: 1D CMThetaMesonW1  180 0 180
+Display: 1D CMThetaMesonW2  180 0 180
+Display: 1D CMPhiMesonW1  360 -180 180
+Display: 1D CMPhiMesonW2  360 -180 180
+Display: 1D CMETotalW1  1000 1000 2000
+Display: 1D CMETotalW2  1000 1000 2000
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Some distributions for reconstructed g p -> p meson reactions in Lab frame
+#(proton & meson energies, azimuthal angles, polar angles, beam energy)
+#W1 and W2 indicate different (prompt/random) time windows
+Display: 1D LabEProtonW1  2000 0 2000
+Display: 1D LabEProtonW2  2000 0 2000
+Display: 1D LabThetaProtonW1  180 0 180
+Display: 1D LabThetaProtonW2  180 0 180
+Display: 1D LabPhiProtonW1  360 -180 180
+Display: 1D LabPhiProtonW2  360 -180 180
+Display: 1D LabEMesonW1  800 0 800
+Display: 1D LabEMesonW2  800 0 800
+Display: 1D LabThetaMesonW1  180 0 180
+Display: 1D LabThetaMesonW2  180 0 180
+Display: 1D LabPhiMesonW1  360 -180 180
+Display: 1D LabPhiMesonW2  360 -180 180
+Display: 1D LabEBeamW1  1500 0 1500
+Display: 1D LabEBeamW2  1500 0 1500
+Display: 1D LabChBeamW1  352 0 352
+Display: 1D LabChBeamW2  352 0 352
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Two-dimensional plot of meson CM polar angle vs Lab beam energy
+Display: 2D CMThetaMesonW1 90 0 180 -1 LabEBeamW1 150 0 1500 -1
+Display: 2D CMThetaMesonW2 90 0 180 -1 LabEBeamW2 150 0 1500 -1
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
