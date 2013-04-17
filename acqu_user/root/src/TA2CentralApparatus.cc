@@ -1,5 +1,14 @@
-// SVN info: $Id: TA2CentralApparatus.cc 64 2011-09-21 22:28:32Z mushkar $
+// SVN info: $Id$
+// ROOT
+#include "TF1.h"
+#include "TCanvas.h"
+#include "TArc.h"
+#include "TPolyLine.h"
+#include "TLine.h"
+#include "TMarker.h"
+#include "TH2F.h"
 // AcquRoot
+#include "TA2MyUserAnalysis.h"
 #include "TA2CentralApparatus.h"
 #include "TA2PlasticPID.h"
 #include "TA2CylMwpc.h"
@@ -12,26 +21,48 @@
 // Default list of detector classes that the TA2CentralApparatus
 // apparatus may contain
 enum { ECB_PlasticPID, ECB_CalArray, ECB_CylMWPC, ECB_TA2CylMwpc};
-static Map_t kValidDetectors[] =
-{
-  {"TA2PlasticPID", ECB_PlasticPID},
-  {"TA2CylMwpc",    ECB_TA2CylMwpc},
-  {"TA2CalArray",   ECB_CalArray},
-  {NULL,            -1}
+static Map_t kValidDetectors[] = {
+  {"TA2PlasticPID",	ECB_PlasticPID},
+  {"TA2CylMwpc",	ECB_TA2CylMwpc},
+  {"TA2CalArray",	ECB_CalArray},
+  {NULL, 		-1}
 };
 
 // Valid Keywords for command-line setup of CB apparatus
 enum { ECBAngleLimits = 1000, ECBParticleCuts,
        ECBUseTracksBestMwpc, ECBDroop, ECBTrackLimits };
-static const Map_t kCBKeys[] =
-{
-  {"AngleLimits:",       ECBAngleLimits},
-  {"ParticleID-Cut:",    ECBParticleCuts},
-  {"UseBestMwpcTracks:", ECBUseTracksBestMwpc},
-  {"Droop:",             ECBDroop}, //To-do: It would be better to move it to TA2PlasticPID
-  {"TrackLimits:",       ECBTrackLimits},
-  {NULL,                 -1}
+static const Map_t kCBKeys[] = {
+  {"AngleLimits:",      ECBAngleLimits},
+  {"ParticleID-Cut:",   ECBParticleCuts},
+  {"UseBestMwpcTracks:",ECBUseTracksBestMwpc},
+  {"Droop:",             ECBDroop}, // TODO It would be better to move it to TA2PlasticPID
+  {"TrackLimits:",      ECBTrackLimits},
+  {NULL,            -1}
 };
+
+  // needed for the display
+  const Double_t dphi = 15; // deg
+  const Double_t innerPID = 58.;  // PID
+  const Double_t outerPID = 62.;  // PID
+  const Double_t PIDlength = 500.; 
+  const Double_t innerCB = 254.;
+  const Double_t outerCB = 660.4; //360.4; 
+  const Double_t outerCB_yz = 660.4;
+  const Double_t outerCB_xz = 660.4;
+  const Double_t shortCB = 51.;
+  const Double_t longCB = 254.;
+  //   const Double_t dphiCB = 2*TMath::ASin((shortCB/2)/longCB)*kRadToDeg;
+  const Double_t dphiCB = 360./31.; // deg
+  const Double_t thetaMinCB = 21.; // deg
+  const Double_t thetaMaxCB = 159.; // deg
+  const Double_t innerMWPC = 74.;
+  const Double_t outerMWPC = 94.5;
+  const Double_t MWPClength = 650.;
+  const Double_t targetLength = 100.;
+  const Double_t targetDiameter = 21.5;
+
+TPolyLine *contourPID[25], *contourCB[32], *contourCB_yz[13], *contourCB2_yz[13];
+TPolyLine *contourCB_xz[13], *contourCB2_xz[13];
 
 ClassImp(TA2CentralApparatus)
 //_________________________________________________________________________________________
@@ -46,9 +77,13 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
 {
   // Zero pointers and counters, add local SetConfig command list
   // to list of other apparatus commands
-
+   
   // Test
   fWait = kFALSE;
+  fDisplay = kFALSE;
+
+  // Geometrical const
+  fR = NULL;
 
   // Parameters/Options
   fUseTracksBestMwpc = kFALSE;
@@ -64,13 +99,13 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
   fLimitsPsVertex[1] =  1000.;
   fLimitsPsVertex[2] = -1000.;
   // NaI 
-  fFactorTrackLengthNaI = .9; // TEST option being tested
+  fFactorTrackLengthNaI = 1.; // TEST option being tested
   // Pid droop
   fLengthPid = 30.;
   fNpointsDroopPid = 0;
   fLostCorrPosPid = NULL;
   fLostCorrFacPid = NULL;
-
+  
   // Detectors
   // PID
   fPid = NULL;
@@ -97,7 +132,7 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
   fIdClNaI = NULL;
   fUsedClNaI = NULL;
   fPositionsNaI = NULL;
-
+  
   // Tracks
   fNtracks = 0;
   fTracks  = NULL;
@@ -128,7 +163,7 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
   fEhitPid = NULL;
   fEtrackMwpc = NULL;
   fPsVertex[0] = fPsVertex[1] = fPsVertex[2] = fPsVertexR = NULL;
-
+  
   // Vertexes
   fNvertexes = 0;
   fVertexes = NULL;
@@ -136,14 +171,14 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
   // For histograms
   for(Int_t i=0; i<3; ++i) fVert[i] = NULL;
   fVertR = NULL;
-
+  
   // ParticleInfo
   fDet     = NULL;
   fSize    = NULL;
   fCentral = NULL;
   fTime    = NULL;
   fType    = NULL;
-
+  
   //
   AddCmdList(kCBKeys); // for SetConfig()
 }
@@ -152,6 +187,7 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
 TA2CentralApparatus::~TA2CentralApparatus()
 {
   // Free up allocated memory
+  
   DeleteArrays();
 }
 
@@ -159,10 +195,13 @@ TA2CentralApparatus::~TA2CentralApparatus()
 void TA2CentralApparatus::DeleteArrays()
 {
   // Free up all allocated memory
-
+  
   // Parameters
   if (fLostCorrFacPid) delete [] fLostCorrFacPid;
   if (fLostCorrPosPid) delete [] fLostCorrPosPid;
+
+  // Geometrical consts
+  delete [] fR;
 
   // Detectors
   if (fPid) {
@@ -385,6 +424,8 @@ void TA2CentralApparatus::PostInit()
     //
     fRmwpc = fMwpc->GetR();
     fTracksMwpc = fMwpc->GetTracks();
+    // Geometrical consts arrays allocations
+    fR   = new Double_t[fNchambers];
     if (fUseTracksBestMwpc)
     {
       fTracksTrueMwpc          = fMwpc->GetTracksTrueBest();
@@ -409,6 +450,7 @@ void TA2CentralApparatus::PostInit()
       fIintersCandidateMwpc[i] = fMwpc->GetIintersCandidate(i);
       fNintersTrueMwpcNotUsed[i] = 0;
       fNintersCandidateMwpcNotUsed[i] = 0;
+      fR[i] = fMwpc->GetWires(i)->GetRadius();
     }
   }
   
@@ -555,7 +597,8 @@ void TA2CentralApparatus::Reconstruct()
     fNhitsPid = fPid->GetNhits();
     for (Int_t i=0; i<fNhitsPid; ++i)
     {
-      rPid   = pos[fHitsPid[i]]->X();		// Pid radius in mm
+//       rPid   = pos[fHitsPid[i]]->X();		// Pid radius in mm
+      rPid = 59.5; // mm
       phiPid = pos[fHitsPid[i]]->Z()*kDegToRad;	// Pid phi in radians
       fPositionsPid[i] = TVector2(rPid*TMath::Cos(phiPid),rPid*TMath::Sin(phiPid));
     }
@@ -974,23 +1017,16 @@ void TA2CentralApparatus::MakeVertexes()
 {
   // Reconstruct all possible vertexes (based on 2 tracks)
   
-  const TVector3 *o1, *o2, *d1, *d2;
-  TVector3 r1, r2;
   for (Int_t ii, i=0; i<fNchTracks-1; ++i)
   {
     ii = fIchTracks[i];
     if ( !fTracks[ii].HasMwpc() || !fTracks[ii].HasNaI() ) continue;
-    o1 = &(fTracks[ii].GetOrigin());
-    d1 = &(fTracks[ii].GetDirCos());
     for (Int_t jj, j=i+1; j<fNchTracks; ++j)
     {
       jj = fIchTracks[j];
       if ( !fTracks[jj].HasMwpc() || !fTracks[jj].HasNaI() ) continue;
-      o2 = &(fTracks[jj].GetOrigin());
-      d2 = &(fTracks[jj].GetDirCos());
       //
-      fTrackDist[fNvertexes] = TA2Math::DistanceBetweenTwoLines(*o1,*d1,*o2,*d2,r1,r2);
-      fVertexes[fNvertexes] = 0.5*(r1 + r2);
+      fVertexes[fNvertexes] = fTracks[ii].Vertex(fTracks[jj],fTrackDist[fNvertexes]);
       //
       fVert[0][fNvertexes] = fVertexes[fNvertexes].X();
       fVert[1][fNvertexes] = fVertexes[fNvertexes].Y();
@@ -1016,8 +1052,10 @@ void TA2CentralApparatus::AddTrack(const Int_t iHitPid, const Int_t iInterMwpc0,
   // Set Pid info
   if (track.HasPid())
   {
-    track.SetEhitPid(CalcEhitPid(iHitPid,orig,dircos));
+    track.SetEhitPidCorr(CalcEhitPid(iHitPid,orig,dircos));
+    track.SetEhitPid(fPid->GetEnergy(fHitsPid[iHitPid]));
     if (fPid->IsTime()) track.SetThitPid(fPid->GetTime(fHitsPid[iHitPid]));
+    track.SetPhiPid(TVector2::Phi_0_2pi(fPositionsPid[iHitPid].Phi()));
   }
   // Set MWPC info
   if (track.HasMwpc())
@@ -1029,9 +1067,12 @@ void TA2CentralApparatus::AddTrack(const Int_t iHitPid, const Int_t iInterMwpc0,
   if (track.HasNaI())
   {
     track.SetEclNaI(fClNaI[fIdClNaI[iClNaI]]->GetEnergy());
+    track.SetEclNaICorr(CalcEclNaI(iClNaI));
     track.SetTclNaI(fClNaI[fIdClNaI[iClNaI]]->GetTime());
     track.SetMclNaI(fClNaI[fIdClNaI[iClNaI]]->GetNhits());
     track.SetCentralIndexNaI(fClNaI[fIdClNaI[iClNaI]]->GetIndex());
+    track.SetThetaNaI(fPositionsNaI[iClNaI].Theta());
+    track.SetPhiNaI(TVector2::Phi_0_2pi(fPositionsNaI[iClNaI].Phi()));
     track.SetSigmaTimeNaI(fNaI->GetSigmaTime());
     track.SetSigmaEnergyNaI(fNaI->GetSigmaEnergy(track.GetEclNaI()));
     track.SetSigmaPhiNaI(fNaI->GetSigmaPhi(fPositionsNaI[iClNaI].Theta()));
@@ -1140,12 +1181,13 @@ void TA2CentralApparatus::AddParticleInfo(const TA2CentralTrack &track)
   fParticleInfo[fNparticle].SetSigmaTheta(track.GetSigmaThetaNaI());
   fParticleInfo[fNparticle].SetParticleIDA(fType[fNparticle]);
   fParticleInfo[fNparticle].SetVetoTime(track.GetThitPid());
-  fParticleInfo[fNparticle].SetVetoEnergy(track.GetEhitPid());
-  fParticleInfo[fNparticle].SetVetoIndex(track.GetIhitPid());
+  fParticleInfo[fNparticle].SetVetoEnergy(CalcEhitPid(track.GetIhitPid(),track.GetOrigin(),track.GetDirCos())); // fParticleInfo[fNparticle].SetVetoEnergy(track.GetEhitPid());
+//   fParticleInfo[fNparticle].SetVetoIndex(track.GetIhitPid());
+  if (track.HasPid()) fParticleInfo[fNparticle].SetVetoIndex(fHitsPid[track.GetIhitPid()]);
   fParticleInfo[fNparticle].SetDetectorA( fDet[fNparticle] - fParticleInfo[fNparticle].GetDetectors() );
-  fParticleInfo[fNparticle].SetTrackIntersects(track.GetIinterMwpc(0),track.GetIinterMwpc(1));
-  fParticleInfo[fNparticle].SetTrackEnergy(track.GetEtrackMwpc());
-  fParticleInfo[fNparticle].SetTrackTime(track.GetTtrackMwpc());
+  fParticleInfo[fNparticle].SetIintersMwpc(track.GetIinterMwpc(0),track.GetIinterMwpc(1));
+  fParticleInfo[fNparticle].SetEtrackMwpc(track.GetEtrackMwpc());
+  fParticleInfo[fNparticle].SetTtrackMwpc(track.GetTtrackMwpc());
   
   ++fNparticle;
   
@@ -1155,11 +1197,19 @@ void TA2CentralApparatus::AddParticleInfo(const TA2CentralTrack &track)
 ////////// TEST ////////////// TEST ///////////// TEST ///////////////
 //////////////////////////////////////////////////////////////////////
 //_______________________________________________________________________________
-void TA2CentralApparatus::Test()
+void TA2CentralApparatus::Test(Bool_t WantDisplay)
 {
-  // Test output
+  // Test output, eventually with eventDisplay
   
-  // Print file name & event number
+  fDisplay = WantDisplay;
+  Int_t fVerbose = 2;
+
+  if (fDisplay) {
+    fWait = kTRUE;
+    InitGeometry();
+  }
+  
+// Print file name & event number
   cout << "____________________________________ TA2CentralApparatus _______________________________"<< endl;
   cout << "Event#: " << gAN->GetNEvent() << "\tAccepted#: " << gAN->GetNEvAnalysed() << "\tDAQ#: " << gAN->GetNDAQEvent() << endl;
   
@@ -1254,15 +1304,349 @@ void TA2CentralApparatus::Test()
     cout << "\tType: " << fTracks[i].GetType() << "\tPhi: " << TVector2::Phi_0_2pi(fTracks[i].GetPhi())*kRadToDeg << "\tTheta: " << fTracks[i].GetTheta()*kRadToDeg << "\tiCh: " << fTracks[i].HasSingleMwpc()-1 << endl;
   }
   
-//   fWait = fNhitsPid ==2 && fNclNaI == 2 && fMwpc->GetNtracks() == 2;//fTracksTrueMwpc->size() > 0;
-//   fWait = fMwpc->GetNtracks() == 2;
-//      fWait = fNintersTrueMwpc[1] == 2 && fNtracks == 2;
-//   fWait = gAN->GetNDAQEvent() == 3000;
-//   fWait = fNtracksSingleMwpc > 0;
+  // start display
+  if (fDisplay) {
 
+    if (fVerbose>0) {
+      cout << endl;
+      cout << "==============================================================" << endl;
+      cout << "========================== MY TESTS ==========================" << endl;
+      cout << "==============================================================" << endl;
+      cout << "Event # " << gAN->GetNEvent() << endl; 
+      cout << "In this event " << fNtracks << " tracks have been found " << endl;
+    }
+
+    // CB
+    Double_t xcb[50], ycb[50], zcb[50];
+    if (fVerbose>0) {
+      cout << "++++++++++++++++ CB ++++++++++++++++" << endl;
+      cout << "--> " << fNclNaI << " CB sectors were hit" << endl;
+    }
+    for (Int_t iNaI=0; iNaI<fNclNaI; iNaI++) {
+      xcb[iNaI] = fPositionsNaI[iNaI].X();
+      ycb[iNaI] = fPositionsNaI[iNaI].Y();
+      TMarker *mcb = new TMarker(xcb[iNaI], ycb[iNaI], 3);
+      mcb->SetMarkerColor(kGreen-2);
+      c->cd(); mcb->Draw("same");
+      for (int iCbSect=0; iCbSect<32; iCbSect++) {
+	Double_t tempx[5], tempy[5];
+	for (int j=0; j<5; j++) {
+	  tempx[j] = xCB[j][iCbSect]; tempy[j] = yCB[j][iCbSect];
+	}
+	if (TMath::IsInside(xcb[iNaI], ycb[iNaI], 5, tempx, tempy)) {
+	  contourCB[iCbSect]->SetFillStyle(3001); 
+	  contourCB[iCbSect]->SetFillColor(kGreen);
+	  for (Int_t iTrk=0; iTrk<fNtracks; iTrk++) {
+	    if (iNaI == fTracks[iTrk].GetIclNaI())
+	      contourCB[iCbSect]->SetFillStyle(1001);
+	  }
+	  c->cd(); contourCB[iCbSect]->Draw("same");
+	}
+      }
+     
+      // yz plane
+      zcb[iNaI] = fPositionsNaI[iNaI].Z();
+      if (fVerbose>1)
+	cout << "CB cluster " << iNaI << "\t ==> (" << xcb[iNaI] << ", " << ycb[iNaI] << ", " << zcb[iNaI] << ")" << endl;
+      TMarker *mcb_yz = new TMarker(zcb[iNaI], ycb[iNaI], 3);
+      mcb_yz->SetMarkerColor(kGreen-2);
+      c2->cd(); mcb_yz->Draw("same");
+      for (int iCbSect=0; iCbSect<13; iCbSect++) {
+	Double_t tempz[5], tempy[5], tempy2[5];
+	for (int j=0; j<5; j++) {
+	  tempz[j] = zCB_yz[j][iCbSect]; tempy[j] = yCB_yz[j][iCbSect]; tempy2[j] = y2CB_yz[j][iCbSect];
+	}
+	if (TMath::IsInside(zcb[iNaI], ycb[iNaI], 5, tempz, tempy)) {
+	  contourCB_yz[iCbSect]->SetFillStyle(3001);
+	  contourCB_yz[iCbSect]->SetFillColor(kGreen);
+	  for (Int_t iTrk=0; iTrk<fNtracks; iTrk++) {
+	    if (iNaI == fTracks[iTrk].GetIclNaI())
+	      contourCB_yz[iCbSect]->SetFillStyle(1001);
+	  }
+	}
+	if (TMath::IsInside(zcb[iNaI], ycb[iNaI], 5, tempz, tempy2)) {
+	  contourCB2_yz[iCbSect]->SetFillStyle(3001);
+	  contourCB2_yz[iCbSect]->SetFillColor(kGreen);
+	  for (Int_t iTrk=0; iTrk<fNtracks; iTrk++) {
+	    if (iNaI == fTracks[iTrk].GetIclNaI())
+	      contourCB2_yz[iCbSect]->SetFillStyle(1001);
+	  }
+	}
+      }
+
+      // xz plane
+      TMarker *mcb_xz = new TMarker(zcb[iNaI], xcb[iNaI], 3);
+      mcb_xz->SetMarkerColor(kGreen-2);
+      c3->cd(); mcb_xz->Draw("same");
+      for (int iCbSect=0; iCbSect<13; iCbSect++) {
+	Double_t tempz[5], tempx[5], tempx2[5];
+	for (int j=0; j<5; j++) {
+	  tempz[j] = zCB_yz[j][iCbSect]; tempx[j] = xCB_xz[j][iCbSect]; tempx2[j] = x2CB_xz[j][iCbSect];
+	}
+	if (TMath::IsInside(zcb[iNaI], xcb[iNaI], 5, tempz, tempx)) {
+	  contourCB_xz[iCbSect]->SetFillStyle(3001);
+	  contourCB_xz[iCbSect]->SetFillColor(kGreen);
+	  for (Int_t iTrk=0; iTrk<fNtracks; iTrk++) {
+	    if (iNaI == fTracks[iTrk].GetIclNaI())
+	      contourCB_xz[iCbSect]->SetFillStyle(1001);
+	  }
+	}
+	if (TMath::IsInside(zcb[iNaI], xcb[iNaI], 5, tempz, tempx2)) {
+	  contourCB2_xz[iCbSect]->SetFillStyle(3001);
+	  contourCB2_xz[iCbSect]->SetFillColor(kGreen);
+	  for (Int_t iTrk=0; iTrk<fNtracks; iTrk++) {
+	    if (iNaI == fTracks[iTrk].GetIclNaI())
+	      contourCB2_xz[iCbSect]->SetFillStyle(1001);
+	  }
+	}
+      }
+    }
+    c->Update();    c->Modified();
+    c2->Update();   c2->Modified();
+    c3->Update();   c3->Modified();
+   
+
+
+    // PID
+    Double_t xpid[50], ypid[50], zpid[50];
+
+    if (fVerbose>0) {
+      cout << "++++++++++++++++ PID ++++++++++++++++" << endl;
+      cout << "--> " << fNhitsPid << " PID sectors were hit " << endl;
+    }
+
+    for (Int_t iPid=0; iPid<fNhitsPid; ++iPid) {
+      xpid[iPid] = fPositionsPid[iPid].X();
+      ypid[iPid] = fPositionsPid[iPid].Y();
+      if (fVerbose>1)
+	cout << "PID cluster " << iPid << "\t ==> (" << xpid[iPid] << ", " << ypid[iPid] << ")" << endl;
+            
+      for (int iSect=0; iSect<25; iSect++) {
+	Double_t tempx[5], tempy[5];
+	for (int j=0; j<5; j++) {
+	  tempx[j] = xPID[j][iSect]; tempy[j] = yPID[j][iSect]; 
+	}
+ 	if (TMath::IsInside(xpid[iPid], ypid[iPid], 5, tempx, tempy)) {
+	  contourPID[iSect]->SetFillStyle(3001);
+	  contourPID[iSect]->SetFillColor(kBlack);
+	  for (Int_t iTrk=0; iTrk<fNtracks; iTrk++) {
+	    if (iPid == fTracks[iTrk].GetIhitPid())
+	      contourPID[iSect]->SetFillStyle(1001);
+	  }
+	  c->cd(); contourPID[iSect]->Draw("same");
+ 	}
+      }
+    }
+    c->Update();
+    c->Modified();
+
+    // MWPC
+    // check on wire clusters
+    TMarker *w[2][20];
+    TMarker *inter[2][20], *inter_yz[2][20], *inter_xz[2][20];
+    TMarker *mwpc[2][20], *mwpc_yz[2][20], *mwpc_xz[2][20];
+    Double_t phiwire[2][20], xwire[2][20], ywire[2][20];
+    Double_t xint[2][20], yint[2][20], zint[2][20];
+    Double_t xtrk[2][20], ytrk[2][20], ztrk[2][20];
+    Double_t xmwpc[2][20], ymwpc[2][20], zmwpc[2][20];
+    Int_t iInter[2][20];
+    Int_t iItrk[2][20];
+
+    for (Int_t iCh=0; iCh<2; iCh++) {
+      if (fVerbose>0) {
+	cout << "++++++++++++++++ MWPC" << iCh << " ++++++++++++++++" << endl;
+	cout << "--> " << fMwpc->GetWires(iCh)->GetNClust() << " clusters (open circles)" << endl;
+      }
+      for (Int_t iW = 0; iW < fMwpc->GetWires(iCh)->GetNClust(); ++iW) {
+	phiwire[iCh][iW] = fMwpc->GetWires(iCh)->GetCGClust(iW); // rad
+	xwire[iCh][iW] = fR[iCh] * TMath::Cos(phiwire[iCh][iW]);
+	ywire[iCh][iW] = fR[iCh] * TMath::Sin(phiwire[iCh][iW]);
+	if (fVerbose>1)
+	  cout << "cluster " << iW << "\t phiW: " << phiwire[iCh][iW]*kRadToDeg << "\t ==> (" << xwire[iCh][iW] << ", " << ywire[iCh][iW] << ")" << endl;
+
+	w[iCh][iW] = new TMarker( xwire[iCh][iW], ywire[iCh][iW], 24);
+	if (iCh==0) w[iCh][iW]->SetMarkerColor(kAzure+7);
+	else w[iCh][iW]->SetMarkerColor(kBlue);
+	c->cd(); w[iCh][iW]->Draw("same");
+      }
+    
+      // check on intersections on wires
+      if (fVerbose>0)
+	cout << "--> " << fMwpc->GetNinters(iCh) << " intersections (stars)" << endl;
+      for (Int_t iInt = 0; iInt<fMwpc->GetNinters(iCh); iInt++) {
+ 	Int_t nW = fMwpc->GetInters(iCh, iInt)->GetIclW();
+  	if (nW != -1)
+  	  w[iCh][nW]->Delete();
+ 	xint[iCh][iInt] = fMwpc->GetInters(iCh, iInt)->GetPosition()->X();
+ 	yint[iCh][iInt] = fMwpc->GetInters(iCh, iInt)->GetPosition()->Y();
+	if (fVerbose>1)
+	  cout << "intersection " << iInt << " using wire cluster " << nW <<  "\t ==> (" << xint[iCh][iInt] << ", " << yint[iCh][iInt] << ")" << endl;
+	
+ 	inter[iCh][iInt] = new TMarker(xint[iCh][iInt], yint[iCh][iInt], 29);
+ 	inter[iCh][iInt]->SetMarkerSize(1.2);
+ 	if (iCh==0) inter[iCh][iInt]->SetMarkerColor(kAzure+7);
+ 	else 	inter[iCh][iInt]->SetMarkerColor(kBlue);
+ 	c->cd(); inter[iCh][iInt]->Draw("same");
+	
+ 	// yz plane
+ 	zint[iCh][iInt] = fMwpc->GetInters(iCh, iInt)->GetPosition()->Z();
+ 	inter_yz[iCh][iInt] = new TMarker(zint[iCh][iInt], yint[iCh][iInt], 29);
+ 	inter_yz[iCh][iInt]->SetMarkerSize(1.2);
+ 	if (iCh==0) inter_yz[iCh][iInt]->SetMarkerColor(kAzure+7);
+ 	else 	inter_yz[iCh][iInt]->SetMarkerColor(kBlue);
+ 	c2->cd(); inter_yz[iCh][iInt]->Draw("same");
+
+ 	// xz plane
+  	inter_xz[iCh][iInt] = new TMarker(zint[iCh][iInt], xint[iCh][iInt], 29);
+ 	inter_xz[iCh][iInt]->SetMarkerSize(1.2);
+ 	if (iCh==0) inter_xz[iCh][iInt]->SetMarkerColor(kAzure+7);
+ 	else 	inter_xz[iCh][iInt]->SetMarkerColor(kBlue);
+ 	c3->cd(); inter_xz[iCh][iInt]->Draw("same");
+      }
+      c->Update();    c->Modified();
+      c2->Update();   c2->Modified();
+      c3->Update();   c3->Modified();
+
+      // check for MWPC tracks
+      if (fVerbose>0) 
+	cout << "--> " << fMwpc->GetNtracks() << " tracks using both MWPCs (full circles and thin line)" <<endl;
+      for (Int_t iChTrk=0; iChTrk<fMwpc->GetNtracks(); iChTrk++) {
+	iInter[iCh][iChTrk] = fMwpc->GetTrack(iChTrk)->GetIinter(iCh);
+	inter[iCh][iInter[iCh][iChTrk]]->SetMarkerStyle(20);
+	inter[iCh][iInter[iCh][iChTrk]]->SetMarkerSize(1.0);
+	xtrk[iCh][iChTrk] = xint[iCh][iInter[iCh][iChTrk]];
+	ytrk[iCh][iChTrk] = yint[iCh][iInter[iCh][iChTrk]];
+	// yz plane
+	inter_yz[iCh][iInter[iCh][iChTrk]]->SetMarkerStyle(20);
+	inter_yz[iCh][iInter[iCh][iChTrk]]->SetMarkerSize(1.0);
+      	ztrk[iCh][iChTrk] = zint[iCh][iInter[iCh][iChTrk]];
+	// xz plane
+	inter_xz[iCh][iInter[iCh][iChTrk]]->SetMarkerStyle(20);
+	inter_xz[iCh][iInter[iCh][iChTrk]]->SetMarkerSize(1.0);
+      }
+      c->Update();       c->Modified();
+      c2->Update();      c2->Modified();
+      c3->Update();      c3->Modified();
+
+      // "global" tracks
+      for (Int_t iTrk=0; iTrk<fNtracks; ++iTrk) {    
+	iItrk[iCh][iTrk] = fTracks[iTrk].GetIinterMwpc(iCh);
+	if (iItrk[iCh][iTrk] != -1) {
+ 	  inter[iCh][iItrk[iCh][iTrk]]->SetMarkerStyle(21);
+	  inter[iCh][iItrk[iCh][iTrk]]->SetMarkerSize(1.0);
+ 	  xmwpc[iCh][iTrk] = xint[iCh][iItrk[iCh][iTrk]];
+ 	  ymwpc[iCh][iTrk] = yint[iCh][iItrk[iCh][iTrk]]; 
+	  
+	  // yz plane
+ 	  inter_yz[iCh][iItrk[iCh][iTrk]]->SetMarkerStyle(21);
+	  inter_yz[iCh][iItrk[iCh][iTrk]]->SetMarkerSize(1.0);
+ 	  zmwpc[iCh][iTrk] = zint[iCh][iItrk[iCh][iTrk]];
+
+	  // xz plane
+ 	  inter_xz[iCh][iItrk[iCh][iTrk]]->SetMarkerStyle(21);
+	  inter_xz[iCh][iItrk[iCh][iTrk]]->SetMarkerSize(1.0);
+	}
+      }
+      c->Update();      c->Modified();
+      c2->Update();     c2->Modified();
+      c2->Update();     c3->Modified();
+    }
+
+
+    TLine *trkl[20], *trkl_yz[20], *trkl_xz[20];
+    for (Int_t iChTrk=0; iChTrk<fMwpc->GetNtracks(); iChTrk++) {
+      if (fVerbose>1)
+	cout << "Track " << iChTrk << " using intersection " << fMwpc->GetTrack(iChTrk)->GetIinter(0) << " on MWPC0 and intersection " << fMwpc->GetTrack(iChTrk)->GetIinter(1) << " on MWPC1" << endl; 
+
+      trkl[iChTrk] = new TLine(xtrk[0][iChTrk], ytrk[0][iChTrk], xtrk[1][iChTrk], ytrk[1][iChTrk]);
+      c->cd(); trkl[iChTrk]->Draw("same");
+      
+      // yz plane
+      trkl_yz[iChTrk] = new TLine(ztrk[0][iChTrk], ytrk[0][iChTrk], ztrk[1][iChTrk], ytrk[1][iChTrk]);
+      c2->cd(); trkl_yz[iChTrk]->Draw("same");
+
+      // xz plane
+      trkl_xz[iChTrk] = new TLine(ztrk[0][iChTrk], xtrk[0][iChTrk], ztrk[1][iChTrk], xtrk[1][iChTrk]);
+      c3->cd(); trkl_xz[iChTrk]->Draw("same");
+    }
+    c->Update();      c->Modified();
+    c2->Update();     c2->Modified();
+    c3->Update();     c3->Modified();
+
+    if (fVerbose>0) {
+      cout << endl;
+      cout << "----------------- " << fNtracks << " tracks (full squares and red lines) -----------------" << endl;
+    }
+
+    for (Int_t iTrk=0; iTrk<fNtracks; ++iTrk) {    
+      if (iItrk[0][iTrk] != -1 && iItrk[1][iTrk] != -1) {
+	TLine *l = new TLine(xmwpc[0][iTrk], ymwpc[0][iTrk], xmwpc[1][iTrk], ymwpc[1][iTrk]);
+	c->cd(); l->SetLineWidth(2); l->SetLineColor(kRed); l->Draw("same");
+	TLine *l_yz = new TLine(zmwpc[0][iTrk], ymwpc[0][iTrk], zmwpc[1][iTrk], ymwpc[1][iTrk]);
+	c2->cd(); l_yz->SetLineWidth(2); l_yz->SetLineColor(kRed); l_yz->Draw("same");
+	TLine *l_xz = new TLine(zmwpc[0][iTrk], xmwpc[0][iTrk], zmwpc[1][iTrk], xmwpc[1][iTrk]);
+	c3->cd(); l_xz->SetLineWidth(2); l_xz->SetLineColor(kRed); l_xz->Draw("same");
+      }
+      if (fVerbose>1) {
+	Int_t trackType = fTracks[iTrk].GetType();
+	switch (trackType) {
+	case 3:
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0" << endl;
+	  break;
+	case 5:
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1" << endl;
+	  break;
+	case 6:
+	  cout << "Track " << iTrk << " using intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0 and intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1" << endl;
+	  break;
+	case 7:
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0 and intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1" << endl;
+	  break;
+	case 8:
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 9: 
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 10:
+	  cout << "Track " << iTrk << " using intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0 and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 11:
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0 and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 12:
+	  cout << "Track " << iTrk << " using intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1 and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 13:
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1 and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 14:
+	  cout << "Track " << iTrk << " using intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0 and intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1 and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	case 15: 
+	  cout << "Track " << iTrk << " using cluster " << fTracks[iTrk].GetIhitPid() << " on PID and intersection " << fTracks[iTrk].GetIinterMwpc(0) << " on MWPC0 and intersection " << fTracks[iTrk].GetIinterMwpc(1) << " on MWPC1 and cluster " << fTracks[iTrk].GetIclNaI() << " on CB" << endl;
+	  break;
+	}
+      }
+    }
+
+    c->Update();     c->Modified();
+    c2->Update();    c2->Modified();
+    c3->Update();    c3->Modified();
+
+    h->Delete();     h2->Delete();    h3->Delete();
+  }
+   
+  //   fWait = fNhitsPid ==2 && fNclNaI == 2 && fMwpc->GetNtracks() == 2;//fTracksTrueMwpc->size() > 0;
+  //   fWait = fMwpc->GetNtracks() == 2;
+  //      fWait = fNintersTrueMwpc[1] == 2 && fNtracks == 2;
+  //   fWait = gAN->GetNDAQEvent() == 3000;
+  //   fWait = fNtracksSingleMwpc > 0;
+  
   // Wait?
-  if (fWait)
-  {
+  if (fWait) {
+    cout << endl;
+    cout << "Press any key to continue / q to quit " << endl;
     if (cin.get()=='q') gROOT->ProcessLine(".q");
   }
   
@@ -1270,4 +1654,313 @@ void TA2CentralApparatus::Test()
   fWait = kFALSE;
   
   cout << "________________________________________________________________________________________"<< endl;
+}
+
+
+
+void TA2CentralApparatus::InitGeometry() {
+  
+  c = new TCanvas("display_xy","display_xy", 0, 0, 1000, 1000);
+  h = new TH2F("xy","xy", 200, -300, 300, 200, -300, 300);
+  c->cd();
+  h->Draw();
+  c->Update();
+  c->Modified();
+
+  // target
+  TArc * target = new TArc(0., 0., targetDiameter);
+  target->SetLineColor(kRed);
+  target->SetFillColor(kRed);
+  target->SetFillStyle(3013);
+  target->Draw("same");
+    
+  TMarker *origin = new TMarker(0., 0., 5);
+  origin->Draw("same");
+    
+  // CB  
+  TArc *cbInn = new TArc(0.,0., innerCB);
+  cbInn->SetLineColor(kGreen);
+  cbInn->SetFillStyle(0);
+  cbInn->Draw("same");
+  //   TArc *cbOut = new TArc(0.,0., outerCB);
+  //   cbOut->SetLineColor(kGreen);
+  //   cbOut->SetFillStyle(0);
+  //   cbOut->Draw("same");
+    
+  TVector2 dCB[32], uCB[32];
+  for (int i=0; i<32; i++) {
+    Double_t phi = i*dphiCB;
+    Double_t xdCB = TMath::Sin(phi*kDegToRad)*innerCB;
+    Double_t ydCB = TMath::Cos(phi*kDegToRad)*innerCB;
+    if (TMath::Abs(xdCB) < 1e-10) xdCB = 0.;
+    if (TMath::Abs(ydCB) < 1e-10) ydCB = 0.;
+    dCB[i].Set(xdCB, ydCB);
+    Double_t xuCB = TMath::Sin(phi*kDegToRad)*outerCB;
+    Double_t yuCB = TMath::Cos(phi*kDegToRad)*outerCB;
+    if (TMath::Abs(xuCB) < 1e-10) xuCB = 0.;
+    if (TMath::Abs(yuCB) < 1e-10) yuCB = 0.;
+    uCB[i].Set(xuCB, yuCB);
+    if (i>0) {
+      Double_t x[5] = {dCB[i-1].X(), uCB[i-1].X(), uCB[i].X(), dCB[i].X(), dCB[i-1].X()};
+      Double_t y[5] = {dCB[i-1].Y(), uCB[i-1].Y(), uCB[i].Y(), dCB[i].Y(), dCB[i-1].Y()};
+      xCB[0][i] = dCB[i-1].X(); xCB[1][i] = uCB[i-1].X(); xCB[2][i] = uCB[i].X(); xCB[3][i] = dCB[i].X(); xCB[4][i] = dCB[i-1].X();
+      yCB[0][i] = dCB[i-1].Y(); yCB[1][i] = uCB[i-1].Y(); yCB[2][i] = uCB[i].Y(); yCB[3][i] = dCB[i].Y(); yCB[4][i] = dCB[i-1].Y(); 
+      contourCB[i] = new TPolyLine(5, x, y);
+      contourCB[i]->SetLineColor(kGreen);
+      contourCB[i]->SetFillStyle(0);
+      contourCB[i]->Draw("f");
+      contourCB[i]->Draw("same");
+    }
+  }
+    
+  // mwpcs
+  TArc *mwpc1 = new TArc(0., 0., fR[0]);
+  mwpc1->SetLineColor(kAzure+7);
+  mwpc1->SetFillStyle(0);
+  mwpc1->Draw("same");
+  TArc *mwpc2 = new TArc(0., 0., fR[1]);
+  mwpc2->SetLineColor(kBlue);
+  mwpc2->SetFillStyle(0);
+  mwpc2->Draw("same");
+    
+  // PID
+  TVector2 d[30], u[30];
+  for (int i=0; i<25; i++) {
+    Double_t phi = i*dphi;
+    Double_t xd = TMath::Sin(phi*kDegToRad)*innerPID;
+    Double_t yd = TMath::Cos(phi*kDegToRad)*innerPID;
+    if (TMath::Abs(xd) < 1e-10) xd = 0.;
+    if (TMath::Abs(yd) < 1e-10) yd = 0.;
+    d[i].Set(xd, yd);
+    Double_t xu = TMath::Sin(phi*kDegToRad)*outerPID;
+    Double_t yu = TMath::Cos(phi*kDegToRad)*outerPID;
+    if (TMath::Abs(xu) < 1e-10) xu = 0.;
+    if (TMath::Abs(yu) < 1e-10) yu = 0.;
+    u[i].Set(xu, yu);
+    if (i>0) {
+      Double_t x[5] = {d[i-1].X(), u[i-1].X(), u[i].X(), d[i].X(), d[i-1].X()};
+      Double_t y[5] = {d[i-1].Y(), u[i-1].Y(), u[i].Y(), d[i].Y(), d[i-1].Y()};
+      xPID[0][i] = d[i-1].X(); xPID[1][i] = u[i-1].X(); xPID[2][i] = u[i].X(); xPID[3][i] = d[i].X(); xPID[4][i] = d[i-1].X();
+      yPID[0][i] = d[i-1].Y(); yPID[1][i] = u[i-1].Y(); yPID[2][i] = u[i].Y(); yPID[3][i] = d[i].Y(); yPID[4][i] = d[i-1].Y();
+      contourPID[i] = new TPolyLine(5, x, y);
+      contourPID[i]->Draw("f");
+      contourPID[i]->Draw("same");
+    }
+  }
+  c->Update();
+  c->Modified();
+
+  // y-z projection
+  c2 = new TCanvas("c2","c2", 0, 0, 1000, 1000);
+  h2 = new TH2F("yz","yz", 200, -650, 650, 200, -680, 680);
+  c2->cd();
+  h2->Draw();
+
+  // CB
+  //   TArc *cbOut_yz = new TArc(0., 0., outerCB_yz, thetaMinCB, thetaMaxCB);
+  //   cbOut_yz->SetLineColor(kGreen);
+  //   cbOut_yz->SetFillStyle(0);
+  //   cbOut_yz->Draw("same");
+  TArc * cbInn_yz = new TArc(0., 0., innerCB, thetaMinCB, thetaMaxCB);
+  cbInn_yz->SetLineColor(kGreen);
+  cbInn_yz->SetFillStyle(0);
+  cbInn_yz->SetNoEdges();
+  cbInn_yz->Draw("same");
+
+  //   TArc *cbOut2_yz = new TArc(0., 0., outerCB_yz, -thetaMinCB, -thetaMaxCB);
+  //   cbOut2_yz->SetLineColor(kGreen);
+  //   cbOut2_yz->SetFillStyle(0);
+  //   cbOut2_yz->Draw("same");
+  TArc * cbInn2_yz = new TArc(0., 0., innerCB, -thetaMinCB, -thetaMaxCB);
+  cbInn2_yz->SetLineColor(kGreen);
+  cbInn2_yz->SetFillStyle(0);
+  cbInn2_yz->SetNoEdges();
+  cbInn2_yz->Draw("same");
+
+  TVector2 dCB_yz[32], uCB_yz[32];
+  for (int i=0; i<13; i++) {
+    Double_t phi = i*dphiCB + thetaMinCB - 90;
+    Double_t zdCB_yz = TMath::Sin(phi*kDegToRad)*innerCB;
+    Double_t ydCB_yz = TMath::Cos(phi*kDegToRad)*innerCB;
+    if (TMath::Abs(zdCB_yz) < 1e-10) zdCB_yz = 0.;
+    if (TMath::Abs(ydCB_yz) < 1e-10) ydCB_yz = 0.;
+    dCB_yz[i].Set(zdCB_yz, ydCB_yz);
+    Double_t zuCB_yz = TMath::Sin(phi*kDegToRad)*outerCB_yz;
+    Double_t yuCB_yz = TMath::Cos(phi*kDegToRad)*outerCB_yz;
+    if (TMath::Abs(zuCB_yz) < 1e-10) zuCB_yz = 0.;
+    if (TMath::Abs(yuCB_yz) < 1e-10) yuCB_yz = 0.;
+    uCB_yz[i].Set(zuCB_yz, yuCB_yz);
+    if (i>0) {
+      Double_t z_yz[5] = {dCB_yz[i-1].X(), uCB_yz[i-1].X(), uCB_yz[i].X(), dCB_yz[i].X(), dCB_yz[i-1].X()};
+      Double_t y_yz[5] = {dCB_yz[i-1].Y(), uCB_yz[i-1].Y(), uCB_yz[i].Y(), dCB_yz[i].Y(), dCB_yz[i-1].Y()};
+      zCB_yz[0][i] = z_yz[0];       zCB_yz[1][i] = z_yz[1];       zCB_yz[2][i] = z_yz[2]; 
+      zCB_yz[3][i] = z_yz[3];       zCB_yz[4][i] = z_yz[4]; 
+      yCB_yz[0][i] = y_yz[0];       yCB_yz[1][i] = y_yz[1];       yCB_yz[2][i] = y_yz[2];      
+      yCB_yz[3][i] = y_yz[3];       yCB_yz[4][i] = y_yz[4];
+      contourCB_yz[i] = new TPolyLine(5, z_yz, y_yz);
+      contourCB_yz[i]->SetLineColor(kGreen);
+      contourCB_yz[i]->SetFillStyle(0);
+      contourCB_yz[i]->Draw("f");
+      contourCB_yz[i]->Draw("same");
+
+      Double_t y2_yz[5] = {-dCB_yz[i-1].Y(), -uCB_yz[i-1].Y(), -uCB_yz[i].Y(), -dCB_yz[i].Y(), -dCB_yz[i-1].Y()};
+      y2CB_yz[0][i] = y2_yz[0];       y2CB_yz[1][i] = y2_yz[1];       y2CB_yz[2][i] = y2_yz[2];
+      y2CB_yz[3][i] = y2_yz[3];       y2CB_yz[4][i] = y2_yz[4];
+      contourCB2_yz[i] = new TPolyLine(5, z_yz, y2_yz);
+      contourCB2_yz[i]->SetLineColor(kGreen);
+      contourCB2_yz[i]->SetFillStyle(0);
+      contourCB2_yz[i]->Draw("f");
+      contourCB2_yz[i]->Draw("same");
+    }
+  }
+
+  // MWPC
+  Double_t xm[5] = {-MWPClength/2., -MWPClength/2., MWPClength/2., MWPClength/2., -MWPClength/2.};
+  Double_t ym[5] = {-fR[1], fR[1], fR[1], -fR[1], -fR[1]};
+  TPolyLine *mwpc_yz = new TPolyLine(5, xm, ym);
+  mwpc_yz->SetFillStyle(0);
+  mwpc_yz->SetLineColor(kBlue);
+  mwpc_yz->Draw("same");
+  TLine *mwpcup_yz = new TLine(-MWPClength/2., fR[0], MWPClength/2., fR[0]);
+  mwpcup_yz->SetLineStyle(7);
+  mwpcup_yz->SetLineColor(kAzure+7);
+  mwpcup_yz->Draw("same");
+  TLine *mwpcdown_yz = new TLine(-MWPClength/2., -fR[0], MWPClength/2., -fR[0]);
+  mwpcdown_yz->SetLineStyle(7);
+  mwpcdown_yz->SetLineColor(kAzure+7);
+  mwpcdown_yz->Draw("same");
+  
+  // PID
+  Double_t xp[5] = {-PIDlength/2., -PIDlength/2., PIDlength/2., PIDlength/2., -PIDlength/2.};
+  Double_t yp[5] = {-outerPID, outerPID, outerPID, -outerPID, -outerPID};
+  TPolyLine *pid_yz = new TPolyLine(5, xp, yp);
+  pid_yz->SetFillStyle(0);
+  pid_yz->Draw("same");
+  TLine *pidup_yz = new TLine(-PIDlength/2., innerPID, PIDlength/2., innerPID);
+  pidup_yz->SetLineStyle(7);
+  pidup_yz->Draw("same");
+  TLine *piddown_yz = new TLine(-PIDlength/2., -innerPID, PIDlength/2., -innerPID);
+  piddown_yz->SetLineStyle(7);
+  piddown_yz->Draw("same");
+
+  // target
+  Double_t xt[5] = {-targetLength/2., -targetLength/2., targetLength/2., targetLength/2., -targetLength/2.};
+  Double_t yt[5] = {-targetDiameter/2., targetDiameter/2., targetDiameter/2., -targetDiameter/2., -targetDiameter/2.};
+  TPolyLine *target_yz = new TPolyLine(5, xt, yt);
+  target_yz->SetLineColor(kRed);
+  target_yz->SetFillColor(kRed);
+  target_yz->SetFillStyle(3013);
+  target_yz->Draw("f");
+  target_yz->Draw("same");
+  
+  origin->Draw("same");
+
+  c2->Update();
+  c2->Modified();
+
+
+  // x-z projection
+  c3 = new TCanvas("c3","c3", 0, 0, 1000, 1000);
+  h3 = new TH2F("xz","xz", 200, -650, 650, 200, -680, 680);
+  c3->cd();
+  h3->Draw();
+
+  // CB
+  TArc * cbInn_xz = new TArc(0., 0., innerCB, thetaMinCB, thetaMaxCB);
+  cbInn_xz->SetLineColor(kGreen);
+  cbInn_xz->SetFillStyle(0);
+  cbInn_xz->SetNoEdges();
+  cbInn_xz->Draw("same");
+
+  //   TArc *cbOut2_xz = new TArc(0., 0., outerCB_xz, -thetaMinCB, -thetaMaxCB);
+  //   cbOut2_xz->SetLineColor(kGreen);
+  //   cbOut2_xz->SetFillStyle(0);
+  //   cbOut2_xz->Draw("same");
+  TArc * cbInn2_xz = new TArc(0., 0., innerCB, -thetaMinCB, -thetaMaxCB);
+  cbInn2_xz->SetLineColor(kGreen);
+  cbInn2_xz->SetFillStyle(0);
+  cbInn2_xz->SetNoEdges();
+  cbInn2_xz->Draw("same");
+
+  TVector2 dCB_xz[32], uCB_xz[32];
+  for (int i=0; i<13; i++) {
+    Double_t phi = i*dphiCB + thetaMinCB - 90;
+    Double_t zdCB_xz = TMath::Sin(phi*kDegToRad)*innerCB;
+    Double_t xdCB_xz = TMath::Cos(phi*kDegToRad)*innerCB;
+    if (TMath::Abs(zdCB_xz) < 1e-10) zdCB_xz = 0.;
+    if (TMath::Abs(xdCB_xz) < 1e-10) xdCB_xz = 0.;
+    dCB_xz[i].Set(zdCB_xz, xdCB_xz);
+    Double_t zuCB_xz = TMath::Sin(phi*kDegToRad)*outerCB_xz;
+    Double_t xuCB_xz = TMath::Cos(phi*kDegToRad)*outerCB_xz;
+    if (TMath::Abs(zuCB_xz) < 1e-10) zuCB_xz = 0.;
+    if (TMath::Abs(xuCB_xz) < 1e-10) xuCB_xz = 0.;
+    uCB_xz[i].Set(zuCB_xz, xuCB_xz);
+    if (i>0) {
+      Double_t z_xz[5] = {dCB_xz[i-1].X(), uCB_xz[i-1].X(), uCB_xz[i].X(), dCB_xz[i].X(), dCB_xz[i-1].X()};
+      Double_t x_xz[5] = {dCB_xz[i-1].Y(), uCB_xz[i-1].Y(), uCB_xz[i].Y(), dCB_xz[i].Y(), dCB_xz[i-1].Y()};
+      zCB_xz[0][i] = z_xz[0];       zCB_xz[1][i] = z_xz[1];       zCB_xz[2][i] = z_xz[2]; 
+      zCB_xz[3][i] = z_xz[3];       zCB_xz[4][i] = z_xz[4]; 
+      xCB_xz[0][i] = x_xz[0];       xCB_xz[1][i] = x_xz[1];       xCB_xz[2][i] = x_xz[2];      
+      xCB_xz[3][i] = x_xz[3];       xCB_xz[4][i] = x_xz[4];
+      contourCB_xz[i] = new TPolyLine(5, z_xz, x_xz);
+      contourCB_xz[i]->SetLineColor(kGreen);
+      contourCB_xz[i]->SetFillStyle(0);
+      contourCB_xz[i]->Draw("f");
+      contourCB_xz[i]->Draw("same");
+
+      Double_t x2_xz[5] = {-dCB_xz[i-1].Y(), -uCB_xz[i-1].Y(), -uCB_xz[i].Y(), -dCB_xz[i].Y(), -dCB_xz[i-1].Y()};
+      x2CB_xz[0][i] = x2_xz[0];       x2CB_xz[1][i] = x2_xz[1];       x2CB_xz[2][i] = x2_xz[2];
+      x2CB_xz[3][i] = x2_xz[3];       x2CB_xz[4][i] = x2_xz[4];
+      contourCB2_xz[i] = new TPolyLine(5, z_xz, x2_xz);
+      contourCB2_xz[i]->SetLineColor(kGreen);
+      contourCB2_xz[i]->SetFillStyle(0);
+      contourCB2_xz[i]->Draw("f");
+      contourCB2_xz[i]->Draw("same");
+    }
+  }
+
+  // MWPC
+  //   Double_t xm[5] = {-MWPClength/2., -MWPClength/2., MWPClength/2., MWPClength/2., -MWPClength/2.};
+  //   Double_t ym[5] = {-fR[1], fR[1], fR[1], -fR[1], -fR[1]};
+  TPolyLine *mwpc_xz = new TPolyLine(5, xm, ym);
+  mwpc_xz->SetFillStyle(0);
+  mwpc_xz->SetLineColor(kBlue);
+  mwpc_xz->Draw("same");
+  TLine *mwpcup_xz = new TLine(-MWPClength/2., fR[0], MWPClength/2., fR[0]);
+  mwpcup_xz->SetLineStyle(7);
+  mwpcup_xz->SetLineColor(kAzure+7);
+  mwpcup_xz->Draw("same");
+  TLine *mwpcdown_xz = new TLine(-MWPClength/2., -fR[0], MWPClength/2., -fR[0]);
+  mwpcdown_xz->SetLineStyle(7);
+  mwpcdown_xz->SetLineColor(kAzure+7);
+  mwpcdown_xz->Draw("same");
+  
+  // PID
+  //   Double_t xp[5] = {-PIDlength/2., -PIDlength/2., PIDlength/2., PIDlength/2., -PIDlength/2.};
+  //   Double_t yp[5] = {-outerPID, outerPID, outerPID, -outerPID, -outerPID};
+  TPolyLine *pid_xz = new TPolyLine(5, xp, yp);
+  pid_xz->SetFillStyle(0);
+  pid_xz->Draw("same");
+  TLine *pidup_xz = new TLine(-PIDlength/2., innerPID, PIDlength/2., innerPID);
+  pidup_xz->SetLineStyle(7);
+  pidup_xz->Draw("same");
+  TLine *piddown_xz = new TLine(-PIDlength/2., -innerPID, PIDlength/2., -innerPID);
+  piddown_xz->SetLineStyle(7);
+  piddown_xz->Draw("same");
+
+  // target
+  //   Double_t xt[5] = {-targetLength/2., -targetLength/2., targetLength/2., targetLength/2., -targetLength/2.};
+  //   Double_t yt[5] = {-targetDiameter/2., targetDiameter/2., targetDiameter/2., -targetDiameter/2., -targetDiameter/2.};
+  TPolyLine *target_xz = new TPolyLine(5, xt, yt);
+  target_xz->SetLineColor(kRed);
+  target_xz->SetFillColor(kRed);
+  target_xz->SetFillStyle(3013);
+  target_xz->Draw("f");
+  target_xz->Draw("same");
+  
+  origin->Draw("same");
+
+  c3->Update();
+  c3->Modified();
+
 }

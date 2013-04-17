@@ -29,6 +29,7 @@
 #include "TA2MesonPhysics.h"
 #include "TA2BasePhysics.h"
 #include "TA2TriggerPhysics.h"
+#include "TA2ExampleRangeFit.h"
 
 #include "TA2MyCrystalBall.h"
 #include "TA2MyTAPS.h"
@@ -52,7 +53,8 @@ enum { EA2Calorimeter,
        EA2MyCalibration, 
        EA2MyCaLib, 
        EA2MyClusterCalib, 
-       EA2MyRateEstimation,  };
+       EA2MyRateEstimation,
+       EA2ExampleRangeFit,  };
 
 static const Map_t kKnownChild[] =
 {
@@ -80,6 +82,7 @@ static const Map_t kKnownChild[] =
   {"TA2MyCaLib",          EA2MyCaLib},
   {"TA2MyClusterCalib",   EA2MyClusterCalib},
   {"TA2MyRateEstimation", EA2MyRateEstimation},
+  {"TA2ExampleRangeFit",  EA2ExampleRangeFit},
   {NULL,                  -1}
 };
 
@@ -160,6 +163,10 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2TriggerPhysics:
     //Trigger threshold physics class
     return new TA2TriggerPhysics(name, this);
+   case EA2ExampleRangeFit:
+    return new TA2ExampleRangeFit(name, this);
+
+
    case EA2MyCalibration:
     // calibration
     return new TA2MyCalibration( name, this );

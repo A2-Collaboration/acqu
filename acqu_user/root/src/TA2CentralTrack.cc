@@ -1,4 +1,4 @@
-// SVN info: $Id: TA2CentralTrack.cc 14 2011-06-16 13:00:23Z mushkar $
+// SVN info: $Id$
 #include "TA2CentralTrack.h"
 
 ClassImp(TA2CentralTrack)

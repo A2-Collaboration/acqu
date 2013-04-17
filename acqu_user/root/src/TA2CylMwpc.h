@@ -1,9 +1,10 @@
-// SVN info: $Id: TA2CylMwpc.h 71 2011-10-25 17:40:25Z mushkar $
+// SVN info: $Id$
 #ifndef __TA2CylMwpc_h__
 #define __TA2CylMwpc_h__
 
 // STD
 #include <algorithm>
+using std::equal;
 #include <vector>
 using std::vector;
 #include <map>
@@ -14,12 +15,13 @@ using std::make_pair;
 using std::cout;
 using std::cin;
 using std::endl;
+#include <iomanip>
+#include <sstream> 
 
 // ROOT
 #include <TGraph2D.h>
 
 // AcquRoot
-#include "TA2UserAnalysis.h"
 #include "TA2WireChamber.h"
 #include "TA2CylMwpcStrip.h"
 #include "TA2CylMwpcWire.h"
@@ -30,7 +32,7 @@ using std::endl;
 class TA2CylMwpc : public TA2WireChamber {
 public:
   Bool_t fWait;
-  virtual void Test(); // for test
+  virtual void Test(Bool_t); // for test
 protected:
   // Geometrical constants
   Double_t	*fR;	// chamber wire radii
@@ -121,7 +123,7 @@ public:
   virtual Double_t ZinterWE(const Int_t, const Double_t&, const Double_t&, const Int_t) const;
   virtual Double_t Xinter(const Int_t, const Double_t&) const;
   virtual Double_t Yinter(const Int_t, const Double_t&) const;
-  virtual Double_t Zinter(const Int_t, const Double_t&) const;
+  virtual Double_t Zinter(const Int_t, Double_t) const;
   // All
   virtual const Int_t *GetNinters() const { return fNinters; }
   virtual const Int_t &GetNinters(const Int_t i) const { return fNinters[i]; }
@@ -184,6 +186,8 @@ public:
   virtual const Int_t		 	&GetNtracks() const { return fNTrack; }
   virtual const TA2MwpcTrack		*GetTracks() const { return fTracks; }
   virtual const TA2MwpcTrack		*GetTrack(const Int_t i) const { return fTracks+i; }
+  virtual const TA2MwpcTrack		*FindTrack(const Int_t *inters) const; // Among fTracks, find a track contaning all intersections from inters
+  virtual const TA2MwpcTrack		*FindTrack(const Int_t, const Int_t) const; // The above function for Nch = 2
   // True tracks (all possible)
   virtual const Int_t		 	*GetNtracksTruePtr() const { return &fNtracksTrue; }
   virtual const Int_t		 	&GetNtracksTrue() const { return fNtracksTrue; }
@@ -224,6 +228,7 @@ public:
   virtual const Int_t		&GetNvertexes() const { return fNVertex; }
   virtual const Int_t		*GetNvertexPtr() const { return &fNVertex; }
   virtual const TVector3 	*GetVertex() const { return fVertexes; }
+  virtual const pair<Int_t,Int_t> *GetItracks() const { return fItracks; }
   
 // Simulation
 protected:
@@ -234,7 +239,10 @@ protected:
   // For the output hists
   Double_t	fVertSim[3];	// simulated vertex {x,y,z}
   Double_t     *fDrHitsSim;
-
+public:
+  virtual Double_t	SmearZ(const Int_t, const Double_t&, const Double_t&) const;
+  virtual Double_t	SmearPhi(const Int_t, const Double_t&, const Double_t&) const;
+  
 //
 protected:
   virtual void	 DeleteArrays();         	// flush local new store
@@ -252,6 +260,16 @@ public:
   virtual void	Decode();
   virtual void	SetConfig( char*, Int_t );
   virtual void	Cleanup();	// Reset event
+  
+  // TODO: сделать заглушки на накоторые ненужные члены и методы, наследованные от TA2WireChamber (see TObject::MayNotUse())
+  
+  // Display
+ public:
+  void InitGeometry();
+ private:
+  TCanvas *c, *c2;
+  TH2F * h, *h2;
+  Bool_t fMwpcDisplay;
 
   ClassDef(TA2CylMwpc,1)  // Cylindrical MWPC events reconstructions
 };
@@ -267,7 +285,8 @@ inline Double_t TA2CylMwpc::PhiCorrEI(const Int_t iCh, const Double_t &zEI, cons
 inline Double_t TA2CylMwpc::ZcorrEI(const Int_t iCh, const Double_t &phiCorrEI) const
 {
   // Return Z correction of E relative to I
-  return fRtE[iCh]*phiCorrEI;
+/*   return fRtE[iCh]*phiCorrEI; // con CB */
+  return fR[iCh]*fPhiCorrEI[0][iCh]; // senza CB
 }
 
 //________________________________________________________________________________________
@@ -368,20 +387,25 @@ inline Double_t TA2CylMwpc::Yinter(const Int_t iCh, const Double_t &phi) const
 }
 
 //________________________________________________________________________________________
-inline Double_t TA2CylMwpc::Zinter(const Int_t iCh, const Double_t &z) const
+inline Double_t TA2CylMwpc::Zinter(const Int_t iCh, Double_t z) const
 {
   // Return an absolute Z coordinate for an intersection in the iCh-th MWPC
   // Correction fZcorr depends on z of intersection
   
-  Double_t zCorr = fZcorr[0][iCh];
-  for (Int_t i=1; i<=1; ++i) // TEST
-  {
-    zCorr += fZcorr[i][iCh]*TMath::Power(z,i);
-  }
-  //
-  zCorr = zCorr + fZcorr[2][iCh] + fZcorr[3][iCh]*zCorr; // TEST
-  //
-  return z + zCorr;
+//   Double_t zCorr = fZcorr[0][iCh];
+//   for (Int_t i=1; i<8; ++i)
+//   {
+//     zCorr += fZcorr[i][iCh]*TMath::Power(z,i);
+//   }
+  
+  Double_t zCorr1 = fZcorr[0][iCh] + fZcorr[1][iCh]*z;	// 1st
+  z += zCorr1;
+  Double_t zCorr2 = fZcorr[2][iCh] + fZcorr[3][iCh]*z;	// 2st
+  z +=zCorr2;
+  Double_t zCorr3 = fZcorr[4][iCh] + fZcorr[5][iCh]*z;	// 3st
+  z +=zCorr3;
+  
+  return z;
 }
 
 //________________________________________________________________________________________
@@ -532,5 +556,63 @@ inline void TA2CylMwpc::AddTrackTo(map<Double_t,Int_t> &mapTracks)
   fDZInters[fNTrack]    = fInters[0][fTracks[fNTrack].GetIinter(0)].GetPosition()->Z() - fInters[1][fTracks[fNTrack].GetIinter(1)].GetPosition()->Z();
 }
 
+//________________________________________________________________________________________
+inline const TA2MwpcTrack *TA2CylMwpc::FindTrack(const Int_t *ii) const
+{
+  // Find a track build of the intersections ii[]
+  
+  const Int_t *iInters;
+  for (Int_t i=0; i<fNTrack; ++i)
+  {
+    iInters = fTracks[i].GetIinters();
+    if ( equal(iInters, iInters+fNchamber, ii) )
+    {
+      // Found
+      return fTracks+i;
+    }
+  }
+  
+  // Not found
+  return NULL;
+}
+
+//________________________________________________________________________________________
+inline const TA2MwpcTrack *TA2CylMwpc::FindTrack(const Int_t i1, const Int_t i2) const
+{
+  // Find a track build of the intersections i1 and i2
+  
+  Int_t i[2] = {i1, i2};
+  return FindTrack(i);
+}
+
+//________________________________________________________________________________________
+inline Double_t TA2CylMwpc::SmearZ(const Int_t iCh, const Double_t &phi, const Double_t &z) const
+{
+  // Return a smeared value of the Z coordinate for the iCh-th chamber
+  
+  Double_t dZ = 0.;
+  if (fSigmaZ[iCh])
+  {
+    dZ = gRandom->Gaus(0.,fSigmaZ[iCh]->Interpolate(phi,z));
+  }
+  
+  //
+  return z + dZ;
+}
+
+//________________________________________________________________________________________
+inline Double_t TA2CylMwpc::SmearPhi(const Int_t iCh, const Double_t &phi, const Double_t &z) const
+{
+  // Return a smeared value of the Phi coordinate for the iCh-th chamber
+  
+  Double_t dPhi = 0.;
+  if (fSigmaPhi[iCh])
+  {
+    dPhi = gRandom->Gaus(0.,fSigmaPhi[iCh]->Interpolate(phi,z));
+  }
+  
+  //
+  return TVector2::Phi_0_2pi(phi + dPhi);
+}
 
 #endif

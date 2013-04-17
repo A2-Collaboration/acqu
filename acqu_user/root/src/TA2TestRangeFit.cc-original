@@ -1,0 +1,1527 @@
+#include <iostream>
+#include <fstream>
+
+// AcquROOT includes
+#include "TA2MyUserAnalysis.h"
+#include "TA2CentralApparatus.h"
+#include "TA2CalArray.h"
+#include "TA2PlasticPID.h"
+#include "TA2CylMwpc.h"
+#include "TA2CentralTrack.h"
+#include "TA2TestRangeFit.h"
+#include "TA2Tagger.h"
+#include "TA2RangeFit.h"
+
+using namespace std;
+
+static const Double_t mproton  = 0.938272013; // GeV
+static const Double_t mneutron = 0.939565346; // GeV
+static const Double_t mpi0     = 0.1349766;   // GeV
+static const Double_t mpi      = 0.139570;    // GeV
+static const Double_t RadToDeg = TMath::RadToDeg();
+static const Double_t DegToRad = TMath::DegToRad();
+
+ClassImp(TA2TestRangeFit)
+
+
+// ================================================================
+  TA2TestRangeFit::TA2TestRangeFit( const char* name, TA2Analysis* analysis ) : TA2Physics( name, analysis )
+{
+  // Initialise Physics variables here
+  // Default null pointers, zeroed variables
+  
+  // Apparatuses & Detectrors
+  fCB   = NULL;
+  fNaI  = NULL;
+  fMwpc = NULL;
+  fPid  = NULL;
+  fNintersTrue = NULL;
+  fFPDTimeOR   = new Double_t[1056];
+  fFPDHits     = new Int_t[1056];
+  
+  // Neutral
+  fThetaNe = NULL;
+  fPhiNe   = NULL;
+  fEne     = NULL;
+  fMclNe   = NULL;
+  fTne     = NULL;
+  fCentralIndexNaINe = NULL;
+
+  // Charged
+  fThetaCh   = NULL;
+  fThetaChCB = NULL;
+  fPhiCh     = NULL;
+  fEch       = NULL;
+  fMclCh     = NULL;
+  fTch       = NULL;
+  fEpid      = NULL;
+  fIhitPid   = NULL;
+  fPsVertexX = NULL;
+  fPsVertexY = NULL;
+  fPsVertexZ = NULL;
+  fPsVertexGoodZ = NULL;
+  fChTrackType   = NULL;
+  fCentralIndexNaICh = NULL;
+
+  for(Int_t e=0;e<24;e++)
+    fPID_dE[e]=NULL;
+
+  fEmwpc    = NULL ;
+  fDEmwpc   = NULL ;
+  EventTime = NULL; 
+}
+
+
+// ================================================================
+TA2TestRangeFit::~TA2TestRangeFit()
+{
+  // Free up allocated memory...after checking its allocated
+  // detector and cuts lists
+
+  // Neutral
+  delete [] fThetaNe;
+  delete [] fPhiNe;
+  delete [] fEne;
+  delete [] fMclNe;
+  delete [] fTne;
+  delete [] fCentralIndexNaINe;
+
+  // Charged
+  delete [] fThetaCh;
+  delete [] fThetaChCB;
+  delete [] fPhiCh;
+  delete [] fEch;
+  delete [] fMclCh;
+  delete [] fTch;
+  delete [] fCentralIndexNaICh;
+  delete [] fEpid;
+  delete [] fIhitPid;
+  delete [] fPsVertexX;
+  delete [] fPsVertexY;
+  delete [] fPsVertexZ;
+  delete [] fPsVertexGoodZ;
+  delete [] fChTrackType;
+  delete [] fDE_MWPC;
+  delete [] EventTime;
+  for(Int_t e=0;e<24;e++)
+    delete [] fPID_dE[e];
+}
+
+
+// ================================================================
+void TA2TestRangeFit::PostInit()
+{
+  // Initialise arrays to contain 4 momenta and plotable scaler variables
+  // Missing mass, missing energy, cm momentum, energies, angles
+  // Initialisation will abort if CB or Tagger not initialised
+  // TAPS is optional
+
+  nBeam = 1000; // Tagger
+
+  // CB
+  fCB = (TA2CentralApparatus*)((TA2Analysis*)fParent)->GetChild("CB");
+  if (!fCB) PrintError("","<No Central Apparatus class found in annalysis>",EErrFatal);
+
+  // NaI
+  fNaI = (TA2CalArray*)((TA2Analysis*)fParent)->GetGrandChild("NaI");
+  if (!fNaI) PrintError("Warning!","<No NaI class found in annalysis>");
+  
+  // Mwpc
+  fMwpc = (TA2CylMwpc*)((TA2Analysis*)fParent)->GetGrandChild("CylMWPC");
+  if (!fMwpc)
+    PrintError("Warning!","<No Mwpc class found in annalysis>");
+  else
+    fNintersTrue = fMwpc->GetNintersTrue();
+      
+  // Pid
+  fPid = (TA2PlasticPID*)((TA2Analysis*)fParent)->GetGrandChild("PID");
+  if (!fPid) PrintError("Warning!","<No Pid class found in annalysis>");
+
+  // TAGGER
+  fTagger = (TA2Tagger*)((TA2Analysis*)fParent)->GetChild("TAGG");
+  if (!fTagger)
+    PrintError("","<No TAGGER class found in analysis>",EErrFatal);
+  else {
+    fTAGGp4 = fTagger->GetP4();
+    // FPD
+    fFPD = (TA2Ladder*)fTagger->GetChild("FPD", "TA2Detector");
+    if (!fFPD)
+      PrintError("","<No FPD class found in analysis>",EErrFatal);
+  }
+
+  fRangeFit = new TA2RangeFit("RangeFit", (TA2Analysis*)fParent);               // gets pointer to RangeFit
+  if(!fRangeFit) 
+    PrintError("","<No RangeFit class found in analysis>",EErrFatal);
+
+  // Neutral
+  Int_t nMaxTracks = fCB->GetMaxTrack()+1;
+  fThetaNe = new Double_t[nMaxTracks];
+  fPhiNe   = new Double_t[nMaxTracks];
+  fEne     = new Double_t[nMaxTracks];
+  fMclNe   = new Double_t[nMaxTracks];
+  fTne     = new Double_t[nMaxTracks];
+  fCentralIndexNaINe = new Double_t[nMaxTracks];
+  // Charged
+  fThetaCh   = new Double_t[nMaxTracks];
+  fThetaChCB = new Double_t[nMaxTracks];
+  fPhiCh     = new Double_t[nMaxTracks];
+  fEch       = new Double_t[nMaxTracks];
+  fMclCh     = new Double_t[nMaxTracks];
+  fTch       = new Double_t[nMaxTracks];
+  fEpid      = new Double_t[nMaxTracks];
+  fIhitPid   = new Double_t[nMaxTracks];
+  fPsVertexX = new Double_t[nMaxTracks];
+  fPsVertexY = new Double_t[nMaxTracks];
+  fPsVertexZ = new Double_t[nMaxTracks];
+  fPsVertexGoodZ = new Double_t[nMaxTracks];
+  fChTrackType   = new Double_t[nMaxTracks];
+  fCentralIndexNaICh = new Double_t[nMaxTracks];
+
+  for(Int_t e=0;e<24;e++)
+    fPID_dE[e]= new Double_t[nMaxTracks];
+  EventTime = new Double_t[1000];//[nBeam];        // Timing spectrum
+  // These spectra are created for each defined time window (prompt/random)
+  for(Int_t w=1; w<OPT_NWIND+1; w++) {
+    // Beam Polarization (antiparallel) multitime
+    BeamPol10[w]    = new Int_t[nBeam];
+    // Beam Polarization (parallel)  multitime
+    BeamPol20[w]    = new Int_t[nBeam];
+    TwoGammaIM[w]   = new Double_t[nBeam];
+    TwoGammaMass[w] = new Double_t[nBeam];
+    Egamma[w]       = new Double_t[1000];
+    PhiPi[w]        = new Double_t[1000];
+    ThetaPi[w]      = new Double_t[1000];
+    ThetaPiKin[w]   = new Double_t[1000];
+    DiffThetaPi[w]  = new Double_t[1000];
+    EnePi[w]        = new Double_t[1000];
+    EnePiKin[w]     = new Double_t[1000];
+    PhiProton[w]    = new Double_t[1000];
+    ThetaProton[w]  = new Double_t[1000];
+    EneProton[w]    = new Double_t[1000];
+    EneProtonKin[w] = new Double_t[1000];
+    deltaphi[w]     = new Double_t[1000];
+    deltaphiOk[w]   = new Double_t[1000];
+    KinProton[w]    = new Double_t[1000];
+    KinPi[w]        = new Double_t[1000];
+    CBcorrProt[w]   = new Double_t[1000];
+    PIDcorrProt[w]  = new Double_t[1000];
+    TrfBadChi2[w]   = new Double_t[1000];
+    TkineBadChi2[w] = new Double_t[1000];
+    TrfOkChi2[w]    = new Double_t[1000];
+    TkineOkChi2[w]  = new Double_t[1000];
+    CBcorrPion[w]   = new Double_t[1000];
+    PIDcorrPion[w]  = new Double_t[1000];
+    TrfBadChi2Pion[w]   = new Double_t[1000];
+    TkineBadChi2Pion[w] = new Double_t[1000];
+    TrfOkChi2Pion[w]    = new Double_t[1000];
+    TkineOkChi2Pion[w]  = new Double_t[1000];
+    CBKinCorrProt[w]  = new Double_t[1000];
+    PIDKinCorrProt[w] = new Double_t[1000];
+    CBKinCorrPion[w]  = new Double_t[1000];
+    PIDKinCorrPion[w] = new Double_t[1000];
+    EneCBProt[w]      = new Double_t[1000];
+    CheckEneCBProt[w] = new Double_t[1000];
+    CheckEneCBPion[w] = new Double_t[1000];
+    EneCBKinProt[w]   = new Double_t[1000];
+    EnePIDProt[w]     = new Double_t[1000];
+    EnePIDKinProt[w]  = new Double_t[1000];
+    EnePIDNormProt[w] = new Double_t[1000];
+    EneCBPion[w]      = new Double_t[1000];
+    EneCBKinPion[w]   = new Double_t[1000];
+    EnePIDPion[w]     = new Double_t[1000];
+    EnePIDKinPion[w]  = new Double_t[1000];
+    EnePIDNormPion[w] = new Double_t[1000];
+    MissingEneProt[w] = new Double_t[1000];
+    MissingEnePion[w] = new Double_t[1000];
+    EneCBStopPion[w]  = new Double_t[1000];
+    EnePIDStopPion[w] = new Double_t[1000];
+    CheckEnePIDProt[w] = new Double_t[1000];
+    CheckEnePIDPion[w] = new Double_t[1000];
+    MissingEnePIDProt[w] = new Double_t[1000];
+    MissingEnePIDPion[w] = new Double_t[1000];
+    EneCBKinStopPion[w]  = new Double_t[1000];
+    EneCBKinLowPion[w]   = new Double_t[1000];
+    EnePIDKinStopPion[w] = new Double_t[1000];
+  }
+  fEmwpc  = new Double_t[nMaxTracks];
+  fDEmwpc = new Double_t[nMaxTracks];
+
+  // Default physics initialisation
+  TA2Physics::PostInit();
+}
+
+
+// ================================================================
+void TA2TestRangeFit::LoadVariable()
+{
+  // Input name - variable pointer associations for any subsequent
+  // Default physics initialisation cut or histogram setup
+  // LoadVariable( "name", pointer-to-variable, type-spec );
+
+  // NB scaler variable pointers need the preceeding &
+  //    array variable pointers do not.
+  // type-spec ED prefix for a Double_t variable
+  //           EI prefix for an Int_t variable
+  // type-spec SingleX for a single-valued variable
+  //           MultiX  for a multi-valued variable
+
+  Char_t Name[255];
+  Char_t* VarName;
+
+  TA2Physics::LoadVariable();
+  TA2DataManager::LoadVariable("Ntr", &fNtracks, EISingleX);
+
+  // Neutral
+  TA2DataManager::LoadVariable("Nne",		    &fNne, 	        EISingleX);
+  TA2DataManager::LoadVariable("ThetaNe",	    fThetaNe,	        EDMultiX);
+  TA2DataManager::LoadVariable("PhiNe",		    fPhiNe,             EDMultiX);
+  TA2DataManager::LoadVariable("Ene",               fEne,               EDMultiX);
+  TA2DataManager::LoadVariable("MclNe",             fMclNe,             EDMultiX);
+  TA2DataManager::LoadVariable("Tne",               fTne,               EDMultiX);
+  TA2DataManager::LoadVariable("M2g",               &fM2g,              EDSingleX);
+  TA2DataManager::LoadVariable("CentralIndexNaINe", fCentralIndexNaINe, EDMultiX);
+
+  // Charged
+  TA2DataManager::LoadVariable("Nch",           &fNch,          EISingleX);
+  TA2DataManager::LoadVariable("ThetaCh",       fThetaCh,       EDMultiX);
+  TA2DataManager::LoadVariable("PhiCh",         fPhiCh,         EDMultiX);
+  TA2DataManager::LoadVariable("Ech",           fEch,           EDMultiX);
+  TA2DataManager::LoadVariable("MclCh",         fMclCh,         EDMultiX);
+  TA2DataManager::LoadVariable("Tch",           fTch,           EDMultiX);
+  TA2DataManager::LoadVariable("Epid",          fEpid,          EDMultiX);
+  TA2DataManager::LoadVariable("IhitPid",       fIhitPid  ,     EDMultiX);
+  TA2DataManager::LoadVariable("PsVertexX",     fPsVertexX,     EDMultiX);
+  TA2DataManager::LoadVariable("PsVertexY",     fPsVertexY,     EDMultiX);
+  TA2DataManager::LoadVariable("PsVertexZ",     fPsVertexZ,     EDMultiX);
+  TA2DataManager::LoadVariable("ChTrackType",   fChTrackType,   EDMultiX);
+  TA2DataManager::LoadVariable("PsVertexGoodZ", fPsVertexGoodZ, EDMultiX);
+  TA2DataManager::LoadVariable("EventTime",     EventTime,      EDMultiX);
+  TA2DataManager::LoadVariable("EnergyCB",      &fECB,          EDSingleX);
+  TA2DataManager::LoadVariable("EnergyPID",     &fEPID,         EDSingleX);
+  TA2DataManager::LoadVariable("EneRFProt",     &EneRFProt,     EDSingleX);
+  TA2DataManager::LoadVariable("EneRFPion",     &EneRFPion,     EDSingleX);
+  TA2DataManager::LoadVariable("chi2Prot",      &chi2Prot,      EDSingleX);
+  TA2DataManager::LoadVariable("chi2Pion",      &chi2Pion,      EDSingleX);
+  TA2DataManager::LoadVariable("CumulProt",     &CumulProt,     EDSingleX);
+  TA2DataManager::LoadVariable("CumulPion",     &CumulPion,     EDSingleX);
+  TA2DataManager::LoadVariable("CumulAllProt",  &CumulAllProt,  EDSingleX);
+  TA2DataManager::LoadVariable("CumulAllPion",  &CumulAllPion,  EDSingleX);
+  TA2DataManager::LoadVariable("RanErrProt",    &RanErrProt,    EISingleX);
+  TA2DataManager::LoadVariable("RanErrPion",    &RanErrPion,    EISingleX);
+  TA2DataManager::LoadVariable("CentralIndexNaICh",fCentralIndexNaICh,EDMultiX);
+
+
+  // histos for bananas (24 PID sectors)
+  for(Int_t e=0;e<24;e++) {
+    sprintf(Name, "PID_dE%d", e);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, fPID_dE[e], EDMultiX);
+  }
+  for(Int_t w=1; w<OPT_NWIND+1; w++) {
+    // Beam polarization spectra (Antiparallel) for 2 clusters
+    sprintf(Name, "BeamPol10W%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, BeamPol10[w], EIMultiX);
+
+    // Beam polarization spectra (Parallel) for 2 clusters
+    sprintf(Name, "BeamPol20W%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, BeamPol20[w], EIMultiX);
+
+    sprintf(Name,"TwoGammaIMW%d",w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName,TwoGammaIM[w], EDMultiX);
+
+    sprintf(Name,"TwoGammaMassW%d",w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName,TwoGammaMass[w], EDMultiX);
+
+    sprintf(Name, "EgammaW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, Egamma[w], EDMultiX);  
+			 
+    sprintf(Name, "PhiPiW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, PhiPi[w], EDMultiX);
+
+    sprintf(Name, "ThetaPiW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, ThetaPi[w], EDMultiX);
+    
+    sprintf(Name, "ThetaPiKinW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, ThetaPiKin[w], EDMultiX);
+
+    sprintf(Name, "DiffThetaPiW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, DiffThetaPi[w], EDMultiX);
+
+    sprintf(Name, "EnePiW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePi[w], EDMultiX);
+
+    sprintf(Name, "EnePiKinW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePiKin[w], EDMultiX);
+
+    sprintf(Name, "ThetaProtonW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, ThetaProton[w], EDMultiX);
+
+    sprintf(Name, "PhiProtonW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, PhiProton[w], EDMultiX);
+
+    sprintf(Name, "EneProtonW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneProton[w], EDMultiX);
+
+    sprintf(Name, "EneProtonKinW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneProtonKin[w], EDMultiX);
+
+    sprintf(Name, "MissingEneProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, MissingEneProt[w], EDMultiX);
+
+    sprintf(Name, "MissingEnePionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, MissingEnePion[w], EDMultiX);
+
+    sprintf(Name, "MissingEnePIDProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, MissingEnePIDProt[w], EDMultiX);
+
+    sprintf(Name, "MissingEnePIDPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, MissingEnePIDPion[w], EDMultiX);
+
+    sprintf(Name, "KinProtonW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, KinProton[w], EDMultiX);
+
+    sprintf(Name, "KinPiW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, KinPi[w], EDMultiX);
+
+    sprintf(Name, "TrfBadChi2W%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TrfBadChi2[w], EDMultiX);
+
+    sprintf(Name, "TrfOkChi2W%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TrfOkChi2[w], EDMultiX);
+
+    sprintf(Name, "TkineBadChi2W%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TkineBadChi2[w], EDMultiX);
+
+    sprintf(Name, "TkineOkChi2W%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TkineOkChi2[w], EDMultiX);
+
+    sprintf(Name, "TrfBadChi2PionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TrfBadChi2Pion[w], EDMultiX);
+
+    sprintf(Name, "TrfOkChi2PionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TrfOkChi2Pion[w], EDMultiX);
+
+    sprintf(Name, "TkineBadChi2PionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TkineBadChi2Pion[w], EDMultiX);
+
+    sprintf(Name, "TkineOkChi2PionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, TkineOkChi2Pion[w], EDMultiX);
+
+    sprintf(Name, "deltaphiW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, deltaphi[w], EDMultiX);
+
+    sprintf(Name, "deltaphiOkW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, deltaphiOk[w], EDMultiX);
+ 
+    sprintf(Name, "EneCBProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBProt[w], EDMultiX);
+
+    sprintf(Name, "CheckEneCBProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CheckEneCBProt[w], EDMultiX);
+
+    sprintf(Name, "CheckEneCBPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CheckEneCBPion[w], EDMultiX);
+
+    sprintf(Name, "CheckEnePIDProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CheckEnePIDProt[w], EDMultiX);
+
+    sprintf(Name, "CheckEnePIDPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CheckEnePIDPion[w], EDMultiX);
+
+    sprintf(Name, "CBcorrProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CBcorrProt[w], EDMultiX);
+
+    sprintf(Name, "CBKinCorrProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CBKinCorrProt[w], EDMultiX);
+
+    sprintf(Name, "PIDcorrProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, PIDcorrProt[w], EDMultiX);
+
+    sprintf(Name, "PIDKinCorrProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, PIDKinCorrProt[w], EDMultiX);
+
+    sprintf(Name, "CBcorrPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CBcorrPion[w], EDMultiX);
+
+    sprintf(Name, "CBKinCorrPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, CBKinCorrPion[w], EDMultiX);
+
+    sprintf(Name, "PIDcorrPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, PIDcorrPion[w], EDMultiX);
+
+    sprintf(Name, "PIDKinCorrPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, PIDKinCorrPion[w], EDMultiX);
+
+    sprintf(Name, "EneCBKinProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBKinProt[w], EDMultiX);
+
+    sprintf(Name, "EnePIDProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDProt[w], EDMultiX);
+
+    sprintf(Name, "EnePIDKinProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDKinProt[w], EDMultiX);
+
+    sprintf(Name, "EnePIDNormProtW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDNormProt[w], EDMultiX);
+
+    sprintf(Name, "EneCBPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBPion[w], EDMultiX);
+
+    sprintf(Name, "EneCBKinPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBKinPion[w], EDMultiX);
+
+    sprintf(Name, "EneCBStopPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBStopPion[w], EDMultiX);
+
+    sprintf(Name, "EneCBKinStopPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBKinStopPion[w], EDMultiX);
+
+    sprintf(Name, "EneCBKinLowPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EneCBKinLowPion[w], EDMultiX);
+
+    sprintf(Name, "EnePIDPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDPion[w], EDMultiX);
+
+    sprintf(Name, "EnePIDKinPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDKinPion[w], EDMultiX);
+
+    sprintf(Name, "EnePIDStopPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDStopPion[w], EDMultiX);
+
+    sprintf(Name, "EnePIDKinStopPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDKinStopPion[w], EDMultiX);
+
+    sprintf(Name, "EnePIDNormPionW%d", w);
+    VarName = new Char_t[strlen(Name)+1];
+    strcpy(VarName,Name);
+    TA2DataManager::LoadVariable(VarName, EnePIDNormPion[w], EDMultiX);
+  }
+
+  TA2DataManager::LoadVariable("E_MWPC", fEmwpc, EDMultiX);
+  TA2DataManager::LoadVariable("DE_MWPC", fDEmwpc, EDMultiX);
+
+  Read_Cal();
+}
+
+
+// ================================================================
+void TA2TestRangeFit::Reconstruct()
+{
+  Int_t iWindow;
+  Double_t Tvirtual;
+
+
+  EneRFProt  = -1;
+  EneRFPion  = -1;
+  chi2Prot   = -1;
+  chi2Pion   = -1;
+  RanErrProt = -1;
+  RanErrPion = -1;
+  CumulProt  = -1;
+  CumulPion  = -1;
+  CumulAllProt = -1;
+  CumulAllPion = -1;
+
+  // proton bananas taglio ottagono
+  Double_t x[24][8];
+  Double_t y[24][8];
+ 
+  for (Int_t i=0; i<24 ;i++) {
+    x[i][0] = 0;
+    x[i][1] = 100;
+    x[i][2] = 250;
+    x[i][3] = 400;
+
+    x[i][4] = 400;
+    x[i][5] = 250;
+    x[i][6] = 100;
+    x[i][7] = 0; 
+
+    y[i][4] = 10;
+    y[i][5] = 10;
+    y[i][6] = 10;
+    y[i][7] = 10;
+  }
+  
+//   y[0][0]  = 1.8;   y[0][1]  = 0.45;  y[0][2]  = 0.3;   y[0][3]  = 0.2;
+//   y[1][0]  = 2.1;   y[1][1]  = 0.75;  y[1][2]  = 0.45;  y[1][3]  = 0.3;
+//   y[2][0]  = 1.4;   y[2][1]  = 0.5;   y[2][2]  = 0.3;   y[2][3]  = 0.2;
+//   y[3][0]  = 2.1;   y[3][1]  = 1.85;  y[3][2]  = 0.4;   y[3][3]  = 0.3;  // controllare 2 code
+//   y[4][0]  = 1.3;   y[4][1]  = 0.45;  y[4][2]  = 0.2;   y[4][3]  = 0.15;
+//   y[5][0]  = 3.85;  y[5][1]  = 1.35;  y[5][2]  = 0.7;   y[5][3]  = 0.75; //molto alto
+//   y[6][0]  = 1.6;   y[6][1]  = 0.55;  y[6][2]  = 0.25;  y[6][3]  = 0.25;
+//   y[7][0]  = 2.7;   y[7][1]  = 1.15;  y[7][2]  = 0.4;   y[7][3]  = 0.35; //2 code
+//   y[8][0]  = 3.15;  y[8][1]  = 1.15;  y[8][2]  = 0.7;   y[8][3]  = 0.5;
+//   y[9][0]  = 2.6;   y[9][1]  = 0.95;  y[9][2]  = 0.5;   y[9][3]  = 0.4;
+//   y[10][0] = 2.5;   y[10][1] = 0.7;   y[10][2] = 0.4;   y[10][3] = 0.25;
+//   y[11][0] = 2.1;   y[11][1] = 0.8;   y[11][2] = 0.45;  y[11][3] = 0.4;
+//   y[12][0] = 2.3;   y[12][1] = 0.75;  y[12][2] = 0.4;   y[12][3] = 0.3;
+//   y[13][0] = 2.3;   y[13][1] = 0.95;  y[13][2] = 0.45;  y[13][3] = 0.45;
+//   y[14][0] = 2.2;   y[14][1] = 1;     y[14][2] = 0.45;  y[14][3] = 0.45;
+//   y[15][0] = 1.9;   y[15][1] = 0.7;   y[15][2] = 0.45;  y[15][3] = 0.5;
+//   y[16][0] = 1.8;   y[16][1] = 0.55;  y[16][2] = 0.35;  y[16][3] = 0.45;
+//   y[17][0] = 3;     y[17][1] = 1.1;   y[17][2] = 0.45;  y[17][3] = 0.4;  // pessimo
+//   y[18][0] = 2.4;   y[18][1] = 0.95;  y[18][2] = 0.5;   y[18][3] = 0.4;
+//   y[19][0] = 3.25;  y[19][1] = 1.05;  y[19][2] = 0.7;   y[19][3] = 0.65;
+//   y[20][0] = 2.25;  y[20][1] = 0.7;   y[20][2] = 0.45;  y[20][3] = 0.4;  // 2 code
+//   y[21][0] = 2.3;   y[21][1] = 1;     y[21][2] = 0.5;   y[21][3] = 0.5;
+//   y[22][0] = 1.9;   y[22][1] = 0.65;  y[22][2] = 0.4;   y[22][3] = 0.4;
+//   y[23][0] = 2.15;  y[23][1] = 1.1;   y[23][2] = 0.35;  y[23][3] = 0.4;
+
+  y[0][0]  = 2.00;   y[0][1]  = 0.80;   y[0][2]  = 0.65;   y[0][3]  = 0.55;
+  y[1][0]  = 1.90;   y[1][1]  = 0.80;   y[1][2]  = 0.65;   y[1][3]  = 0.55;
+  y[2][0]  = 2.10;   y[2][1]  = 1.00;   y[2][2]  = 0.70;   y[2][3]  = 0.65;
+  y[3][0]  = 1.75;   y[3][1]  = 0.90;   y[3][2]  = 0.70;   y[3][3]  = 0.65;  
+  y[4][0]  = 1.75;   y[4][1]  = 1.00;   y[4][2]  = 0.85;   y[4][3]  = 0.75;
+  y[5][0]  = 1.40;   y[5][1]  = 0.80;   y[5][2]  = 0.60;   y[5][3]  = 0.55;
+  y[6][0]  = 1.80;   y[6][1]  = 0.85;   y[6][2]  = 0.60;   y[6][3]  = 0.60;
+  y[7][0]  = 1.80;   y[7][1]  = 0.80;   y[7][2]  = 0.60;   y[7][3]  = 0.55;
+  y[8][0]  = 1.85;   y[8][1]  = 0.95;   y[8][2]  = 0.55;   y[8][3]  = 0.60;
+  y[9][0]  = 3.20;   y[9][1]  = 1.20;   y[9][2]  = 0.75;   y[9][3]  = 0.70;
+  y[10][0] = 2.20;   y[10][1] = 1.00;   y[10][2] = 0.75;   y[10][3] = 0.70;
+  y[11][0] = 2.20;   y[11][1] = 0.90;   y[11][2] = 0.70;   y[11][3] = 0.65;
+  y[12][0] = 2.40;   y[12][1] = 0.95;   y[12][2] = 0.70;   y[12][3] = 0.65;
+  y[13][0] = 1.50;   y[13][1] = 0.75;   y[13][2] = 0.55;   y[13][3] = 0.50;
+  y[14][0] = 1.50;   y[14][1] = 0.75;   y[14][2] = 0.55;   y[14][3] = 0.50;
+  y[15][0] = 2.50;   y[15][1] = 1.00;   y[15][2] = 0.65;   y[15][3] = 0.60;
+  y[16][0] = 3.10;   y[16][1] = 1.40;   y[16][2] = 0.90;   y[16][3] = 0.90;
+  y[17][0] = 2.10;   y[17][1] = 1.10;   y[17][2] = 0.75;   y[17][3] = 0.75;
+  y[18][0] = 2.10;   y[18][1] = 0.90;   y[18][2] = 0.60;   y[18][3] = 0.55;
+  y[19][0] = 2.10;   y[19][1] = 0.90;   y[19][2] = 0.60;   y[19][3] = 0.55;
+  y[20][0] = 2.10;   y[20][1] = 1.00;   y[20][2] = 0.65;   y[20][3] = 0.65; 
+  y[21][0] = 2.90;   y[21][1] = 1.10;   y[21][2] = 0.70;   y[21][3] = 0.70;
+  y[22][0] = 2.70;   y[22][1] = 1.00;   y[22][2] = 0.65;   y[22][3] = 0.65;
+  y[23][0] = 2.65;   y[23][1] = 1.00;   y[23][2] = 0.65;   y[23][3] = 0.65;
+
+  // Speed measurement
+  Speed();
+
+  ResetEvent();
+
+  // Get number of tracks in CB
+  fNtracks = fCB->GetNtracks();
+  fNne = fCB->GetNne(); // # of "neutral" tracks in CB
+  fNch = fCB->GetNch(); // # of charged tracks in CB
+  if (fNch < 1) {
+    MarkEndBuffers();
+    return;
+  }
+
+  // Definition of some useful variables
+  // Get beam polarization =10 anti-parallel/ =4 parallel
+  Int_t nBeamPol=0;
+  nBeamPol = (Int_t)fADC[6]&fgBeamPolConst;
+
+  // Choice of the Trigger
+  Int_t nCBSumTrig = 0 ; 
+  Int_t nTAPSOrTrig = 0;
+  Int_t nPulserTrig = 0;
+  Int_t nNoTrig     = 0;
+
+  // Trigger selection (Using trigger pattern --- Sasha)
+  Int_t iTrig = fParent->GetBitPattern()->GetHits(0,0);
+  switch(iTrig) {
+  case 0:  nCBSumTrig  = 1; break;
+  case 3:  nTAPSOrTrig = 1; break;
+  case 4:  nPulserTrig = 1; break;
+  default: nNoTrig     = 1;
+  }
+  if (!nCBSumTrig) return;
+
+  // Get ptr to the CB tracks
+  const TA2CentralTrack *tracks = fCB->GetTracks();
+ 
+  fM2g = -1000.0;
+  fECB = -1000.0;
+  fEPID = -1000.0;
+  
+  // Build 2g invariant mass
+  TLorentzVector g[2];
+  TVector3 p[2];
+
+  // Neutral
+  const Int_t *iNe = fCB->GetIneTracks();
+  const TA2CentralTrack *track;
+  for (Int_t i=0; i<fNne; ++i) {
+    track = tracks + iNe[i];
+    fThetaNe[i] = track->GetTheta()*RadToDeg;            // Track theta (polar)   angle (deg)
+    fPhiNe[i]   = track->GetPhi()*RadToDeg;              // Track phi (azimuthal) angle (deg)
+    fEne[i]     = track->GetEclNaI();                    // Cluster Deposited Energy inside CB (MeV)
+    fTne[i]     = track->GetTclNaI();                    // Cluster Time (ns) 
+    fMclNe[i]   = track->GetMclNaI();                    // Cluster Size
+    fCentralIndexNaINe[i] = track->GetCentralIndexNaI(); // Index of the CB central cluster crystal
+  }
+
+  
+  // Charged
+  const Int_t *iCh = fCB->GetIchTracks();
+  for (Int_t i=0; i<fNch; ++i) {
+    track = tracks + iCh[i];
+    fThetaCh[i] = track->GetTheta()*RadToDeg;                  // Track theta (polar)   angle (deg)
+    fPhiCh[i]   = track->GetPhi()*RadToDeg;                    // Track phi (azimuthal) angle (deg)
+    fEch[i]     = track->GetEclNaI();                          // Cluster Deposited Energy inside CB (MeV)
+    fTch[i]     = track->GetTclNaI();                          // Cluster Time (ns) 
+    fMclCh[i]   = track->GetMclNaI();                          // Cluster Size
+    fCentralIndexNaICh[i] = track->GetCentralIndexNaI();       // Index of the CB central cluster crystal
+    fEpid[i] = track->GetEhitPid();                            // Energy (MeV) of the hit PID sector 
+    fIhitPid[i] = *(fPid->GetHits() + track->GetIhitPid());    // Index of the hit PID sector --new Paolo
+    fPsVertexX[i] = track->GetPsVertex().X();                  // Track Pseudo-vertex - X coordinate
+    fPsVertexY[i] = track->GetPsVertex().Y();                  // Track Pseudo-vertex - Y coordinate
+    fPsVertexZ[i] = track->GetPsVertex().Z();                  // Track Pseudo-vertex - Z coordinate
+    fChTrackType[i] = track->GetType();                        // Track Type
+    fEmwpc[i] = track->GetEtrackMwpc();                        // Strip Amplitude
+    Int_t iClusterCB =  track->GetIclNaI();                    // new Theta from CB
+    fThetaChCB[i] = fCB->GetPositionsNaI(iClusterCB)->Theta(); // in rad
+  }
+
+  Bool_t GoodProton = kFALSE;
+  Bool_t GoodPion = kFALSE;
+  Bool_t GoodDelta = kFALSE;
+  Double_t ProtonEne, ProtonTheta, ProtonPhi, ProtonMom, DeltaPhi, DeltaPhiNorm = -999;
+  Double_t PiEne, PiTheta, PiPhi, PiMom;
+  Double_t ECB_prot = -999, ECB_pion = -999;
+  Double_t CorrECB_prot = -999, CorrECB_pion = -999;
+  Double_t EPID_prot = -999, EPID_norm_prot = -999;
+  Double_t EPID_pion = -999, EPID_norm_pion = -999;
+  Double_t ECB = -999, EPID = -999, EPID_norm = -999;
+  Double_t *xp, *yp;
+  Int_t PIDhit = -1;
+  if (fNch == 2) {
+    for (Int_t ii = 0; ii<fNch; ii++) {
+ 
+      if (fChTrackType[ii]==11 || fChTrackType[ii]==13 || fChTrackType[ii]==15) {
+	PIDhit = fIhitPid[ii];
+	xp = &x[PIDhit][0];
+	yp = &y[PIDhit][0];
+	EPID = fEpid[ii]; // e' gia': fEpid = EnePid * sin(theta)
+	ECB = fEch[ii];
+	fECB = ECB;
+	fEPID = EPID;
+	// proton
+	if (TMath::IsInside(ECB, EPID*TMath::Sin(fThetaCh[ii]*DegToRad), 8, xp, yp)) { 
+// 	  cout << "Protone!!!" << endl;
+	  GoodProton = kTRUE;
+	  ProtonEne = (ECB + EPID)*1e-03 + mproton;
+	  ProtonMom = TMath::Sqrt(ProtonEne*ProtonEne - mproton*mproton);
+	  ProtonTheta = fThetaCh[ii];
+	  ProtonPhi = fPhiCh[ii];
+	  ECB_prot = ECB;
+// 	  CorrECB_prot = Read_CBProton(ECB_prot);
+	  EPID_prot = EPID/TMath::Sin(ProtonTheta*DegToRad);
+// 	  if (EPID_prot < 0)
+// 	    cout << "======= EPID_prot < 0!!! " << EPID_prot << "\t" << EPID << "\t" << ProtonTheta<< endl;
+	  EPID_norm_prot = EPID;
+	}
+	// pion
+	if (!TMath::IsInside(ECB, EPID*TMath::Sin(fThetaCh[ii]*DegToRad), 8, xp, yp)) {
+// 	  cout << "pione!!!" << endl;
+	  GoodPion = kTRUE;
+	  PiEne = (ECB + EPID)*1e-03 + mpi;
+	  PiMom = TMath::Sqrt(PiEne*PiEne - mpi*mpi);
+	  PiTheta = fThetaCh[ii];
+	  PiPhi = fPhiCh[ii];
+	  ECB_pion = ECB;
+// 	  CorrECB_pion = Read_CBPion(ECB_pion);
+	  EPID_pion = EPID/TMath::Sin(PiTheta*DegToRad);
+	  EPID_norm_pion = EPID;
+	}
+      }
+    }
+    if (GoodProton && GoodPion) {
+ //      cout << "Protone e pione!!!" << endl;
+      // check back-to-back
+      DeltaPhi = TMath::Abs(ProtonPhi - PiPhi); // deg
+      DeltaPhiNorm = 180 - DeltaPhi;
+//       cout << "Phi proton " << ProtonPhi << "\t Phi pion " << PiPhi << "\t DeltaPhi " << DeltaPhiNorm << endl;
+      if (DeltaPhiNorm>=-20 && DeltaPhiNorm<=20) {
+	GoodDelta = kTRUE;
+// 	cout << "Delta ok!!!!!!" << endl;
+      }
+    }
+  }
+  
+  fFPDNHits=0 ;
+  for(UInt_t m=0; m<fFPD->GetNMultihit(); ++m) {
+    for(UInt_t i=0; i<fFPD->GetNhitsM(m); ++i) {
+      fFPDTimeOR[fFPDNHits] = fFPD->GetTimeORM(m)[i];
+      fFPDHits[fFPDNHits]   = fFPD->GetHitsM(m)[i];
+      ++fFPDNHits;
+    }
+  }
+  
+  Int_t nCBTaggerAll = 0;
+  
+  for(Int_t iTagg=0; iTagg<fFPDNHits; ++iTagg) {
+    // CB-Tagger
+    Tvirtual=1000. ;
+    Int_t iprompt=0 ; Double_t pippo2 ; Int_t ientr=0 ;
+    
+    Double_t MinTime = 10000.0; 
+    Double_t TShift  = 108.5 ;
+    
+    for(Int_t ichar=0; ichar<fNch; ++ichar) {
+      iprompt=0;
+      Double_t pippo = fTch[ichar] - fFPDTimeOR[iTagg] ;
+      EventTime[nEventTime] = pippo;
+      nEventTime++;
+	   
+      if( (pippo > -45) && (pippo < -27)) {
+	iprompt=1 ; 
+	Tvirtual=100; // fake prompt
+      }
+	   
+      if( (Tvirtual !=100) && (pippo > -600.0) && (pippo < -45.0)) Tvirtual=30;   // fake random
+      if( (Tvirtual !=100) && (pippo > -27.0)  && (pippo < 400.0)) Tvirtual=150;  // fake random
+      pippo2 = pippo+TShift ;
+      ientr=1 ;
+      if (TMath::Abs(MinTime) > TMath::Abs(pippo2)) MinTime = pippo2 ;
+      ++nCBTaggerAll;
+    }
+	 
+    for(Int_t w = 1; w<OPT_NWIND+1; w++) {  // Compare with lower/upper bounds
+	   
+      if ((Tvirtual > Window[w][0]) && (Tvirtual < Window[w][1])) { // of all defined windows
+	iWindow = w;
+	     
+	if(fNne>=2) {
+	  TwoGammaIM[iWindow][nTwoGammaIM[iWindow]]= fM2g;
+	  nTwoGammaIM[iWindow]++;	
+	}       
+	     
+	if (fNne==2) {
+	  TwoGammaMass[iWindow][nTwoGammaMass[iWindow]] = fM2g;
+	  nTwoGammaMass[iWindow]++;
+	}
+
+	Double_t Egamma_val = EgammaCal[fFPDHits[iTagg]];
+	Egamma[iWindow][nEgamma[iWindow]] = Egamma_val;
+// 	Egamma[iWindow][nEgamma[iWindow]] = EgammaCal[fFPDHits[iTagg]];
+	nEgamma[iWindow]++;
+
+	Bool_t GoodEgamma = kFALSE;
+// 	if (Egamma_val<0.400) 
+	  GoodEgamma = kTRUE;
+
+	deltaphi[iWindow][ndeltaphi[iWindow]] = DeltaPhiNorm;
+	ndeltaphi[iWindow]++;
+
+	if(GoodProton && GoodPion && GoodDelta && GoodEgamma) {
+// 	  cout << "evento buono!!!" << endl;
+	  BeamPol10[iWindow][nBeamPol10[iWindow]] = fFPDHits[iTagg];
+	  nBeamPol10[iWindow]++;
+	  PhiProton[iWindow][nPhiProton[iWindow]]     = ProtonPhi;
+	  nPhiProton[iWindow]++;
+	  ThetaProton[iWindow][nThetaProton[iWindow]] = ProtonTheta;
+	  nThetaProton[iWindow]++;
+	  EneProton[iWindow][nEneProton[iWindow]] = ProtonEne;
+	  nEneProton[iWindow]++;
+	  PhiPi[iWindow][nPhiPi[iWindow]] = PiPhi;
+	  nPhiPi[iWindow]++;
+	  ThetaPi[iWindow][nThetaPi[iWindow]] = PiTheta;
+	  nThetaPi[iWindow]++;
+	  EnePi[iWindow][nEnePi[iWindow]] = PiEnergy;
+	  nEnePi[iWindow]++;
+	  deltaphiOk[iWindow][ndeltaphiOk[iWindow]] = DeltaPhiNorm;
+	  ndeltaphiOk[iWindow]++;
+
+	  Double_t p_prot=0, E_prot=0, T_prot=0, th_pi=0, p_pi=0, E_pi=0, T_pion=0;
+	  Int_t ierr;
+	  ComputeKineticEne(Egamma_val, ProtonTheta, p_prot, E_prot, T_prot, th_pi, p_pi, E_pi, T_pion, ierr);
+//  	  if (iWindow==1)
+//  	    cout << Egamma_val << "\t" << ProtonTheta << "\t" << T_prot << "\t" <<  T_pion << "\t" << th_pi << endl;
+	  if (ierr!=1) {
+	    EneProtonKin[iWindow][nEneProtonKin[iWindow]] = E_prot;
+	    nEneProtonKin[iWindow]++;
+	    KinProton[iWindow][nKinProton[iWindow]] = T_prot*1e3;
+	    nKinProton[iWindow]++;
+	    ThetaPiKin[iWindow][nThetaPiKin[iWindow]] = th_pi;
+	    nThetaPiKin[iWindow]++;
+	    DiffThetaPi[iWindow][nDiffThetaPi[iWindow]] = th_pi - PiTheta;
+	    nDiffThetaPi[iWindow]++;
+	    EnePiKin[iWindow][nEnePiKin[iWindow]] = E_pi*1000;
+	    nEnePiKin[iWindow]++;
+	    KinPi[iWindow][nKinPi[iWindow]] = T_pion*1e3;
+	    nKinPi[iWindow]++;
+
+	    // *   ipart            particle type   (1 = proton / 2 = pion)
+	    // *   itarget          = 1 : Hydrogen
+	    // *                    = 2 : Deuterium
+	    // *                    = 3 : He-3
+	    // *                    = 4 : He-4
+	    // *                    = 5 : Carbon
+	    // *                    = 6 : CH2
+	    // *                    = 7 : Butanol
+	    
+	    // ********** PROTONS ************
+	    Int_t ipart = 1;
+	    Int_t itarg = 2; 
+	    Double_t kinetic_prot = T_prot*1000; 
+	    Double_t output[3];
+	    Double_t xcos[6];
+	    xcos[0] = fPsVertexX[0];
+	    xcos[1] = fPsVertexY[0];
+	    xcos[2] = fPsVertexZ[0];
+	    xcos[3] = TMath::Sin(ProtonTheta*DegToRad)*TMath::Cos(ProtonPhi*DegToRad);
+	    xcos[4] = TMath::Sin(ProtonTheta*DegToRad)*TMath::Sin(ProtonPhi*DegToRad);
+	    xcos[5] = TMath::Cos(ProtonTheta*DegToRad);
+
+	    fRangeFit->range_los(&ipart, &kinetic_prot, xcos, &itarg, output);
+
+	    Int_t istop = 2; // CB
+	    Double_t CorrECB_prot = Read_CBProton(ECB_prot);
+	    Double_t CorrEPID_prot = Read_PIDProton(EPID_prot);
+
+	    Double_t e[3];
+	    e[0] = CorrEPID_prot;
+	    e[1] = CorrECB_prot;
+	    e[2] = 0;
+	    Double_t ey[3];
+	    ey[0] = 0.1801 + 0.3752*CorrEPID_prot;
+	    ey[1] = 46.8905 - 0.131684*CorrECB_prot + 0.000353094*CorrECB_prot*CorrECB_prot;
+	    ey[2] = 0;
+
+	    // test rangefit for proton
+	    fRangeFit->range_fit(&ipart, &istop, xcos, e, ey, &itarg);
+
+	    Double_t TRFprot = fRangeFit->GetEner();
+	    RanErrProt = fRangeFit->GetIerr();
+	    CumulAllProt = fRangeFit->GetCumulus();
+	    if (fRangeFit->GetIerr() == 0) {
+	      EneRFProt = TRFprot;
+ 	      CumulProt = fRangeFit->GetCumulus();
+	    }
+	    chi2Prot = fRangeFit->GetChi2();
+
+	    EnePIDNormProt[iWindow][nEnePIDNormProt[iWindow]] = EPID_norm_prot; // MeV
+	    nEnePIDNormProt[iWindow]++;
+	    if (output[1]>0.) {
+	      EneCBProt[iWindow][nEneCBProt[iWindow]] = ECB_prot; // MeV
+	      nEneCBProt[iWindow]++;
+
+	      CheckEneCBProt[iWindow][nCheckEneCBProt[iWindow]] = CorrECB_prot;
+	      nCheckEneCBProt[iWindow]++;
+	      EnePIDProt[iWindow][nEnePIDProt[iWindow]] = EPID_prot;
+	      nEnePIDProt[iWindow]++;
+	      EneCBKinProt[iWindow][nEneCBKinProt[iWindow]] = output[1]; // MeV
+	      nEneCBKinProt[iWindow]++; 
+	      MissingEneProt[iWindow][nMissingEneProt[iWindow]] = output[1] - ECB_prot; // MeV
+	      nMissingEneProt[iWindow]++;
+
+	      CheckEnePIDProt[iWindow][nCheckEnePIDProt[iWindow]] = CorrEPID_prot;
+	      nCheckEnePIDProt[iWindow]++;
+	      EnePIDKinProt[iWindow][nEnePIDKinProt[iWindow]] = output[0]; // MeV
+	      nEnePIDKinProt[iWindow]++;
+	      // missing ene
+	      MissingEnePIDProt[iWindow][nMissingEnePIDProt[iWindow]] = output[0] - EPID_prot;
+	      nMissingEnePIDProt[iWindow]++;
+
+	      if (RanErrProt == 2 && iWindow==1) {
+		Double_t chi2cb = (output[1] - e[1])*(output[1] - e[1]) / (ey[1]*ey[1]);
+		Double_t chi2pid = (output[0] - e[0])*(output[0] - e[0]) / (ey[0]*ey[0]);
+		cout.precision(5);
+// 		cout << chi2Prot << "\t" << chi2cb << "\t" << chi2pid << "\t" << output[0] << "\t" << EPID_prot << "\t" << e[0] << "\t" << TRFprot << "\t" << T_prot*1e3 << "\t" << PIDhit << endl;
+		Double_t output2[3];
+		fRangeFit->range_los(&ipart, &TRFprot, xcos, &itarg, output2);
+// 		cout << output2[0] << "\t" << output2[1] << endl;
+	      }
+
+	      if (chi2Prot>5) {
+		CBcorrProt[iWindow][nCBcorrProt[iWindow]] = CorrECB_prot;
+		nCBcorrProt[iWindow]++;
+		CBKinCorrProt[iWindow][nCBKinCorrProt[iWindow]] = output[1];
+		nCBKinCorrProt[iWindow]++;
+		PIDcorrProt[iWindow][nPIDcorrProt[iWindow]] = CorrEPID_prot;
+		nPIDcorrProt[iWindow]++;
+		PIDKinCorrProt[iWindow][nPIDKinCorrProt[iWindow]] = output[0];
+		nPIDKinCorrProt[iWindow]++;
+		TrfBadChi2[iWindow][nTrfBadChi2[iWindow]] = TRFprot;
+		nTrfBadChi2[iWindow]++;
+		TkineBadChi2[iWindow][nTkineBadChi2[iWindow]] = T_prot*1e3;
+		nTkineBadChi2[iWindow]++;
+
+// 		if (iWindow==1)
+// 		  cout << chi2cb << "\t" << chi2pid << "\t" << output[0] << "\t" << EPID_prot << "\t" << e[0] << "\t" << TRFprot << "\t" << T_prot*1e3 << endl;
+	      }
+	      if (chi2Prot<=5) {
+		TrfOkChi2[iWindow][nTrfOkChi2[iWindow]] = TRFprot;
+		nTrfOkChi2[iWindow]++;
+		TkineOkChi2[iWindow][nTkineOkChi2[iWindow]] = T_prot*1e3;
+		nTkineOkChi2[iWindow]++;
+	      }
+	    }
+
+	    // ********** PIONS ************
+	    ipart = 2;
+	    Double_t kinetic_pion = T_pion*1000;
+	    Double_t ycos[6];
+	    ycos[0] = fPsVertexX[0];
+	    ycos[1] = fPsVertexY[0];
+	    ycos[2] = fPsVertexZ[0];
+	    ycos[3] = TMath::Sin(th_pi*DegToRad)*TMath::Cos(PiPhi*DegToRad);
+	    ycos[4] = TMath::Sin(th_pi*DegToRad)*TMath::Sin(PiPhi*DegToRad);
+	    ycos[5] = TMath::Cos(th_pi*DegToRad);
+
+	    fRangeFit->range_los(&ipart, &kinetic_pion, ycos, &itarg, output);
+
+	    Double_t CorrECB_pion = Read_CBPion(ECB_pion);
+	    Double_t CorrEPID_pion = Read_PIDPion(EPID_pion);
+// 	    cout.precision(5);
+// 	    if (EPID_pion < 1.) 
+// 	      cout << "EPID " << EPID_pion << "\t CorrEPID " << CorrEPID_pion << endl;
+
+	    Double_t ee[3];
+	    ee[0] = CorrEPID_pion;
+	    ee[1] = CorrECB_pion;
+	    ee[2] = 0;
+	    Double_t eey[3];
+	    eey[0] = 1.972 - 0.2122*CorrEPID_pion;
+	    eey[1] = 25.5 + 0.2168*CorrECB_pion;
+	    eey[2] = 0;
+
+	    // test rangefit for proton
+	    fRangeFit->range_fit(&ipart, &istop, ycos, ee, eey, &itarg);
+
+	    Double_t TRFpion = fRangeFit->GetEner();
+	    RanErrPion = fRangeFit->GetIerr();
+	    CumulAllPion = fRangeFit->GetCumulus();
+	    if (fRangeFit->GetIerr() == 0) {
+	      EneRFPion = TRFpion;
+ 	      CumulPion = fRangeFit->GetCumulus();
+	    }
+	    chi2Pion = fRangeFit->GetChi2();
+
+	    EneCBPion[iWindow][nEneCBPion[iWindow]] = ECB_pion; // MeV
+	    nEneCBPion[iWindow]++;
+	    if (output[1]>0.) {
+	    
+	    CheckEneCBPion[iWindow][nCheckEneCBPion[iWindow]] = CorrECB_pion;
+	    nCheckEneCBPion[iWindow]++;
+	      EneCBKinPion[iWindow][nEneCBKinPion[iWindow]] = output[1]; // MeV
+	      nEneCBKinPion[iWindow]++; 
+	      EnePIDKinPion[iWindow][nEnePIDKinPion[iWindow]] = output[0]; // MeV
+	      nEnePIDKinPion[iWindow]++;
+	      EnePIDPion[iWindow][nEnePIDPion[iWindow]] = EPID_pion; // MeV
+	      nEnePIDPion[iWindow]++;
+	      EnePIDNormPion[iWindow][nEnePIDNormPion[iWindow]] = EPID_norm_pion; // MeV
+	      nEnePIDNormPion[iWindow]++;
+	      if (output[2]==0.) {
+		EneCBKinStopPion[iWindow][nEneCBKinStopPion[iWindow]] = output[1];
+		nEneCBKinStopPion[iWindow]++;
+		if (Egamma_val<0.4) {
+		  EneCBStopPion[iWindow][nEneCBStopPion[iWindow]] = ECB_pion;
+		  nEneCBStopPion[iWindow]++;
+		  EneCBKinLowPion[iWindow][nEneCBKinLowPion[iWindow]] = output[1];
+		  nEneCBKinLowPion[iWindow]++;
+		  MissingEnePion[iWindow][nMissingEnePion[iWindow]] = output[1] - ECB_pion; // MeV
+		  nMissingEnePion[iWindow]++;
+		  EnePIDStopPion[iWindow][nEnePIDStopPion[iWindow]] = EPID_pion;
+		  nEnePIDStopPion[iWindow]++;
+		  
+		  CheckEnePIDPion[iWindow][nCheckEnePIDPion[iWindow]] = CorrEPID_pion;
+		  nCheckEnePIDPion[iWindow]++;
+		  EnePIDKinStopPion[iWindow][nEnePIDKinStopPion[iWindow]] = output[0];
+		  nEnePIDKinStopPion[iWindow]++;
+		  // missing ene 
+		  MissingEnePIDPion[iWindow][nMissingEnePIDPion[iWindow]] = output[0] - EPID_pion;
+		  nMissingEnePIDPion[iWindow]++;
+
+		  if (chi2Pion>5) {
+		    CBcorrPion[iWindow][nCBcorrPion[iWindow]] = CorrECB_pion;
+		    nCBcorrPion[iWindow]++;
+		    CBKinCorrPion[iWindow][nCBKinCorrPion[iWindow]] = output[1];
+		    nCBKinCorrPion[iWindow]++;
+		    PIDcorrPion[iWindow][nPIDcorrPion[iWindow]] = CorrEPID_pion;
+		    nPIDcorrPion[iWindow]++;
+		    PIDKinCorrPion[iWindow][nPIDKinCorrPion[iWindow]] = output[0];
+		    nPIDKinCorrPion[iWindow]++;
+		    TrfBadChi2Pion[iWindow][nTrfBadChi2Pion[iWindow]] = TRFpion;
+		    nTrfBadChi2Pion[iWindow]++;
+		    TkineBadChi2Pion[iWindow][nTkineBadChi2Pion[iWindow]] = T_pion*1e3;
+		    nTkineBadChi2Pion[iWindow]++;
+		  }
+		  if (chi2Pion<=5) {
+		    TrfOkChi2Pion[iWindow][nTrfOkChi2Pion[iWindow]] = TRFpion;
+		    nTrfOkChi2Pion[iWindow]++;
+		    TkineOkChi2Pion[iWindow][nTkineOkChi2Pion[iWindow]] = T_pion*1e3;
+		    nTkineOkChi2Pion[iWindow]++;
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+	
+      } 
+    } 
+  }  
+
+  MarkEndBuffers();
+}
+
+
+// ================================================================
+void TA2TestRangeFit::ResetEvent()
+{
+  // Set default value for the variables being chenged during an event
+
+  fNtracks = 0;
+  fNch = 0;
+  fNne = 0;
+  fM2g = ENullFloat;
+  fECB = ENullFloat;
+  fEPID = ENullFloat;
+  
+  fFPDTimeOR[0] = EBufferEnd;
+  fFPDNHits     = 0 ;
+  fFPDHits[0]   = EBufferEnd;
+  
+  nCB      = 0;
+  nCBnoPID = 0;
+  nEventTime = 0;
+  for(Int_t w=1; w<OPT_NWIND+1; w++) {
+      nBeamPol10[w]    = 0;
+      nBeamPol20[w]    = 0;
+      nTwoGammaIM[w]   = 0;
+      nTwoGammaMass[w] = 0;
+      nEgamma[w]       = 0;
+      nPhiPi[w]        = 0;
+      nThetaPi[w]      = 0;
+      nThetaPiKin[w]   = 0;
+      nDiffThetaPi[w]  = 0;
+      nEnePi[w]        = 0;
+      nEnePiKin[w]     = 0;
+      nPhiProton[w]    = 0;
+      nThetaProton[w]  = 0;
+      nEneProton[w]    = 0;
+      nEneProtonKin[w] = 0;
+      nKinProton[w]    = 0;
+      nKinPi[w]        = 0;
+      ndeltaphi[w]     = 0;
+      ndeltaphiOk[w]   = 0;
+      nCBcorrProt[w]   = 0;
+      nPIDcorrProt[w]  = 0;
+      nTrfBadChi2[w]   = 0;
+      nTkineBadChi2[w] = 0;
+      nTrfOkChi2[w]    = 0;
+      nTkineOkChi2[w]  = 0;
+      nCBKinCorrProt[w]  = 0;
+      nPIDKinCorrProt[w] = 0;
+      nCBcorrPion[w]   = 0;
+      nPIDcorrPion[w]  = 0;
+      nTrfBadChi2Pion[w]   = 0;
+      nTkineBadChi2Pion[w] = 0;
+      nTrfOkChi2Pion[w]    = 0;
+      nTkineOkChi2Pion[w]  = 0;
+      nCBKinCorrPion[w]  = 0;
+      nPIDKinCorrPion[w] = 0;
+      nEneCBProt[w]      = 0;
+      nCheckEneCBProt[w] = 0;
+      nCheckEneCBPion[w] = 0;
+      nEneCBKinProt[w]   = 0;
+      nEnePIDProt[w]     = 0;
+      nEnePIDKinProt[w]  = 0;
+      nEnePIDNormProt[w] = 0;
+      nMissingEneProt[w] = 0;
+      nEneCBPion[w]      = 0;
+      nEneCBKinPion[w]   = 0;
+      nEnePIDPion[w]     = 0;
+      nEnePIDKinPion[w]  = 0;
+      nEnePIDNormPion[w] = 0;
+      nMissingEnePion[w] = 0;
+      nEneCBKinLowPion[w]= 0;
+      nEneCBStopPion[w]  = 0;
+      nEnePIDStopPion[w] = 0;
+      nCheckEnePIDProt[w] = 0;
+      nCheckEnePIDPion[w] = 0;
+      nMissingEnePIDProt[w] = 0;
+      nMissingEnePIDPion[w] = 0;
+      nEnePIDKinStopPion[w] = 0;
+      nEneCBKinStopPion[w]  = 0;
+    }
+  
+  for(Int_t e=0;e<24;e++)
+    IndPID[e]=0;
+}
+
+
+// ================================================================
+void TA2TestRangeFit::MarkEndBuffers()
+{
+  // Mark end buffers for arrays
+  fFPDTimeOR[fFPDNHits] = EBufferEnd;
+  fFPDHits[fFPDNHits]   = EBufferEnd;
+
+
+  // Neutral
+  fThetaNe[fNne] = EBufferEnd;
+  fPhiNe[fNne]   = EBufferEnd;
+  fEne[fNne]     = EBufferEnd;
+  fMclNe[fNne]   = EBufferEnd;
+  fTne[fNne]     = EBufferEnd;
+  fCentralIndexNaINe[fNne] = EBufferEnd;
+  // Charged
+  fThetaCh[fNch]   = EBufferEnd;
+  fThetaChCB[fNch] = EBufferEnd;
+  fPhiCh[fNch]     = EBufferEnd;
+  fEch[fNch]       = EBufferEnd;
+  fMclCh[fNch]     = EBufferEnd;
+  fTch[fNch]       = EBufferEnd;
+  fCentralIndexNaICh[fNch] = EBufferEnd;
+  fEpid[fNch]      = EBufferEnd;
+  fIhitPid[fNch]   = EBufferEnd;
+  fPsVertexX[fNch] = EBufferEnd;
+  fPsVertexY[fNch] = EBufferEnd;
+  fPsVertexZ[fNch] = EBufferEnd;
+  fPsVertexGoodZ[fNch] = EBufferEnd;
+  fChTrackType[fNch] = EBufferEnd;
+  fEmwpc[fNch] = EBufferEnd;
+  //
+  for(Int_t e=0;e<24;e++)
+    {
+      fPID_dE[e][IndPID[e]] = EBufferEnd;
+    }
+  fDEmwpc[nCBnoPID]= EBufferEnd;
+  EventTime[nEventTime] = EBufferEnd;
+  for(Int_t w=1; w<OPT_NWIND+1; w++) {
+    BeamPol10[w][nBeamPol10[w]]       = EBufferEnd;
+    BeamPol20[w][nBeamPol20[w]]       = EBufferEnd;
+    TwoGammaIM[w][nTwoGammaIM[w]]     = EBufferEnd;
+    Egamma[w][nEgamma[w]]             = EBufferEnd;
+    ThetaProton[w][nThetaProton[w]]   = EBufferEnd;
+    PhiProton[w][nPhiProton[w]]       = EBufferEnd;
+    EneProton[w][nEneProton[w]]       = EBufferEnd;
+    EneProtonKin[w][nEneProtonKin[w]] = EBufferEnd;
+    KinProton[w][nKinProton[w]]       = EBufferEnd;
+    KinPi[w][nKinPi[w]]               = EBufferEnd;
+    PhiPi[w][nPhiPi[w]]               = EBufferEnd;
+    ThetaPi[w][nThetaPi[w]]           = EBufferEnd;
+    ThetaPiKin[w][nThetaPiKin[w]]     = EBufferEnd;
+    DiffThetaPi[w][nDiffThetaPi[w]]   = EBufferEnd;
+    EnePi[w][nEnePi[w]]               = EBufferEnd;
+    EnePiKin[w][nEnePiKin[w]]         = EBufferEnd;
+    deltaphi[w][ndeltaphi[w]]         = EBufferEnd;
+    deltaphiOk[w][ndeltaphiOk[w]]     = EBufferEnd;
+    CBcorrProt[w][nCBcorrProt[w]]     = EBufferEnd;
+    PIDcorrProt[w][nPIDcorrProt[w]]   = EBufferEnd;
+    TrfBadChi2[w][nTrfBadChi2[w]]     = EBufferEnd;
+    TkineBadChi2[w][nTkineBadChi2[w]] = EBufferEnd;
+    TrfOkChi2[w][nTrfOkChi2[w]]       = EBufferEnd;
+    TkineOkChi2[w][nTkineOkChi2[w]]   = EBufferEnd;
+    CBKinCorrProt[w][nCBKinCorrProt[w]]   = EBufferEnd;
+    PIDKinCorrProt[w][nPIDKinCorrProt[w]] = EBufferEnd;
+    CBcorrPion[w][nCBcorrPion[w]]     = EBufferEnd;
+    PIDcorrPion[w][nPIDcorrPion[w]]   = EBufferEnd;
+    TrfBadChi2Pion[w][nTrfBadChi2Pion[w]]     = EBufferEnd;
+    TkineBadChi2Pion[w][nTkineBadChi2Pion[w]] = EBufferEnd;
+    TrfOkChi2Pion[w][nTrfOkChi2Pion[w]]       = EBufferEnd;
+    TkineOkChi2Pion[w][nTkineOkChi2Pion[w]]   = EBufferEnd;
+    CBKinCorrPion[w][nCBKinCorrPion[w]]   = EBufferEnd;
+    PIDKinCorrPion[w][nPIDKinCorrPion[w]] = EBufferEnd;
+    EneCBProt[w][nEneCBProt[w]]           = EBufferEnd;
+    CheckEneCBProt[w][nCheckEneCBProt[w]] = EBufferEnd;
+    CheckEneCBPion[w][nCheckEneCBPion[w]] = EBufferEnd;
+    EneCBKinProt[w][nEneCBKinProt[w]]     = EBufferEnd;
+    EnePIDProt[w][nEnePIDProt[w]]         = EBufferEnd;
+    EnePIDKinProt[w][nEnePIDKinProt[w]]   = EBufferEnd;
+    EnePIDNormProt[w][nEnePIDNormProt[w]] = EBufferEnd;
+    MissingEneProt[w][nMissingEneProt[w]] = EBufferEnd;
+    EneCBPion[w][nEneCBPion[w]]           = EBufferEnd;
+    EneCBKinPion[w][nEneCBKinPion[w]]     = EBufferEnd;
+    EnePIDPion[w][nEnePIDPion[w]]         = EBufferEnd;
+    EnePIDKinPion[w][nEnePIDKinPion[w]]   = EBufferEnd;
+    EnePIDNormPion[w][nEnePIDNormPion[w]] = EBufferEnd;
+    MissingEnePion[w][nMissingEnePion[w]] = EBufferEnd;
+    EneCBStopPion[w][nEneCBStopPion[w]]   = EBufferEnd;
+    EnePIDStopPion[w][nEnePIDStopPion[w]] = EBufferEnd;
+    CheckEnePIDProt[w][nCheckEnePIDProt[w]] = EBufferEnd;
+    CheckEnePIDPion[w][nCheckEnePIDPion[w]] = EBufferEnd;
+    MissingEnePIDProt[w][nMissingEnePIDProt[w]] = EBufferEnd;
+    MissingEnePIDPion[w][nMissingEnePIDPion[w]] = EBufferEnd;
+    EnePIDKinStopPion[w][nEnePIDKinStopPion[w]] = EBufferEnd;
+    EneCBKinStopPion[w][nEneCBKinStopPion[w]] = EBufferEnd;
+    EneCBKinLowPion[w][nEneCBKinLowPion[w]]   = EBufferEnd;
+  }
+}
+
+// ================================================================
+void TA2TestRangeFit::ParseMisc(char* line) {
+  FILE* WinFile;
+  Char_t sWord[256];
+
+  // Get keyword
+  if(sscanf(line, "%s", sWord)!=1) return;
+
+  if(!strcmp("TimeWindows", sWord)) {
+    sscanf(line, "%*s %s", WindowFilename);
+    printf("Time windows from:\n %s\n", WindowFilename);
+    WinFile = fopen(WindowFilename, "r");
+    for(Int_t t=1; t<OPT_NWIND+1; t++) {
+      fscanf(WinFile, "%lf %lf", &Window[t][0], &Window[t][1]);
+      printf("Time window %d from %f to %f\n", t, Window[t][0], Window[t][1]);
+    }
+    fclose(WinFile);
+    return;
+  }
+}
+
+
+// ================================================================
+void TA2TestRangeFit::Speed() 
+{
+  static Int_t iStart = time(NULL);
+  static Int_t nEvents = 0;
+  
+  nEvents++;
+  if(time(NULL) - iStart >= 60) {
+    iStart = time(NULL);
+    printf("Processed %d Events/sec\n", nEvents/60);
+    nEvents = 0;
+  }
+}
+
+
+// =============================================================
+void TA2TestRangeFit::Read_Cal() {
+  ifstream infile("/home/susanna/acquroot/a2/acqu/data/Tagger/TagCal883.dat");
+  Double_t t2, t3, t1;
+
+  for(int i=1; i<353; i++){
+    infile>>t1>>t2>>t3;
+    EgammaCal[i] = t2*0.001;
+//     cout << EgammaCal[i] << endl;
+  }
+  infile.close();
+
+  return;
+}
+
+
+// =============================================================
+void TA2TestRangeFit::ComputeKineticEne(Double_t Egamma, Double_t th_prot, 
+					  Double_t &p_prot, Double_t &E_prot, Double_t &T_prot,
+					  Double_t &th_pi, Double_t &p_pi, Double_t &E_pi, Double_t &T_pion, 
+					  Int_t &ierr) {
+
+  Double_t A = 0, B = 0, C = 0, delta = 0, dm = 0;  
+  ierr = 0;
+
+//   cout << "========== theta prot " << th_prot << endl;
+  th_prot = th_prot*DegToRad;
+  A = Egamma * TMath::Cos(th_prot);
+  B = Egamma * mproton + (mproton*mproton + mproton*mproton - mpi*mpi)/2.;
+  C = Egamma + mproton;
+
+  delta = (A*B)*(A*B) + (C*C-A*A)*(B*B-(C*mproton)*(C*mproton));
+  if (delta<0) {
+    ierr = 1;
+    return;
+  }
+  delta = TMath::Sqrt(delta);
+
+  Double_t p_ch1 = (A*B+delta)/(C*C-A*A);
+  Double_t p_ch2 = (A*B-delta)/(C*C-A*A);
+  p_prot = p_ch1;
+  if (p_ch2 >= 0 )
+    ierr = -1;
+  if (p_prot < 0.) {
+    ierr = 1;   
+    return;
+  }
+
+  E_prot = TMath::Sqrt(p_prot*p_prot + mproton*mproton);
+  E_pi = Egamma + mproton - E_prot;
+  p_pi = TMath::Sqrt(E_pi*E_pi - mpi*mpi);
+  dm = (mproton*mproton + mproton*mproton - mpi*mpi)/2.;
+  th_pi = (dm - mproton*E_prot + Egamma*E_pi)/(Egamma*p_pi);
+  T_prot = E_prot - mproton;
+  T_pion = E_pi - mpi;
+  th_pi = TMath::ACos(th_pi)*RadToDeg;
+//   cout << th_prot*RadToDeg << "\t" <<dm << "\t" << mproton << "\t" << E_prot << "\t" << Egamma << "\t" << E_pi << "\t" << p_pi << "\t" << th_pi << endl;
+
+  return;
+}
+
+
+// =============================================================
+Double_t TA2TestRangeFit::Read_CBProton(Double_t enecb_prot) {
+  ifstream infile("/home/susanna/acquroot/a2/acqu/data/OutData/prot_pich/pid_ok/temp2/fitfunc_prot_test.dat");
+  Double_t t1, t2;
+  Double_t par[3], meanerr_prot[3];
+
+  for(int i=1; i<4; i++){
+    infile>>t1>>t2;
+    par[i-1] = t1;
+    meanerr_prot[i-1] = t2;
+  }
+  
+  infile.close();
+
+  Double_t newene;
+  Double_t t = enecb_prot;
+  newene = (-par[1] + TMath::Sqrt(par[1]*par[1] - 4*par[2]*(par[0]-t)))/(2*par[2]);
+  Double_t newene2 = (-par[1] - TMath::Sqrt(par[1]*par[1] - 4*par[2]*(par[0]-t)))/(2*par[2]);
+//  if (iWindow==1)
+//    cout << "=================== Proton " << t << "\t" << newene << "\t " << enecb_kin << endl;
+  if (newene > newene2)
+    return newene;
+  else 
+    return newene2;
+}
+
+
+// =============================================================
+Double_t TA2TestRangeFit::Read_CBPion(Double_t enecb_pion) {
+  Double_t par[2] = {28.6692, 0.754808};
+
+  Double_t newene;
+  Double_t t = enecb_pion;
+  newene = (t-par[0])/par[1];
+//   if (iWindow==1)
+//     cout << "=================== Pion " << t << "\t" << newene << "\t true: " << enecb_kin << endl;
+  return newene;
+}
+
+
+// =============================================================
+Double_t TA2TestRangeFit::Read_PIDPion(Double_t enepid_pion) {
+
+//   Double_t par[2] = {0.12, 0.1403};
+  Double_t par[2] = {0., 0.2857}; // 1/3.5
+
+  Double_t newene;
+  Double_t t = enepid_pion;
+  newene = (t-par[0])/par[1];
+//   if (iWindow==1)
+//     cout << "=================== Pion " << t << "\t" << newene << "\t true: " << enecb_kin << endl;
+  return newene;
+}
+
+
+
+// =============================================================
+Double_t TA2TestRangeFit::Read_PIDProton(Double_t enepid_prot) {
+
+  Double_t par[2] = {0.3951, 0.4615};
+
+  Double_t newene;
+  Double_t t = enepid_prot;
+  newene = (t-par[0])/par[1];
+//   if (iWindow==1)
+//     cout << "=================== Pion " << t << "\t" << newene << "\t true: " << enecb_kin << endl;
+  return newene;
+}

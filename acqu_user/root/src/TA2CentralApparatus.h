@@ -1,4 +1,4 @@
-// SVN info: $Id: TA2CentralApparatus.h 70 2011-10-19 13:34:30Z mushkar $
+// SVN: $Id: TA2CentralApparatus.h 111 2012-12-10 21:52:00Z mushkar $
 #ifndef __TA2CentralApparatus_h__
 #define __TA2CentralApparatus_h__
 
@@ -10,32 +10,36 @@ using std::map;
 using std::pair;
 using std::make_pair;
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 // AcquRoot
 #include "TA2Apparatus.h"
 #include "TA2CylMwpc.h"
 #include "TA2Math.h"
-#include "TA2Particle.h"
+#include "TA2CentralTrack.h"
+#include "HitCluster_t.h"
 
 class TA2CalArray;
 class TA2TrackLine;
 class TA2CentralTrack;
 class TA2MwpcTrack;
-class HitCluster_t;
 class TA2Particle;
 
 class TA2CentralApparatus : public TA2Apparatus {
 public:
   Bool_t fWait;
-  void Test(); // for test
+  void Test(Bool_t); // for test
   
 // Parameters
 protected:
   static const Int_t    kNullHit   = static_cast<Int_t>(ENullHit);
   static const Double_t kNullFloat = ENullFloat;
+  // Geometrical constants
+  Double_t	*fR;	// chamber wire radii
   Bool_t	 fUseTracksBestMwpc;
   Int_t		 fMaxTrack;	// Max tracks number
-  Double_t	 fFactorTrackLengthNaI; // TEST option under test
+  Double_t	 fFactorTrackLengthNaI; // TEST
   Double_t	 fMaxPhiMwpcNaI;
   Double_t	 fMaxPhiTrackPid;
   Double_t	 fMaxPhiPidNaI;
@@ -49,7 +53,7 @@ protected:
   //
 public:
   virtual const Int_t	 &GetMaxTrack() const { return fMaxTrack; }
-  virtual const Double_t &GetFactorTrackLengthNaI() const { return fFactorTrackLengthNaI; }// TEST option under test
+  virtual const Double_t &GetFactorTrackLengthNaI() const { return fFactorTrackLengthNaI; }// TEST
 
 // Detectors
 protected:
@@ -91,6 +95,7 @@ public:
   virtual Bool_t		 IsUsedHitPid(const Int_t i) const { return fIhitsPidUsed[i]; }
   virtual Double_t CalcEhitPid(const Int_t, const TVector3&, const TVector3&) const;
   virtual Double_t CalcEtrackMwpc(const Int_t, const Int_t) const;
+  virtual Double_t CalcEclNaI(const Int_t) const;
   
 // Tracks
 protected:
@@ -149,6 +154,8 @@ public:
   virtual const Int_t	&GetNtracks() const { return fNtracks; }
   virtual const Int_t	*GetNtracksPtr() const { return &fNtracks; }
   virtual const TA2CentralTrack *GetTracks() const { return fTracks; }
+  virtual const TA2CentralTrack *GetTracksCh(const Int_t i) const { return fTracks + fIchTracks[i]; }
+  virtual const TA2CentralTrack *GetTracksNe(const Int_t i) const { return fTracks + fIneTracks[i]; }
   virtual const Int_t	&GetNch() const { return fNchTracks;}
   virtual const Int_t	*GetNchPtr() const { return &fNchTracks;}
   virtual const Int_t	*GetIchTracks() const { return fIchTracks; }
@@ -167,7 +174,7 @@ public:
 protected:
   Int_t		 fNvertexes;
   TVector3	*fVertexes;
-  Int_t	       **fIvertexes;
+  Int_t	       **fIvertexes; // TODO make like in TA2CylMwpc
   // For the output hists
   Double_t	*fVert[3];	// vertex {x,y,z}
   Double_t	*fVertR;	// vertex R
@@ -175,8 +182,9 @@ protected:
   //
   virtual void	 MakeVertexes();
 public:
-  const Int_t		&GetNvertexes() const { return fNvertexes; }
-  const TVector3	*GetVertexes() const { return fVertexes; }
+  const Int_t	       &GetNvertexes() const { return fNvertexes; }
+  const TVector3       *GetVertexes() const { return fVertexes; }
+  Int_t	GetIvertexes(const Int_t i, const Int_t j) const { return fIvertexes[i][j]; }
 
 // Particles
 protected:
@@ -188,10 +196,18 @@ protected:
    
 public:
   virtual void	 AddParticleInfo(const TA2CentralTrack&);
-  TA2Particle* GetParticles() { return fParticleInfo; }
-  TA2Particle GetParticles(Int_t index){ return fParticleInfo[index]; }
-  Int_t GetNparticles(){ return fNparticle; }
-  Int_t GetNParticles(){ return fNparticle; }
+
+  // Display
+ public:
+  Bool_t fDisplay;
+  void InitGeometry();
+ private:
+  TCanvas *c, *c2, *c3;
+  TH2F *h, *h2, *h3;
+  Double_t xPID[5][25], yPID[5][25];
+  Double_t xCB[5][32], yCB[5][32];
+  Double_t zCB_yz[5][13], yCB_yz[5][13], y2CB_yz[5][13];
+  Double_t zCB_xz[5][13], xCB_xz[5][13], x2CB_xz[5][13];
 
 //
 public:
@@ -219,10 +235,8 @@ inline Double_t TA2CentralApparatus::CalcEhitPid(const Int_t iHitPid, const TVec
   // Check if Pid there is a Pid hit
   if ( iHitPid == kNullHit ) return kNullFloat;
   
-  // Droop factor
+  //Droop correction (TODO take into account vertex)
   Double_t factorDroop = 1.;
-  
-  //Droop correction
   if (fNpointsDroopPid)
   {
     Double_t lPath;
@@ -238,7 +252,7 @@ inline Double_t TA2CentralApparatus::CalcEhitPid(const Int_t iHitPid, const TVec
     {
       if ( lPath >= fLostCorrPosPid[iPos] && lPath <= fLostCorrPosPid[iPos+1] ) break;
     }
-    factorDroop = (lPath - fLostCorrPosPid[iPos]) * (fLostCorrFacPid[iPos+1] - fLostCorrFacPid[iPos]) / (fLostCorrPosPid[iPos+1] - fLostCorrPosPid[iPos]) + fLostCorrFacPid[iPos];
+    factorDroop = (lPath-fLostCorrPosPid[iPos])*(fLostCorrFacPid[iPos+1]-fLostCorrFacPid[iPos])/(fLostCorrPosPid[iPos+1]-fLostCorrPosPid[iPos]) + fLostCorrFacPid[iPos];
   }
   
   // Geom correction factor TODO Calc correction taking into account x-y shift
@@ -259,6 +273,35 @@ inline Double_t TA2CentralApparatus::CalcEtrackMwpc(const Int_t iInterMwpc0, con
   if (iInterMwpc1 != kNullHit) e += fMwpc->GetInters(1,iInterMwpc1)->GetAclIE();
   
   return e;
+}
+
+//_______________________________________________________________________________
+inline Double_t TA2CentralApparatus::CalcEclNaI(const Int_t iClNaI) const
+{
+  // Returns corrected NaI claster energy
+  
+  if (iClNaI == kNullHit) return kNullFloat;
+  
+  // Find correction
+  Double_t corr;
+  Double_t e = fClNaI[fIdClNaI[iClNaI]]->GetEnergy();
+  if (e < 250.)
+  {
+    corr = -0.123795297;
+  }
+  else
+  {
+    Double_t a[] = {1.156669e+00, -3.878119e-02, 4.566693e-04, -2.595171e-06, 7.111759e-09, -7.534346e-12, kNullFloat};
+    Int_t i = 0;
+    while (a[i] != kNullFloat)
+    {
+      corr += a[i]*TMath::Power(e,i);
+      ++i;
+    }
+  }
+  
+  // 
+  return e + e*corr;
 }
 
 //_______________________________________________________________________________

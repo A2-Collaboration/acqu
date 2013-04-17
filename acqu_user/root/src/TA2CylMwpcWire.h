@@ -27,8 +27,8 @@ inline void TA2CylMwpcWire::CGCluster(const Int_t ic)
   // Convert wire # to phi
   
   fCGClust[ic] = fPhiSpace * ( fClust[ic] + 0.5*(fLenClust[ic] - 1) );
-  if ( fCGClust[ic] >= 2.*kPi ) fCGClust[ic] -= 2.*kPi; // To-do: May not need!
-  else if ( fCGClust[ic] < 0. ) fCGClust[ic] += 2.*kPi; // To-do: May not need!
+  if ( fCGClust[ic] >= 2.*kPi ) fCGClust[ic] -= 2.*kPi; // TODO May not need!
+  else if ( fCGClust[ic] < 0. ) fCGClust[ic] += 2.*kPi; // TODO May not need!
 }
 
 #endif
