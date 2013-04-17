@@ -98,6 +98,7 @@ inline Int_t TA2MwpcTrack::CalcTrackType(const Int_t typeInter0, const Int_t typ
   // 4		MWPC1 wires layer		typeInterMwpc1 (for 3 to 5)
   // 5		MWPC1 external strip layer
   
+  // bit-wise shift to the left (<<)
   return typeInter1 << 3 | typeInter0;
 }
 

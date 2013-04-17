@@ -1,4 +1,4 @@
-// SVN info: $Id: TA2TrackLine.h 14 2011-06-16 13:00:23Z mushkar $
+// SVN info: $Id: TA2TrackLine.h 77 2011-12-05 02:34:24Z mushkar $
 #ifndef __TA2TrackLine_h__
 #define __TA2TrackLine_h__
 
@@ -34,6 +34,7 @@ class TA2TrackLine : public TObject {
     Double_t Angle(const TA2TrackLine &tr) const;
     Double_t Angle(const TA2TrackLine *tr) const { return Angle(*tr); }
     Double_t Angle(const TVector2 &v) const;
+    TVector3 Vertex(const TA2TrackLine&, Double_t dist = 0.) const;
     
     ClassDef(TA2TrackLine,1) // Particle track line
 };
@@ -75,6 +76,13 @@ inline Double_t TA2TrackLine::Angle(const TVector2 &v) const
   Double_t dPhi = fDirCos.XYvector().DeltaPhi(v-fOrigin.XYvector());
   //
   return ( cosPhiOrig < cosMin ) ? dPhi : TVector2::Phi_mpi_pi( dPhi - kPi );
+}
+
+//_________________________________________________________________________________________
+inline TVector3 TA2TrackLine::Vertex(const TA2TrackLine &tr, Double_t dist) const
+{
+  //
+  return TA2Math::Vertex(fOrigin, fDirCos, tr.GetOrigin(), tr.GetDirCos(), dist);
 }
 
 #endif

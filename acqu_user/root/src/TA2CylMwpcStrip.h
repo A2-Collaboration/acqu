@@ -3,6 +3,8 @@
 #define __TA2CylMwpcStrip_h__
 
 #include "TA2WCLayerSven.h"
+#include <iostream>
+#include "TA2MyUserAnalysis.h"
 
 class TA2CylMwpcStrip : public TA2WCLayerSven {
   protected:
@@ -43,18 +45,23 @@ inline void TA2CylMwpcStrip::CGCluster(const Int_t ic)
   Double_t wesum = 0.;
   Int_t istart = fClust[ic];                    // start cluster index
   Int_t iend = istart + fLenClust[ic];          // end cluster index
-  Int_t j;
+  Int_t j; 
   
+  Int_t ix ;  //added pedro
   for (Int_t i=istart; i<iend; ++i)
   {
-    j = i + fIstart;
+    ix= i;
+    if (i >= fNElement) ix=i- fNElement ; //added pedro
+    j = ix + fIstart;
+    //
     if (fEnergy[j] == static_cast<Double_t>(ENullHit)) continue;
     esum  +=   fEnergy[j];
     wesum += i*fEnergy[j];
+
   }
   // Energy weighted "index"....check its within bounds and save
   wesum = wesum/esum;
-  if ( wesum >= fNElement ) wesum -= fNElement; // TODO May not need!
+  if ( wesum >= fNElement ) wesum -= fNElement; // TODO May not need! now OK!
   if ( wesum < 0 ) wesum += fNElement;	// TODO May not need!
   fCGClust[ic] = wesum/fNElement;
   fClustEn[ic] = esum;

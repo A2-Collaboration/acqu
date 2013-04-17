@@ -30,6 +30,8 @@
 #pragma link C++ class TA2MesonPhysics+;
 #pragma link C++ class TA2BasePhysics+;
 #pragma link C++ class TA2TriggerPhysics+;
+#pragma link C++ class TA2RangeFit+;
+#pragma link C++ class TA2ExampleRangeFit+;
 // TA2My... extension classes
 //#pragma link C++ class TA2MyAnalysis+;
 #pragma link C++ class TA2MyCalibration+;
@@ -57,7 +59,6 @@
 #pragma link C++ class TA2KensLadder+;
 #pragma link C++ class TA2TAPS_BaF2+;
 #pragma link C++ class TA2TAPS_Veto+;
-#pragma link C++ class TA2CylMWPC+;
 #pragma link C++ class TA2FPMicro;
 // Utility classes...components of detectors etc
 #pragma link C++ class TA2CylStripSven+;
