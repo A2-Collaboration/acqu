@@ -1,9 +1,9 @@
 #Architecture
 ARCH = x86_64
-OPTI = -O3 -march=opteron
+OPTI = -O3 #-march=opteron
 
 #ROOT includes
-IR = $(ROOTSYS)/include/root
+IR = $(ROOTSYS)/include
 
 #ROOT libraries
 ROOTLIBS   := $(shell root-config --glibs) -lEG -lstdc++
@@ -79,7 +79,7 @@ libWorker.so: $(MCObj)
 Worker: Worker.o libWorker.so
 	$(CCCOMP) $(O)/Worker.o $(L)/libWorker.so \
 	$(ROOTLIBS) -lThread \
-	-o $(B)/WorkerAR
+	-o $(B)/Worker
 	@echo "$@ done"
 	@echo "--------------------------------------------------------------------------------"
 
