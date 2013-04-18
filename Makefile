@@ -10,6 +10,7 @@ export acqu_sys := $(acqu_dir)/acqu_core
 export acqu := $(acqu_dir)/acqu_user
 export CALIB := $(acqu_dir)/CaLib
 export OSCAR := $(acqu_dir)/OSCAR
+export Worker := $(acqu_dir)/Worker/AR
 export LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(CALIB)/lib:$(OSCAR)/lib
 
 all:
@@ -25,6 +26,7 @@ all:
 	$(MAKE) -C $(OSCAR)
 	$(MAKE) -C $(CALIB)
 	$(MAKE) -C $(acqu) AcquRoot
+	$(MAKE) -C $(Worker)
 	@echo
 	@echo
 	@echo "#########################################################################"
@@ -40,9 +42,16 @@ acqu:
 	$(MAKE) -C $(acqu_sys) AcquRoot
 	$(MAKE) -C $(acqu) AcquRoot
 
+worker:
+	$(MAKE) -C $(Worker)
+
+user:
+	$(MAKE) -C $(acqu) AcquRoot
+
 clean:
 	$(MAKE) -C $(acqu_sys) clean
 	$(MAKE) -C $(OSCAR) clean
 	$(MAKE) -C $(CALIB) clean
 	$(MAKE) -C $(acqu) clean
+	$(MAKE) -C $(Worker) clean
 
