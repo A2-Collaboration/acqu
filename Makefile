@@ -23,6 +23,7 @@ all:
 	@echo Start compiling...
 	@echo
 	$(MAKE) -C $(acqu_sys) AcquRoot
+	$(MAKE) -C $(acqu_sys) AcquMC
 	$(MAKE) -C $(OSCAR)
 	$(MAKE) -C $(CALIB)
 	$(MAKE) -C $(acqu) AcquRoot
