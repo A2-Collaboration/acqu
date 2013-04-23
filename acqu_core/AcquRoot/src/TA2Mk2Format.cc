@@ -8,7 +8,8 @@
 //--Rev 	K Livingston.. 7th Feb 2013   Support for handling EPICS buffers
 //--Rev 	JRM Annand ....1st Mar 2013   More stuff for merging data
 //--Rev 	JRM Annand ....4th Mar 2013   EpicsHeaderInfo_t time_t to UInt_t
-//--Update 	JRM Annand ....6th Mar 2013   Fix TAPS(foreign) ConstructHeader
+//--Rev 	JRM Annand ....6th Mar 2013   Fix TAPS(foreign) ConstructHeader
+//--Update 	JRM Annand ...18th Apr 2013   Fix UpdateHeader()
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -85,7 +86,12 @@ void TA2Mk2Format::UpdateHeader( void* header, void* in )
 
   AcquMk2Info_t* oh = (AcquMk2Info_t*)((UInt_t*)header + 1);
   AcquMk2Info_t* ih = (AcquMk2Info_t*)((UInt_t*)in + 1);
-  memcpy(oh, ih, sizeof(struct AcquMk2Info_t));
+  //  memcpy(oh, ih, sizeof(struct AcquMk2Info_t));
+  // Selectively copy only parameters which should change
+  oh->fRun = ih->fRun;
+  strcpy(oh->fTime,ih->fTime);
+  strcpy(oh->fRunNote,ih->fRunNote);
+  strcpy(oh->fOutFile,ih->fOutFile);
   fDataFileName = oh->fOutFile;
 }
 

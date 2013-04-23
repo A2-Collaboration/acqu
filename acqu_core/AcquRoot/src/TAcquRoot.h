@@ -33,7 +33,8 @@
 //--Rev 	JRM Annand...12th Feb 2008...LinkDataServer() maxscaler
 //--Rev 	JRM Annand... 1st May 2008...SetDataServer()...check dataserver
 //--Rev 	JRM Annand... 1st Sep 2009...BuildName, delete[]
-//--Update	K Livingston..7th Feb 2013   Support for handling EPICS buffers
+//--Rev 	K Livingston..7th Feb 2013   Support for handling EPICS buffers
+//--Update 	JRM Annand...22nd Apr 2013...Explicit Mk2 format flag
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -141,6 +142,7 @@ private:
   Bool_t fIsFinished;           // set when all sorting done
   Bool_t fIsBatch;              // running batch mode?
   Bool_t fIsLocalDAQ;           // local DAQ thread?
+  Bool_t fIsMk2Format;          // flag Mk2 data format
 
   //For EPICS buffers
   Int_t fNEpics;                        //No of different epics event types
@@ -226,7 +228,10 @@ public:
    MultiADC_t* GetMulti(Int_t i){ return fMulti[i]; } // multi-hit ADC's
    Char_t* GetFileName(){
      // ONLINE...access the current file name from the ACQU header record
-     return ((AcquExptInfo_t*)((UInt_t*)fHeaderBuff + 1))->fOutFile;
+     if( fIsMk2Format )
+       return((AcquMk2Info_t*)((UInt_t*)fHeaderBuff + 1))->fOutFile;
+     else
+       return((AcquExptInfo_t*)((UInt_t*)fHeaderBuff + 1))->fOutFile;
    }
    void* GetHeaderBuff(){ return fHeaderBuff; }
    TFile* GetTreeFile(){ return fTreeFile; }

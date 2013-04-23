@@ -10,7 +10,8 @@
 //--Rev 	JRM Annand... 1st Sep 2009 constructer no incr nelem
 //--Rev 	JRM Annand...11th Oct 2012 add time over threshold
 //--Rev 	JRM Annand....8th Nov 2012 init fA2, fT2 zero
-//--Update	JRM Annand...27th Mar 2013 Incorporate Basle mods
+//--Rev 	JRM Annand...27th Mar 2013 Incorporate Basle mods
+//--Update	JRM Annand...23rd Apr 2013 Ensure all updates incorporated
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -50,6 +51,7 @@ HitD2A_t::HitD2A_t( char* line, UInt_t nelem, TA2Detector* det )
   fADC = fTDC = fTDCtothr = NULL;
   fTDCM = NULL;
   fIsMultiADC = fIsMultiTDC = EFalse;
+  fA0 = fA1 = fA2 = fT0 = fT1 = fT2 = 0.0;
   fWalk = NULL;
   fMode = 0;
   fNMultihit = 0;

@@ -28,9 +28,10 @@ d=${0%/*} #$(dirname $0)
 # source the environment "usual" variables
 . $d/setup.sh
 
-# 1a) Build AcquRoot in acqu_core
+# 1a) Build AcquRoot & AcquMC in acqu_core
 cd $acqu_sys
-make AcquRoot || error_exit "Cannot compile acqu_core, check previous output" 
+make AcquRoot || error_exit "Cannot compile acqu_core/AcquRoot, check previous output" 
+make AcquMC || error_exit "Cannot compile acqu_core/AcquMC, check previous output" 
 
 # 1b) Build OSCAR
 cd $OSCAR

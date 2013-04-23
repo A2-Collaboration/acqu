@@ -10,7 +10,8 @@
 //--Rev 	JRM Annand... 1st Sep 2009 constructer no incr nelem
 //--Rev 	JRM Annand...11th Oct 2012 add time over threshold
 //--Rev 	JRM Annand....8th Nov 2012 init fA2, fT2 zero
-//--Update	JRM Annand...27th Mar 2013 Incorporate Basle mods
+//--Rev 	JRM Annand...27th Mar 2013 Incorporate Basle mods
+//--Update	JRM Annand...23rd Apr 2013 Ensure all updates incorporated
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -46,19 +47,19 @@ private:
   UShort_t* fTDC;                   // -> stored TDC value
   UShort_t** fTDCM;                 // -> stored multihit TDC value
   Bool_t fIsMultiTDC;               // multi-hit or not
-  Double_t fTimeLowThr;             // valis time window
+  Double_t fTimeLowThr;             // valid time window
   Double_t fTimeHighThr;
   // Time over threshold
-  Double_t fToThr0; // offset
-  Double_t fToThr1; // conversion gain
-  UShort_t* fTDCtothr; // -> TDC value
+  Double_t fToThr0;                 // offset
+  Double_t fToThr1;                 // conversion gain
+  UShort_t* fTDCtothr;              // -> TDC value
   //
   TimeWalk_t* fWalk;            // time walk correction
   Double_t* fEnergy;            // energy MeV
   Double_t* fTime;              // time ns
   Double_t** fTimeM;            // multihit time ns  
-  Double_t fTimeOvThr; 			// pulse time over threshold
-  Double_t fEnergyScale; 		// global energy scale factor
+  Double_t fTimeOvThr; 		// pulse time over threshold
+  Double_t fEnergyScale; 	// global energy scale factor
   Int_t fMode;                  // ADC, TDC, ADC+TDC
   Int_t fNMultihit;             // analysis of multiple hits in TDC
   Int_t fNhit;                  // # TDC hits

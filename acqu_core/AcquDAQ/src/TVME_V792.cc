@@ -2,7 +2,8 @@
 //--Rev 	JRM Annand
 //--Rev 	JRM Annand  11th Jan 2008  1st working version
 //--Rev 	JRM Annand..28th Apr 2009..remove TDAQmemmap.h
-//--Update	JRM Annand.. 2nd May 2011..no pedestal suppress option
+//--Rev 	JRM Annand.. 2nd May 2011..no pedestal suppress option
+//--Update	JRM Annand..13th Apr 2013..tidy up coding...fix pedestals
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -18,12 +19,38 @@
 
 ClassImp(TVME_V792)
 
-enum { ECAEN_Threshold=200, ECAEN_NoThreshold };
+enum { ECAEN_Threshold=200, ECAEN_NoThreshold, ECAEN_IPed, ECAEN_FCWind };
 static Map_t kCAENKeys[] = {
   {"Threshold:",          ECAEN_Threshold},
   {"No-threshold:",       ECAEN_NoThreshold},
+  {"Pedestal-Current:",   ECAEN_IPed},
+  {"FC-Window:",          ECAEN_FCWind},
   {NULL,                  -1}
 };
+
+// Internal register offsets
+VMEreg_t V792reg[] = {
+  {0x0000,      0x0,  'l', 511},     // data buffer
+  {0x1000,      0x0,  'w', 0},       // firmware version
+  {0x1006,      0x0,  'w', 0},       // Bit set 1 register
+  {0x1008,      0x0,  'w', 0},       // bit clear 1 register
+  {0x100e,      0x0,  'w', 0},       // Status register 1
+  {0x1010,      0x0,  'w', 0},       // Control register 1
+  {0x1022,      0x0,  'w', 0},       // Status register 2
+  {0x1024,      0x0,  'w', 0},       // Event counter low
+  {0x1026,      0x0,  'w', 0},       // Event counter high
+  {0x102e,      0x0,  'w', 0},       // Fast clear window
+  {0x1032,      0x0,  'w', 0},       // Bit set 2 register
+  {0x1034,      0x0,  'w', 0},       // bit clear 2 register
+  {0x1040,      0x0,  'w', 0},       // Event counter reset
+  {0x1060,      0x0,  'w', 0},       // Pedestal current
+  {0x1080,      0x0,  'w', 31},      // Pedestal threshold registers
+  {0x8036,      0x0,  'w', 0},       // Board ID MSB
+  {0x803a,      0x0,  'w', 0},       // Board ID
+  {0x803e,      0x0,  'w', 0},       // Board ID LSB
+  {0xffffffff,  0x0,  'l', 0},       // end of list
+};
+
 
 //-----------------------------------------------------------------------------
 TVME_V792::TVME_V792( Char_t* name, Char_t* file, FILE* log,
@@ -33,7 +60,7 @@ TVME_V792::TVME_V792( Char_t* name, Char_t* file, FILE* log,
   // Basic initialisation 
   fCtrl = NULL;                            // no control functions
   fType = EDAQ_ADC;                        // analogue to digital converter
-  fNreg = fMaxReg = EV7XX_IID2 + 1;        // Last "hard-wired" register
+  fNreg = fMaxReg = EV7XX_ID2 + 1;         // Last "hard-wired" register
   fHardID = 792;                           // ID read from hardware
   fNBits = 12;                             // 12-bit ADC
   fIsThreshold = kTRUE;                    // default suppress pedestals
@@ -66,12 +93,25 @@ void TVME_V792::SetConfig( Char_t* line, Int_t key )
       PrintError(line,"<Threshold index > # channels in module>");
       break;
     }
-    i = EV7XX_IThresholds + ithr;
-    fData[i] = thr;
+    fThresh[ithr] = thr>>1;   // divide by 2 (only 8 bits in register)
     break;
   case ECAEN_NoThreshold:
     // Turn off pedestal suppress
     fIsThreshold = kFALSE;
+    break;
+  case ECAEN_IPed:
+    if( sscanf(line,"%d",&i) != 1 ){
+      PrintError(line,"<Parse pedestal current read>");
+      break;
+    }
+    fData[EV7XX_IPed] = i;
+    break;
+  case ECAEN_FCWind:
+    if( sscanf(line,"%d",&i) != 1 ){
+      PrintError(line,"<FC window read>");
+      break;
+    }
+    fData[EV7XX_FCLRWind] = i;
     break;
   default:
     // default try commands of TDAQmodule
@@ -88,15 +128,17 @@ void TVME_V792::ReadIRQ( void** outBuffer )
   // Errors in contents of header word considered fatal
   // This version decodes a single event and then resets the data buffer
   //
-  UShort_t status1 = Read(EV7XX_IStatus1);    // read status reg. for data avail
-  if( !(status1 & 0x1) || (status1 & 0x4) ){  // is it OK
+  UShort_t status1 = Read(EV7XX_Status1);    // read status reg. for data avail
+  if( !(status1 & 0x1) || (status1 & 0x4) ){ // is there any data?
+    /*
     fprintf(fLogStream,"<V7XX QDC/TDC no data or busy, Status = %x (hex)>\n",
 	    status1);
     ErrorStore(outBuffer, EErrDataFormat);
+    */
     ResetData();
     return;
   }
-  Int_t i = EV7XX_IOutBuff;
+  Int_t i = EV7XX_Outbuff;
   UInt_t datum = Read(i++);                 // data header
   if( (datum & 0x7000000) != 0x2000000 ){   // check its a header word
     ErrorStore(outBuffer, EErrDataFormat);
@@ -131,40 +173,20 @@ void TVME_V792::PostInit( )
   // Check if ID read from internal ROM matches the expected value
   // If OK carry out default init to perform write initialisation of registers
   if( fIsInit ) return;            // Init already done?
-  //
-  if( !fReg )
-    PrintError("","<Register Initialisation not yet performed>", EErrFatal);
-  Int_t i,j;
-  // Data memory addresses
-  for( i=0; i<EV7XX_NMem; i++ ) InitReg( EV7XX_OutBuff+(4*i), 4, 0x09, i );
-  // Threshold registers
-  for( j=0; j<EV7XX_NThresh; j++ ){
-    fIsWrt[i+j] = kTRUE;              // ensure threshold datum is written
-    InitReg(EV7XX_Thresholds+(2*j),2,0x09, i+j, fData[i+j]);
-  }
-  // Status Registers
-  InitReg( EV7XX_Status1, 2, 0x09, EV7XX_IStatus1);
-  InitReg( EV7XX_Status2, 2, 0x09, EV7XX_IStatus2);
-  // Bit-set and clear registers
-  InitReg( EV7XX_BitSet1, 2, 0x09, EV7XX_IBitSet1);
-  fData[EV7XX_IBitSet1] = 0x80;                      // data memory reset
-  InitReg( EV7XX_BitClr1, 2, 0x09, EV7XX_IBitClr1); 
-  fData[EV7XX_IBitClr1] = 0x80;                      // clear data memory reset
-  InitReg( EV7XX_BitSet2, 2, 0x09, EV7XX_IBitSet2);
-  fData[EV7XX_IBitSet2] = 0x4;                       // data memory reset
-  // If no pedestal suppression set the "Low threshold enable bit
-  if( !fIsThreshold )  fData[EV7XX_IBitSet2] |= 0x10;
-  InitReg( EV7XX_BitClr2, 2, 0x09, EV7XX_IBitClr2); 
-  fData[EV7XX_IBitClr2] = 0x4;                       // clear data reset
-  // Module ID ROM
-  InitReg( EV7XX_ID0, 2, 0x09, EV7XX_IID0);
-  InitReg( EV7XX_ID1, 2, 0x09, EV7XX_IID1);
-  InitReg( EV7XX_ID2, 2, 0x09, EV7XX_IID2);
-  // Software reset
+  InitReg(V792reg);
+  fData[EV7XX_BitSet2] = 0x104;
+  // If no pedestal suppression set the "Low threshold enable bit 4
+  if( !fIsThreshold )  fData[EV7XX_BitSet2] |= 0x10;
+  fData[EV7XX_BitClr2] = 0x4;                       // clear data reset
   TVMEmodule::PostInit();
   // Software reset. This will reset many registers which potentially one
   // would want to program. The programming then has to be re-done after this
   // reset. Note that pedestal registers are not affected by a soft reset
+  for(Int_t i=0; i<EV7XX_NThresh; i++){
+    Write(EV7XX_Thresholds+i, fThresh[i]); // write pedestal threshold register
+  }
+  fData[EV7XX_BitSet1] = 0x80;             // software reset
+  fData[EV7XX_BitClr1] = 0x80;             // clear software reset
   Reset();
   ResetData();
   return;
@@ -175,13 +197,14 @@ Bool_t TVME_V792::CheckHardID( )
 {
 
   // Read module ID from internal ROM
-  Int_t id = Read(EV7XX_IID2) & 0xff;
-  id |= (Read(EV7XX_IID1) & 0xff) << 8;
-  id |= (Read(EV7XX_IID0) & 0xff) << 16;
+  Int_t id = Read(EV7XX_ID2) & 0xff;
+  id |= (Read(EV7XX_ID1) & 0xff) << 8;
+  id |= (Read(EV7XX_ID0) & 0xff) << 16;
+  fprintf(fLogStream,"V792 ID Read: %d  Expected: %d\n",id,fHardID);
+  Int_t fw = Read(EV7XX_Firmware) & 0xffff;
+  fprintf(fLogStream,"Firmware version: %x\n",fw);
   if( id == fHardID ) return kTRUE;
   else
     PrintError("","<CAEN V7** ADC/TDC hardware ID read error>",EErrFatal);
-
-
   return kFALSE;
 }

@@ -18,7 +18,12 @@
 //--Rev 	JRM Annand...30th Oct 2008   4v3 Multi hit TDC processing
 //--Rev 	JRM Annand... 3rd Dec 2008   Walk correction input
 //--Rev 	JRM Annand... 1st Sep 2009   delete[], fNelem++...HitD2A
-//--Update	JRM Annand...22nd Dec 2009   Cleanup bug fix
+//--Rev 	JRM Annand...22nd Dec 2009   Cleanup bug fix
+//--Rev 	DL Hornidge..27th Jan 2011   fixed array-termination bug
+//--Rev 	JRM Annand... 6th Jul 2011   PostInit (A.Mushkarenkov)
+//--Rev 	JRM Annand... 6th Oct 2012   DecodeBasic bug fix time hits
+//--Rev 	JRM Annand... 7th Mar 2013   DecodeBasic filter out time = -1
+//--Update	JRM Annand...23rd Apr 2013   Add GetEnergyScalePtr() (git)
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -145,9 +150,7 @@ void TA2Detector::PostInit()
   // and apply any global corrdinate shifts
 
   TA2DataManager::PostInit();
-
-  if( fIsPos )
-  {
+  if( fIsPos ){
     // Mean position (centre) of detector
     UInt_t n;
     for( n=0; n<fNelem; n++ ) fMeanPos += *fPosition[n];
@@ -157,6 +160,7 @@ void TA2Detector::PostInit()
       for( n=0; n<fNelem; n++ ) ApplyShift( n );
     }
   }
+
 }
 
 
@@ -197,12 +201,7 @@ void TA2Detector::DeleteArrays()
       delete[] fTimeORM[i];
     }
     delete[] fTimeM;
-//
-// Changed this.  DLH 27.01.2011
-//    delete[] fTimeOR;
-    delete[] fTimeORM;
-
-
+    delete[] fTimeORM;   // bug fix DLH 27.01.11
   }
   if( fShiftOp ) delete[] fShiftOp;
   if( fShiftValue ) delete[] fShiftValue;
@@ -465,9 +464,7 @@ void TA2Detector::ParseMultihit( Char_t* line )
     fTimeORM[m] = new Double_t[fNelement];
     fTimeM[m] = new Double_t[fNelement];
     fTimeORM[m][0] = (Double_t)EBufferEnd;
-//
-// Added this line DLH 27.01.11
-//
+    // Bug fix DLH 27.01.11
     for( UInt_t i=0; i<fNelement; i++ ) fTimeM[m][i] = (Double_t)ENullADC;
   }
 }

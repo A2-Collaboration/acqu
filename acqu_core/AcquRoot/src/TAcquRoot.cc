@@ -33,7 +33,8 @@
 //--Rev 	JRM Annand...12th Feb 2008...LinkDataServer() maxscaler
 //--Rev 	JRM Annand... 1st May 2008...SetDataServer()...check dataserver
 //--Rev 	JRM Annand... 1st Sep 2009...BuildName, delete[]
-//--Update	K Livingston..7th Feb 2013   Support for handling EPICS buffers
+//--Rev 	K Livingston..7th Feb 2013   Support for handling EPICS buffers
+//--Update 	JRM Annand...22nd Apr 2013...Explicit Mk2 format flag
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data
@@ -187,6 +188,7 @@ TAcquRoot::TAcquRoot( const char* name, Bool_t batch )
   fIsBatch = batch;                  // save batch flag
   if( !batch ) SetLogFile( "AcquRoot.log" );
   fIsLocalDAQ = kFALSE;              // default no local DAQ
+  fIsMk2Format = kFALSE;
 
   fNEpics = 0;                       //No of different epics "modules"
 
@@ -252,6 +254,8 @@ void TAcquRoot::LinkDataServer( )
   fRecLen = (ds->GetDataSource(0))->GetInRecLen();  // data record length
 
   TA2DataFormat* df = ds->GetDataFormat(0);
+  if( df->InheritsFrom("TA2Mk2Format") )
+    fIsMk2Format = kTRUE;
   //  Wait until the data server has started up
   while( !ds->IsHeaderInit() ) usleep(10);
   // Now pull the ACQU info out of the header

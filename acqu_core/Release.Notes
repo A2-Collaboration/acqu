@@ -1186,6 +1186,9 @@ TA2Analysis
 TA2Detector
 	06/10/12 DecodeBasic bug fix time hits
 	07/03/13 DecodeBasic bug fix time hits filter out time = -1
+	23/04/13 Add GetEnergyScalePtr() (git)
+TA2Particle
+	23/04/13 New MWPC stuff has been added...when unknown
 TA2GenericDetector
 	10/10/12 Add stuff for time-over-threshold
 TA2LongScint
@@ -1194,6 +1197,7 @@ HitD2A_t
 	11/10/12 Add stuff for time-over-threshold
 	 8/11/12 Initialise fA2, fT2
 	27/03/13 Basle mods...extra getters and setters
+	23/04/13 Double check all fixes incorporated
 TA2DataServer
 	21/11/12 Mk2 format data merging
 	01/03/13 Debuf Mk2 format data merging
@@ -1208,6 +1212,7 @@ TA2Mk2Format
 	04/03/13 EpicsHeaderInfo_t change "time_t time" to "UInt_t time"
 		 sizeof time_t 32/64 bit hardware dependent
 	06/03/13 Fix the TAPS (foreign module) module setup in ConstructHeader()
+	18/04/13 Fix Updateheader()
 TA2TAPSMk2Format
 	06/03/13 New class for Mk2 data
 TA2RingBuffer
@@ -1220,6 +1225,7 @@ TA2DataManager
 	07/02/13 Stuff for handling EPICS information
 TAcquRoot
 	07/02/13 Stuff to pull out EPICS info from the data stream
+	22/04/13 Explicit flag for Mk2 format. Used in GetFileName()
 ------------------------------------------------------------------------------
 AcquMC
 ------------------------------------------------------------------------------
@@ -1301,5 +1307,7 @@ TVirtualModule
 TVME_V874
 	09/01/13 New class to service the CAEN V874B module which reads out
 		 the BaF2 counters of TAPS
+TVME_V792
+	13/04/13 Clean up register initialisation. Debug pedestal suppression
 TEPICSmodule
 	07/02/13 Ken Livingstons new virtual module for EPICS communication

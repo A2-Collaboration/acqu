@@ -1,8 +1,8 @@
 //--Author	S Schumann   29th Oct 2008
 //--Rev         E J Downie   16th mar 2009 combine SS & JRMA updates
-//--Update      JRM Annand   23rd Apr 2009 call TObj constructor
-//--Update      S Schumann   19th Jun 2009 add Reset() function
-
+//--Rev         JRM Annand   23rd Apr 2009 call TObj constructor
+//--Rev         S Schumann   19th Jun 2009 add Reset() function
+//--Update      JRM Annand   23rd Apr 2013 MWPC stuff when? not by JRMA
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data
