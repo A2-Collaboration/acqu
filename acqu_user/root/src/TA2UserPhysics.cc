@@ -15,7 +15,7 @@
 #include "TA2Analysis.h"
 #include "TA2Calorimeter.h"
 #include "TAcquFile.h"
-#include "TA2KensTagger.h"
+#include "TA2Tagger.h"
 
 ClassImp(TA2UserPhysics)
 
@@ -51,7 +51,7 @@ void TA2UserPhysics::PostInit()
   fMinv = new Double_t[fNbeam+1];
   TA2Physics::PostInit();
   fCB = (TA2Calorimeter*)((TA2Analysis*)fParent)->GetChild("CB");
-  fTAGG = (TA2KensTagger*)((TA2Analysis*)fParent)->GetChild("TAGG");
+  fTAGG = (TA2Tagger*)((TA2Analysis*)fParent)->GetChild("TAGG");
   fTAPS = (TA2Calorimeter*)((TA2Analysis*)fParent)->GetChild("TAPS");
 
   // Anythings else here

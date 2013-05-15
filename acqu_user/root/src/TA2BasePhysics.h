@@ -5,7 +5,6 @@
 #include "TA2Analysis.h"
 #include "TA2Physics.h"
 #include "TA2Particle.h"
-#include "TA2KensTagger.h"
 #include "TA2Tagger.h"
 #include "TA2CrystalBall.h"
 #include "TA2CB.h"
@@ -32,8 +31,7 @@ class TA2BasePhysics : public TA2Physics
     Char_t OutputFilename[256];
 
     //Apparati and detectors
-    TA2KensTagger* Tagger1;   //Tagger apparatus (variant 1: TA2KensTagger)
-    TA2Tagger* Tagger2;       //Tagger apparatus (variant 2: TA2Tagger)
+    TA2Tagger* Tagger;        //Tagger apparatus
     TA2CB* CB1;               //CB apparatus (NaI, PID, MWPC; variant 1: TA2CB)
     TA2CrystalBall* CB2;      //CB apparatus (NaI, PID, MWPC; variant 2: TA2CrystalBall)
     TA2CentralApparatus* CB3; //CB apparatus (NaI, PID, MWPC; variant 2: TA2CentralApparatus)

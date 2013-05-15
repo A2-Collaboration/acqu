@@ -16,12 +16,10 @@
 
 #include "TA2UserAnalysis.h"
 #include "TA2Calorimeter.h"
-#include "TA2KensTagger.h"
 #include "TA2Tagger.h"
 #include "TA2CosmicCal.h"
 #include "TA2CrystalBall.h"
 #include "TA2CB.h"
-#include "TA2TAPS.h"
 #include "TA2Taps.h"
 #include "TA2CentralApparatus.h"
 #include "TA2GenericApp.h"
@@ -58,12 +56,10 @@ static const Map_t kKnownChild[] =
 {
   //Apparati
   {"TA2Calorimeter",      EA2Calorimeter},
-  {"TA2KensTagger",       EA2KensTagger},
   {"TA2Tagger",           EA2Tagger},
   {"TA2CosmicCal",        EA2CosmicCal},
   {"TA2CrystalBall",      EA2CrystalBall},
   {"TA2CB",               EA2CB},
-  {"TA2TAPS",             EA2TAPS},
   {"TA2Taps",             EA2Taps},
   {"TA2CentralApparatus", EA2CentralApparatus},
   {"TA2GenericApp",       EA2GenericApp},  
@@ -107,9 +103,6 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
   switch(a)
   {
    //Apparatus stuff:
-   case EA2KensTagger:
-    //Ken's tagger
-    return new TA2KensTagger(name, this);
    case EA2Tagger:
     //Standard tagger
     return new TA2Tagger(name, this);
@@ -125,9 +118,6 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2CB:
     //Other modded CB stuff
     return new TA2CB(name, this);
-   case EA2TAPS:
-    //Modded TAPS stuff (Ralf)
-    return new TA2TAPS(name, this);
    case EA2Taps:
     //Henning's TAPS class
     return new TA2Taps(name, this);

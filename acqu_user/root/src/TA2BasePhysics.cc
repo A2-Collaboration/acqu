@@ -60,8 +60,7 @@ TA2BasePhysics::TA2BasePhysics(const char* Name, TA2Analysis* Analysis) : TA2Phy
   //By default, produce no TA2Particle filled ROOT files
   bDoROOT = false;
 
-  Tagger1 = NULL;
-  Tagger2 = NULL;
+  Tagger = NULL;
   CB1 = NULL;
   CB2 = NULL;
   CB3 = NULL;
@@ -212,22 +211,12 @@ void TA2BasePhysics::PostInit()
 
   //Find pointers to apparati
   nChilds = ((TList*)(((TA2Analysis*)fParent)->GetChildren()))->GetEntries(); //Get number of TA2Analysis children (i.e. apparati)
-  //Search TA2Analysis for a TA2KensTagger instance
+  //Search TA2Analysis for a TA2Tagger instance
   for(Int_t i=0; i<nChilds; i++)
   {
-    Tagger1 = (TA2KensTagger*)((TA2Analysis*)fParent)->GetChildType("TA2KensTagger", i);
-    if(Tagger1) break;
+    Tagger = (TA2Tagger*)((TA2Analysis*)fParent)->GetChildType("TA2Tagger", i);
+    if(Tagger) break;
   }
-  //If no TA2KensTagger instance found, search for a TA2Tagger instance
-  //CAUTION: TA2Tagger is base class of TA2KensTagger, so any instance of
-  //         TA2KensTagger will also be found here. So, we may only search
-  //         for a 'real' TA2Tagger if no previous TA2KensTagger was found!
-  if(!Tagger1)
-    for(Int_t i=0; i<nChilds; i++)
-    {
-      Tagger2 = (TA2Tagger*)((TA2Analysis*)fParent)->GetChildType("TA2Tagger", i);
-      if(Tagger2) break;
-    }
     
   //Search TA2Analysis for a TA2CB instance
   for(Int_t i=0; i<nChilds; i++)
@@ -296,8 +285,7 @@ void TA2BasePhysics::PostInit()
     }
   }
 
-  if(Tagger1) printf("TA2BasePhysics found TA2KensTagger instance\n");
-  if(Tagger2) printf("TA2BasePhysics found TA2Tagger instance\n");
+  if(Tagger)  printf("TA2BasePhysics found TA2Tagger instance\n");
   if(CB1)     printf("TA2BasePhysics found TA2CB instance\n");
   if(CB2)     printf("TA2BasePhysics found TA2CrystalBall instance\n");
   if(CB3)     printf("TA2BasePhysics found TA2CentralApparatus instance\n");
@@ -332,12 +320,9 @@ void TA2BasePhysics::Reconstruct()
     Event.SetL2Pattern(L2Pattern);
     
     //Pick up particles from whatever tagger class is used
-    if(Tagger1)
-      for(Int_t nTagger=0; nTagger<Tagger1->GetNParticles(); nTagger++)
-        Event.AddBeam(Tagger1->GetParticles(nTagger));
-    else if(Tagger2)
-      for(Int_t nTagger=0; nTagger<Tagger2->GetNparticle(); nTagger++)
-        Event.AddBeam(Tagger2->GetParticles(nTagger));
+    if(Tagger)
+      for(Int_t nTagger=0; nTagger<Tagger->GetNParticles(); nTagger++)
+        Event.AddBeam(Tagger->GetParticles(nTagger));
       
     //Pick up particles from whatever CB class is used
     if(CB1)
@@ -437,16 +422,12 @@ void TA2BasePhysics::Reconstruct()
     }
 
   //Get Tagger information (TA2Particle for each tagged beam photon)
-  if(Tagger1) //Collect photons from Tagger, if corresponding class (TA2KensTagger) is available...
+  if(Tagger)
   {
-    Tagged = Tagger1->GetParticles();
-    nTagged = Tagger1->GetNParticles();
+	Tagged = Tagger->GetParticles();
+	nTagged = Tagger->GetNParticles();
   }
-  else if(Tagger2) //...otherwise collect particles from Tagger, if  corresponding class (TA2Tagger) is available
-  {
-    Tagged = Tagger2->GetParticles();
-    nTagged = Tagger2->GetNparticle(); //Up to now, TA2Tagger does not implement GetNParticles(), so use GetNparticle() from TA2Apparatus
-  }
+  
 }
 
 //-----------------------------------------------------------------------------

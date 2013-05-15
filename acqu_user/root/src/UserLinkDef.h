@@ -43,18 +43,15 @@
 // Apparatus classes
 #pragma link C++ class TA2GenericApp+;
 #pragma link C++ class TA2Calorimeter+;
-#pragma link C++ class TA2KensTagger+;
 #pragma link C++ class TA2CosmicCal+;
 #pragma link C++ class TA2CrystalBall+;
 #pragma link C++ class TA2CB+;
-#pragma link C++ class TA2TAPS+;
 #pragma link C++ class TA2Taps+;
 #pragma link C++ class TA2CentralApparatus+;
 // Detector classes
 #pragma link C++ class TA2PlasticPID+;
 #pragma link C++ class TA2PlasticVETO+;
 #pragma link C++ class TA2CalArray+;
-#pragma link C++ class TA2KensLadder+;
 #pragma link C++ class TA2TAPS_BaF2+;
 #pragma link C++ class TA2TAPS_Veto+;
 #pragma link C++ class TA2CylMWPC+;

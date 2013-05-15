@@ -87,7 +87,6 @@ protected:
   Int_t    fNormChannel;	// Channel to use for normalisation
   Double_t fNormEnergy;		// Photon energy for norm of  "enhancement"
   Double_t *fEnergyCalib;	// Photon energy map
-  //  Double_t fBeamEnergy;		// Photon beam energy
   UInt_t *fScalerCurr;	        // ptr to ladder current scaler buffer
   Char_t* fRefFileName;	        // File name for reference tagger scaler dump
   Double_t *fIncSpectrum;	// Array to hold Inc ref. spectrum
@@ -199,8 +198,7 @@ public:
   virtual Bool_t IsHelicityAmbiguous(){ return fIsHelicityAmbiguous; }
   TA2Particle* GetParticles(){ return fParticles; }
   TA2Particle GetParticles(Int_t index){ return fParticles[index]; }
-  //  Int_t GetNparticles(){ return fNparticle; }
-  //  Int_t GetNParticles(){ return fNparticle; }
+  //	Int_t GetNParticles(){ return fNparticle; }
   void SetParticleInfo( Int_t );
 
   Bool_t IsLinPol(){ return fIsLinPol; }
