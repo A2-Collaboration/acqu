@@ -321,20 +321,20 @@ void TA2BasePhysics::Reconstruct()
     
     //Pick up particles from whatever tagger class is used
     if(Tagger)
-      for(Int_t nTagger=0; nTagger<Tagger->GetNParticles(); nTagger++)
+      for(Int_t nTagger=0; nTagger<Tagger->GetNParticle(); nTagger++)
         Event.AddBeam(Tagger->GetParticles(nTagger));
       
     //Pick up particles from whatever CB class is used
     if(CB1)
-      for(Int_t nCB=0; nCB<CB1->GetNParticles(); nCB++)
+      for(Int_t nCB=0; nCB<CB1->GetNParticle(); nCB++)
         Event.AddParticle(CB1->GetParticles(nCB));
     else if(CB2)
-      for(Int_t nCB=0; nCB<CB2->GetNParticles(); nCB++)
+      for(Int_t nCB=0; nCB<CB2->GetNParticle(); nCB++)
         Event.AddParticle(CB2->GetParticles(nCB));
 
     //Pick up particles from TAPS class
     if(TAPS)
-      for(UInt_t nTAPS=0; nTAPS<TAPS->GetNParticles(); nTAPS++)
+      for(Int_t nTAPS=0; nTAPS<TAPS->GetNParticle(); nTAPS++)
         Event.AddParticle(TAPS->GetParticles(nTAPS));
       
     EventTree->Fill();
@@ -343,7 +343,7 @@ void TA2BasePhysics::Reconstruct()
 
   //Collect detected photons, protons and pi+ from CB
   if(CB1) //Collect particles in CB, if corresponding class (TA2CB) is available...
-    for(Int_t nCB=0; nCB<CB1->GetNParticles(); nCB++)
+    for(Int_t nCB=0; nCB<CB1->GetNParticle(); nCB++)
     {
       if(CB1->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
       {
@@ -362,7 +362,7 @@ void TA2BasePhysics::Reconstruct()
       }
     }
   else if(CB2) //...otherwise collect particles in CB, if corresponding class (TA2CrystalBall) is available
-    for(Int_t nCB=0; nCB<CB2->GetNParticles(); nCB++)
+    for(Int_t nCB=0; nCB<CB2->GetNParticle(); nCB++)
     {
       if(CB2->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
       {
@@ -381,7 +381,7 @@ void TA2BasePhysics::Reconstruct()
       }
     }
   else if(CB3) //...otherwise collect particles in CB, if corresponding class (TA2CentralApparatus) is available
-    for(Int_t nCB=0; nCB<CB3->GetNParticles(); nCB++)
+    for(Int_t nCB=0; nCB<CB3->GetNParticle(); nCB++)
     {
       if(CB3->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
       {
@@ -402,7 +402,7 @@ void TA2BasePhysics::Reconstruct()
 
   //Collect detected photons, protons and pi+ from TAPS
   if(TAPS) //Collect particles in TAPS, if available
-    for(UInt_t nTAPS=0; nTAPS<TAPS->GetNParticles(); nTAPS++)
+    for(Int_t nTAPS=0; nTAPS<TAPS->GetNParticle(); nTAPS++)
     {
       if(TAPS->GetParticles(nTAPS).GetParticleID()==kGamma) //If it is a photon in TAPS...
       {
@@ -425,7 +425,7 @@ void TA2BasePhysics::Reconstruct()
   if(Tagger)
   {
 	Tagged = Tagger->GetParticles();
-	nTagged = Tagger->GetNParticles();
+	nTagged = Tagger->GetNParticle();
   }
   
 }

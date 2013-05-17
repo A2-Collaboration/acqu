@@ -91,8 +91,8 @@ void TA2UserPhysics::Reconstruct()
 {
   // Use 4-momenta and other info from apparati to reconstruct
   // reaction process
-  Int_t ntagg = fTAGG->GetNparticle();
-  Int_t ncb = fCB->GetNparticle();
+  Int_t ntagg = fTAGG->GetNParticle();
+  Int_t ncb = fCB->GetNParticle();
   fP4beam = fTAGG->GetP4();
   TLorentzVector* p4cb = fCB->GetP4();
   TLorentzVector* p4taps;
@@ -101,7 +101,7 @@ void TA2UserPhysics::Reconstruct()
   Int_t i;
   if( ncb == 1 ){
     if( fTAPS ){
-      if( fTAPS->GetNparticle() == 1 ){
+      if( fTAPS->GetNParticle() == 1 ){
 	p4taps = fTAPS->GetP4();
 	p4Dtot = p4taps[0] + p4cb[0];
 	fCBTAPS2PhotonMinv = p4Dtot.M();

@@ -190,8 +190,6 @@ public:
   virtual void	 AddParticleInfo(const TA2CentralTrack&);
   TA2Particle* GetParticles() { return fParticleInfo; }
   TA2Particle GetParticles(Int_t index){ return fParticleInfo[index]; }
-  Int_t GetNparticles(){ return fNparticle; }
-  Int_t GetNParticles(){ return fNparticle; }
 
 //
 public:

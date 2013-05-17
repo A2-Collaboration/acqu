@@ -198,7 +198,6 @@ public:
   virtual Bool_t IsHelicityAmbiguous(){ return fIsHelicityAmbiguous; }
   TA2Particle* GetParticles(){ return fParticles; }
   TA2Particle GetParticles(Int_t index){ return fParticles[index]; }
-  //	Int_t GetNParticles(){ return fNparticle; }
   void SetParticleInfo( Int_t );
 
   Bool_t IsLinPol(){ return fIsLinPol; }

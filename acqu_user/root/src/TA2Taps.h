@@ -152,8 +152,6 @@ public:
 
   TA2Particle* GetParticles(){ return particles; }                    // return array with all particles
   TA2Particle GetParticles(Int_t index){ return particles[index]; } // return a single particle
-  UInt_t GetNparticles(){ return fNparticle; }  // I don't understand why you need 2 functions of this type for the standard physics class ! ??? But, ok, i don't care!
-  UInt_t GetNParticles(){ return fNparticle; }  // I don't understand why you need 2 functions of this type for the standard physics class ! ??? But, ok, i don't care!
 
   TA2ClusterDetector* GetCal(){ return fBaF2; }
   TA2Detector* GetVeto(){ return fVeto; }

@@ -84,7 +84,6 @@ public:
   Double_t* GetMinv(){ return fMinv; }          // individual invariant masses
   Double_t GetEtot(){ return fEtot; }           // total energy
   Int_t GetMaxParticle(){ return fMaxParticle; }// max # particles
-  Int_t GetNparticle(){ return fNparticle; }    // # particles detected
   Int_t GetNParticle(){ return fNparticle; }    // # particles detected (allias)
   TA2Cut** GetPCut(){ return fPCut; }           // array particle-ID cut ptrs
   TA2Cut* GetPCut(Int_t i){ return fPCut[i]; }  // ith particle-ID cut

@@ -191,7 +191,7 @@ void TA2GenericPhysics::Reconstruct()
   // Get 4-momentum info from all apparati
   // and sort into particle type
   for( i=0; i<fNGenApp; i++ ){                // loop over apparati
-    Int_t n = fGenApp[i]->GetNparticle();
+    Int_t n = fGenApp[i]->GetNParticle();
     for( j=0; j<n; j++ ){                     // loop over apparati
       pInfo = fGenAppInfo[i] + j;
       fP4tot += pInfo->GetP4();

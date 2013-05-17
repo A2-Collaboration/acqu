@@ -83,8 +83,6 @@ class TA2CB : public TA2Apparatus
 
   TA2Particle* GetParticles() { return fParticles; }
   TA2Particle GetParticles(Int_t index){ return fParticles[index]; }
-  Int_t GetNparticles(){ return fNparticle; }
-  Int_t GetNParticles(){ return fNparticle; }
 
   Int_t* GetType(){ return fType; }       //Field for numerical particle-ID. Correlated with GetP4()!
   Int_t* GetDet(){ return fDet; }         //Bit field of used detector information. Correlated with GetP4()!
