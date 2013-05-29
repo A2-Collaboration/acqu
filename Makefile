@@ -19,9 +19,19 @@ all: check acqu_core calib worker acqu_user
 	@echo "#########################################################################"
 	@echo
 	@echo "SUCCESSFULLY COMPILED"
-	@echo "You might want to add 'source $(acqu_dir)/setup.sh' to your ~/.bashrc"
+	@echo
+	@echo "If you're using bash, you may want to add:"
+	@echo "'source $(acqu_dir)/setup.sh' to your ~/.bashrc file"
+	@echo
+	@echo "Or, if you're using tcsh, you may want to add:" 
+	@echo "'source $(acqu_dir)/setup.csh' to your ~/.tcshrc file"
+	@echo
 	@echo "This automatically sets the appropriate environment variables to run acqu"
 	@echo
+	@echo "#########################################################################"
+	@echo
+	@echo 
+
 
 check:
 #	check for ncurses
