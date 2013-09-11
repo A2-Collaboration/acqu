@@ -36,7 +36,7 @@
 
 void CrossSection(){
 
-	Char_t* filename = Form("/work0/cristina/TA2Pi0Compton2012.root");
+	Char_t* filename = Form("TA2Pi0Compton2012.root");
 	Fill3DHist(filename, -0.025);
 	data = (TH3D*) h2->Clone();
 

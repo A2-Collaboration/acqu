@@ -23,9 +23,26 @@ Stream-Spec:	File	Mk1	0	32768	32	0	400
 #
 ##############################################################################
 # Specify files
+File-Name:     	Compton_354.dat 0 0
+File-Name:     	Compton_355.dat 0 0
+File-Name:     	Compton_356.dat 0 0
+File-Name:     	Compton_357.dat 0 0
+File-Name:     	Compton_358.dat 0 0
+File-Name:     	Compton_359.dat 0 0
+File-Name:     	Compton_360.dat 0 0
+File-Name:     	Compton_361.dat 0 0
 File-Name:     	Compton_362.dat 0 0
 File-Name:     	Compton_363.dat 0 0
 File-Name:     	Compton_364.dat 0 0
 File-Name:     	Compton_365.dat 0 0
+File-Name:     	Compton_366.dat 0 0
+File-Name:     	Compton_367.dat 0 0
+File-Name:     	Compton_368.dat 0 0
+File-Name:     	Compton_369.dat 0 0
+File-Name:     	Compton_370.dat 0 0
+File-Name:     	Compton_371.dat 0 0
+File-Name:     	Compton_372.dat 0 0
+File-Name:     	Compton_373.dat 0 0
+File-Name:     	Compton_374.dat 0 0
 #
 ## END
