@@ -1,0 +1,2 @@
+# Ignore root files, this directory is standard root file outout directory
+*.root

@@ -53,7 +53,7 @@ Initialise:
 Period:  10000         root/macros/PeriodMacro.C   PeriodMacro()
 #
 #        Macro file name  		Macro funcion
-Finish:	 root/macros/FinishTree.C	FinishTree("ARHistograms_MC.root")
+Finish:	 root/macros/FinishTree.C	FinishTree("output/ARHistograms_MC.root")
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

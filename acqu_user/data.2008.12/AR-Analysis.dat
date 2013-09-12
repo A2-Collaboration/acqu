@@ -63,7 +63,8 @@ Initialise:
 Period:	10000	root/macros/PeriodMacro.C	PeriodMacro()
 ##
 ## Finish...when all input data files processed
-Finish:	root/macros/FinishTree.C	FinishTree("ARHistograms_2008.root")
+#Finish: root/macros/FinishTree.C	FinishTree("ARHistograms_2008.root")
+Finish:	root/macros/FinishTree.C	FinishTreeWorker()
 ##
 ## Histogram ALL defined single value ADC's
 ## Display blocks of scalers

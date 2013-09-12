@@ -72,7 +72,8 @@ Period:	10000	root/macros/PeriodMacro.C	PeriodMacro()
 #Period: 1000	linPolMacro.C	linPolMacro()
 ##
 ## Finish...when all input data files processed
-Finish:		root/macros/FinishTree.C	FinishTree("PARA.root")
+#Finish: root/macros/FinishTree.C	FinishTree("ARHistograms_2012.root")
+Finish:	 root/macros/FinishTree.C	FinishTreeWorker()
 ##
 ## Histogram ALL defined single value ADC's
 #

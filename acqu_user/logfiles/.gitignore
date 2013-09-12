@@ -1,0 +1,2 @@
+# Ignore logfiles, this directory is required for batchmode output
+*.log
