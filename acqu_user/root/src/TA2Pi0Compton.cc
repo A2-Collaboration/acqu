@@ -107,7 +107,7 @@ TA2Pi0Compton::TA2Pi0Compton( const char* name, TA2Analysis* analysis )
 	fPi0PhiPrompt		= NULL;
 	fPi0PhiRandom		= NULL;
 
-	// Trigger Variables
+	// System Variables
 	fCBESum			= 0.0;
 	fNaINCluster		= 0;
 	fBaF2NCluster		= 0;
@@ -191,8 +191,7 @@ void TA2Pi0Compton::SetConfig(Char_t* line, Int_t key)
 				}
 				else {
 					Char_t namehold[256]; Int_t RUN; 
-					Char_t* fInputName = gAR->GetFileName();
-					sscanf( fInputName, "scratch/%[^_]_%d.dat\n", namehold, &RUN);
+					sscanf( gAR->GetFileName(), "scratch/%[^_]_%d.dat\n", namehold, &RUN);
 					sscanf( fTreeFileNameIn, "%[^.].root",fTreeFileNameIn);
 					fTreeFileNameOut = Form("%s_%s_%d.root",fTreeFileNameIn,namehold,RUN);
 				}

@@ -90,8 +90,9 @@ Display: Scaler 182 191
 Display: SumScaler 182 191
 Display: Scaler 192 203
 Display: SumScaler 192 203
-Display: Scaler 204 555
-Display: SumScaler 204 555
+Display: Scaler 268 619
+Display: SumScaler 268 619
+Display: SumScaler 0 
 ##
 ## Time dependence of individual scaler rates and ratios
 Display: Rate	0	500

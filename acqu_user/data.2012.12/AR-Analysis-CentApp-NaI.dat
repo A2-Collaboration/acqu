@@ -2220,9 +2220,9 @@ Initialise:
 ##
 ## NaI hit frequency distribution, 720 elements, range 0 -- 720
 ##              Name            ch/low/high     imin/imax
-#Display: 1D	Hits		720 0 720
-#Display: 1D	ADCHits		720 0 720
-#Display: 1D	TDCHits		720 0 720
+Display: 1D	Hits		720 0 720
+Display: 1D	ADCHits		720 0 720
+Display: 1D	TDCHits		720 0 720
 ##
 ## Total Energy deposited in the array, 1000 channels, range 0 -- 200 MeV
 ##              Name            ch/low/high     imin/imax

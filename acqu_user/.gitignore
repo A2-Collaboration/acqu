@@ -7,6 +7,7 @@
 /output
 /batch
 /Thread*.txt
+Thread*.dat
 *.log
 /result
 /evgen/

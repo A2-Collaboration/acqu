@@ -42,8 +42,8 @@ TA2MyPhysics::TA2MyPhysics(const char* name, TA2Analysis* analysis)
     fMCVertX = 0;
     
     fRunNumber          = 0;
-    if (!fIsMC) sscanf(gAR->GetFileName(), "scratch/Compton_%d.dat", &fRunNumber);
-    //printf("name: %s Run: %d\n",gAR->GetFileName(), fRunNumber);
+    Char_t namehold[256]; // This allows the file name to be of any input form "whatever_RunNumber.dat"
+    if (!fIsMC) sscanf(gAR->GetFileName(), "scratch/%[^_]_%d.dat\n", namehold, &fRunNumber);
     fEventCounter       = 0;
     fEventOffset        = 0;
     fSaveEvent          = 0;
