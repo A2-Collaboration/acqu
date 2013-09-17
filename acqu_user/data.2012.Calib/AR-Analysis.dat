@@ -52,14 +52,14 @@ BitPattern:  AR-Analysis-TriggerPat.dat
 ##              Name            Class           	Setup file
 Apparatus:      TAGG            TA2Tagger   		AR-Analysis-Tagger.dat
 Apparatus:      CB              TA2MyCrystalBall	AR-Analysis-CB.dat
-Apparatus:      TAPS            TA2MyTAPS	  		AR-Analysis-TAPS.dat
+Apparatus:      TAPS            TA2MyTAPS	  	AR-Analysis-TAPS.dat
 ##
 ## Turn on apparatus-level reconstruction
 Reconstruct-Analysis:
 ##
 ## Specify physics analysis
-##			Name	Class		Config File
-Physics-Analysis:	CaLib		TA2MyCaLib	AR-MyCalib.dat
+##			Name	Class			Config File
+Physics-Analysis:	CaLib	TA2MyCaLib		AR-MyCalib.dat
 ##
 ## Do some post initialisation...usually necessary
 Initialise:
@@ -72,7 +72,6 @@ Period:	10000	root/macros/PeriodMacro.C	PeriodMacro()
 #Period: 1000	linPolMacro.C	linPolMacro()
 ##
 ## Finish...when all input data files processed
-#Finish:		root/macros/FinishTree.C	FinishTree("PARA.root")
 Finish:		root/macros/MyFinishMacro.C		MyFinishMacro()
 ##
 ## Histogram ALL defined single value ADC's

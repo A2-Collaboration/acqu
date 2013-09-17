@@ -30,16 +30,15 @@ void AddBeamtime()
     const Char_t calibName[]        = "Compton_2012_12";
     const Char_t calibDesc[]        = "Standard calibration for polarized Compton Dec 2012 beamtime";
 
-    const Char_t calibFileTagger[]  = "/home/cristina/acqu/acqu_user/data/AR-Analysis-Tagger-FP883.dat";
-    const Char_t calibFileCB[]      = "/home/cristina/acqu/acqu_user/data/AR-Analysis-CB-NaI.dat";
-    const Char_t calibFileTAPS[]    = "/home/cristina/acqu/acqu_user/data/AR-Analysis-TAPS-BaF2.dat";
-    const Char_t calibFilePID[]     = "/home/cristina/acqu/acqu_user/data/AR-Analysis-CB-PID.dat";
-    const Char_t calibFileVeto[]    = "/home/cristina/acqu/acqu_user/data/AR-Analysis-TAPS-Veto.dat";
+    const Char_t calibFileTagger[]  = "~/acqu/acqu_user/data/AR-Analysis-Tagger-FP883.dat";
+    const Char_t calibFileCB[]      = "~/acqu/acqu_user/data/AR-Analysis-CB-NaI.dat";
+    const Char_t calibFileTAPS[]    = "~/acqu/acqu_user/data/AR-Analysis-TAPS-BaF2.dat";
+    const Char_t calibFilePID[]     = "~/acqu/acqu_user/data/AR-Analysis-CB-PID.dat";
+    const Char_t calibFileVeto[]    = "~/acqu/acqu_user/data/AR-Analysis-TAPS-Veto.dat";
 
 
-	// Set file System
-	if(fileSystemMk2)
-		TCMySQLManager::GetManager()->SetMk2();
+    // Set file System
+    if(fileSystemMk2) TCMySQLManager::GetManager()->SetMk2();
 	
     // add raw files to the database
     TCMySQLManager::GetManager()->AddRunFiles(rawfilePath, target);

@@ -7,7 +7,7 @@
 ########################################################################
 ##
 ## Batch mode operation...redirect output directory for log files etc.
-BatchDir: /home/cristina/acqu/acqu_user/logfiles/
+BatchDir: ./logfiles/
 ##
 ##        Tree Name     	# branches	Process Type
 Name:     RawEvent_AR_Save	3		Raw
