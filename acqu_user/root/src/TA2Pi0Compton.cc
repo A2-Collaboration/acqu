@@ -107,7 +107,7 @@ TA2Pi0Compton::TA2Pi0Compton( const char* name, TA2Analysis* analysis )
 	fPi0PhiPrompt		= NULL;
 	fPi0PhiRandom		= NULL;
 
-	// Trigger Variables
+	// System Variables
 	fCBESum			= 0.0;
 	fNaINCluster		= 0;
 	fBaF2NCluster		= 0;
@@ -175,16 +175,28 @@ void TA2Pi0Compton::SetConfig(Char_t* line, Int_t key)
 				PrintError( line, "<Error: Tree files not turned on/off correctly>");
 				return;
 			}
-			if(fProduceTreeFile == 1) printf("\n\nPhysics tree file enabled\n");
+			if(fProduceTreeFile == 1) { printf("\n\nPhysics tree file enabled\n"); }
                         else printf("\n\nPhysics tree file disabled\n");
 		break;
 		case ETreeFileName:
 			//  Tree File Name
-			if( sscanf( line, "%s\n", fTreeFileName) != 1){
+			if( sscanf( line, "%s\n", fTreeFileNameIn) != 1){
 				PrintError( line, "<Error: Tree file name not set correctly>");
 				return;
 			}
-			else printf("Physics class tree file will be saved to: %s\n\n", fTreeFileName);
+			else {
+
+				if (gAR->GetProcessType() == EMCProcess) {
+					fTreeFileNameOut = fTreeFileNameIn;
+				}
+				else {
+					Char_t namehold[256]; Int_t RUN; 
+					sscanf( gAR->GetFileName(), "scratch/%[^_]_%d.dat\n", namehold, &RUN);
+					sscanf( fTreeFileNameIn, "%[^.].root",fTreeFileNameIn);
+					fTreeFileNameOut = Form("%s_%s_%d.root",fTreeFileNameIn,namehold,RUN);
+				}
+				printf("Physics class tree file will be saved to: %s\n\n", fTreeFileNameOut);
+			}
 		break;
 		default:
 		// default main apparatus SetConfig()
@@ -310,7 +322,7 @@ void TA2Pi0Compton::PostInit()
 
 	if(fProduceTreeFile == 1){
 
-	fFile = new TFile(fTreeFileName, "RECREATE", "Physics", 3);
+	fFile = new TFile(fTreeFileNameOut, "RECREATE", "Physics", 3);
 	fTree = new TTree("Pi0ComptonTree", "Compton and Pi0 Kinematics");
 	fTree->Branch("NPhotTemp",	&fNPhotTemp, 	"NPhotTemp/I");
 	fTree->Branch("NPhoton",	&fNPhoton, 	"NPhoton/I");

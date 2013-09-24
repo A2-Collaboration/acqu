@@ -25,7 +25,11 @@ Pi0-Invariant-Mass-Cuts: 125 145
 Produce-Tree-File: 1
 #
 # Tree file name if Produce-Tree-File is on
-Tree-File-Name: TA2Pi0Compton2012.root
+# NOTE: File name will be automatically appended with input file name 
+# (ex. "Tree-File-Name: output/PhysTree.root" will output a file called
+# PhysTree_Compton_100.root, in output directory, for input run Compton_100.root)
+# This is necessary for batch mode running...
+Tree-File-Name: output/PhysTree.root
 #
 ############################################################
 Initialise:

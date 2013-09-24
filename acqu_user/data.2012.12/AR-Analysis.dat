@@ -72,7 +72,8 @@ Period:	10000	root/macros/PeriodMacro.C	PeriodMacro()
 #Period: 1000	linPolMacro.C	linPolMacro()
 ##
 ## Finish...when all input data files processed
-Finish:		root/macros/FinishTree.C	FinishTree("ARHistograms_2012.root")
+#Finish: root/macros/FinishTree.C	FinishTree("ARHistograms_2012.root")
+Finish:	 root/macros/FinishTree.C	FinishTreeWorker()
 ##
 ## Histogram ALL defined single value ADC's
 #
@@ -89,8 +90,9 @@ Display: Scaler 182 191
 Display: SumScaler 182 191
 Display: Scaler 192 203
 Display: SumScaler 192 203
-Display: Scaler 204 555
-Display: SumScaler 204 555
+Display: Scaler 268 619
+Display: SumScaler 268 619
+Display: SumScaler 0 
 ##
 ## Time dependence of individual scaler rates and ratios
 Display: Rate	0	500

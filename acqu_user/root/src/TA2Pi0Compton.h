@@ -51,7 +51,9 @@ class TA2Pi0Compton : public TA2Physics {
 	TFile* 		fFile;
 	TTree* 		fTree;
 	Int_t		fProduceTreeFile;
-	Char_t   	fTreeFileName[256];
+	Char_t   	fTreeFileNameIn[256];
+	Char_t*   	fTreeFileNameOut;
+
 
 // Pi0Compton Class Variables
 	UInt_t 		i,j;
@@ -162,6 +164,8 @@ class TA2Pi0Compton : public TA2Physics {
 	Int_t		fBaF2NCluster;
 
 	public:
+	Int_t	IsTreeFileOn() const { return fProduceTreeFile; }
+	Char_t* GetTreeFileName() const { return fTreeFileNameOut; }
 
 	TA2Pi0Compton( const char*, TA2Analysis* );
 		virtual ~TA2Pi0Compton();
@@ -171,6 +175,7 @@ class TA2Pi0Compton : public TA2Physics {
 		virtual void Reconstruct();	// reconstruct detector info
 		virtual TA2DataManager* CreateChild( const char*, Int_t ){ return NULL;}
 		virtual void CloseTrees();
+
 	ClassDef(TA2Pi0Compton,1)
 };
 

@@ -25,7 +25,7 @@ Pi0-Invariant-Mass-Cuts: 125 145
 Produce-Tree-File: 1
 #
 # Tree file name if Produce-Tree-File is on
-Tree-File-Name: TA2Pi0ComptonMC.root
+Tree-File-Name: output/PhysTree_MC.root
 #
 ############################################################
 Initialise:
