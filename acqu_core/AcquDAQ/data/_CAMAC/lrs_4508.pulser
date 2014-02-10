@@ -1,0 +1,69 @@
+****************************************************************************
+*	KELVIN LABORATORY, UNIVERSITY OF GLASGOW
+*	*********** lrs_4508.d *****************
+*	
+*	Sample parameter file for LeCroy 4508 PLU
+*	JRM Annand	10th Sep 1993
+*	Farooq Sadiq	17th Oct 1996
+*	JRM Annand	23rd Nov 1996	Re-do DAPHNE trigger...fix for
+*					MIDAS delay
+****************************************************************************
+*	1st section for pattern unit read
+*	mode = a for subaddr to be read out
+*	mode = x for no readout
+*	thresholds entered in hexadecimal please
+*
+*	mode		lower thresh		upper thresh
+	a		0			100
+	a		0			100
+*
+*	Now comes the bit to set up the 4508 RAM
+*	This 1st section specifies default values which are fed into
+*	RAM's 1 (specify -1 for default) and 2 (specify -2 for default)
+*	ram(default)	dummy	default data
+* Level 1 default (Immediate reset)
+	-1		0	80
+* Level 2 default (Fast Clear)
+	-2		0	2
+*
+*	ram: 1 or 2, corresponding to section 1 or 2 of module
+*	addr:0 - ff(hex) the memory location
+*	data:0 - ff(hex) the data loaded into location addr
+*
+*	**********	 Level 1 Trigger ( L1 )   **************
+*L1 Trigger Inputs		Outputs
+*	1  Daphne Multi C2		1  MIDAS gates (hadr,tfc)
+*	2  Daphne C1 divide		2  DAPHNE gates (all)
+*	3  Daphne Multi C3 C4		3  Pair/Dur gates
+*	4  Daphne c3 c4 divide		4  MIDAS tagger J2
+*	5  Si strips (MIDAS)		5  All other tagger J2
+*	6  Star				6  L2 Strobe
+*	7  Pair				7  Dead Time
+*	8  Dur/Pulser/Ref.Det		8  Imediate reset
+*
+*	ram	addr	data 
+* Single hits
+*	1	1	72
+*	1	2	72
+*	1	4	72
+*	1	8	72
+*	1	10	69
+*	1	20	72
+*	1	40	74
+	1	80	76
+*
+*	***************  Lelvel 2 Trigger (L2)
+* L2 Trigger Inputs			Outputs
+*	1  L1 MIDAS			1  Interrupt 4
+*	2  L1 DAPHNE/Star		2  Fast Clear
+*	3  L1 Pair/Dur			3  MIDAS ADC gate
+*	4  Tagger Coincidence J5	
+*
+*	ram	addr	data
+*	2	2	5		DAPHNE cosmic
+*	2	9	5		MIDAS + tagger
+*	2	a	5		DAPHNE/Star + tagger
+*       2	8	5		Tagger only
+*	2	c	1		Pair/Dur + tagger
+	2	6	5		Pulser
+	2	e	5		Pulser + tagger(in case its pulser)

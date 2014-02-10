@@ -189,7 +189,8 @@ int main(int argc, char **argv)
     Proc[Number] = new TProcessor(Buffer[0]);
     Proc[Number]->SetNumber(Number);
     Proc[Number]->SetRunning(false);
-    Work[Number] = new TThread("ProcessorThread", (void(*)(void*))&(StartThread), (void*)(Number), TThread::kNormalPriority);
+    Work[Number] = new TThread("ProcessorThread", (void(*)(void*))&(StartThread), 
+                               (void*)(intptr_t)(Number), TThread::kNormalPriority);
     //Delete old log files
     sprintf(Buffer[0], "Thread%XLog.txt", Number);
     unlink(Buffer[0]);

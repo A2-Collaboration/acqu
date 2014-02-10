@@ -47,7 +47,8 @@
 #include "CatchTDC_t.h"                // 3-sum SG output handler
 #include "SG3sumADC_t.h"               // 3-sum SG output handler
 #include "TA2Physics.h"                // Physics analysis
-   
+#include <vector>
+
 class TA2Apparatus;
 class TA2Detector;
 
@@ -68,7 +69,7 @@ protected:
   TA2ParticleID* fParticleID;             // -> PDG info
   Bool_t fIsPhysics;                      // switch on physics processing
   Bool_t fIsProcessComplete;              // event processor status
-
+  std::vector<UShort_t> fMultiADCIds;     // IDs of MultiADC (for reference calculation)
 public:
   TA2Analysis( const char* );             // normal use, pass ptr to TAcquRoot
   virtual ~TA2Analysis();
@@ -135,6 +136,7 @@ inline void TA2Analysis::RawDecode( )
   AcquBlock_t* d = fRawData;
   FlashADC_t* f;
   MultiADC_t* m;
+  fMultiADCIds.clear(); // start with an empty array
 
   for( int j=0; j<fNhits; ){
     if( d->id > fMaxADC ){
@@ -155,6 +157,9 @@ inline void TA2Analysis::RawDecode( )
       j += f->GetNstore();
       break;
     case EMultiADC:                     // save the multi-hit data
+      // remember the index for reference calculation after this loop
+      fMultiADCIds.push_back(d->id);
+      // fill it
       m = fMulti[d->id];
       m->Fill( d );
       d += m->GetNtry();
@@ -166,6 +171,16 @@ inline void TA2Analysis::RawDecode( )
       break;
     }
   }
+
+  // now, after all events are processed, we can apply
+  // reference values to the stored hits
+  // we cannot achieve this in general during the loop above,
+  // since the needed reference value could come later in the
+  // data stream than the value which should have been corrected
+  for(size_t i=0;i<fMultiADCIds.size();i++) {
+    fMulti[fMultiADCIds[i]]->ApplyRef();
+  }
+
   if( fIsBitPattern ) fBitPattern->Decode();
   if( fIsRateMonitor ) fRateMonitor->Decode();
 } 

@@ -41,8 +41,12 @@
 //--Rev         JRM Annand    9th Jan 2013  add CAEN V874 TAPS module
 //--Rev 	K Livingston..7th Feb 2013  Support for writing EPICS buffers
 //--Rev 	JRM Annand    2nd Mar 2013  EPICS read in conditional block
-//--Update  A Neiser...   6th June 2013  Make char_t* const
-//--Update	JRM Annand    6th Jul 2013  Add V965 QDC
+//--Rev 	JRM Annand    6th Jul 2013  Add V965 QDC
+//--Rev 	JRM Annand    3rd Sep 2013  Add VITEC interrupt/event-ID card
+//--Rev 	JRM Annand    9th Sep 2013  Add event-ID master functionality
+//--Rev 	JRM Annand   22nd Sep 2013  Add VUPROMT, remove SlowCtrl thread
+//--Update	JRM Annand   24nd Sep 2013  Don't start ctrl thread if slave
+//                                          End-run scaler read for slaves
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -74,6 +78,7 @@ void* RunStoreDataThread( void* );   // data storage
 class TDAQmodule;
 
 enum { EExpInit0, EExpInit1, EExpInit2, EExpInit3 };
+enum { EExpEvIDEnd = 0x80000000, EExpEvIDStop = 0x40000000 };
 
 class TDAQexperiment : public TA2System {
  protected:
@@ -135,8 +140,10 @@ class TDAQexperiment : public TA2System {
   Bool_t fIsCtrl;                   // DAQ control enabled (run start/stop)?
   Bool_t fIsStore;                  // Data storage enabled?
   Bool_t fIsLocalAR;                // DAQ is run as thread of AcquRoot
+  Bool_t fIsEvIDMaster;             // Control of the event ID?
+  Bool_t fIsRunTerm;                // local run terminated flag
  public:
-  TDAQexperiment(const Char_t*, Char_t*, const Char_t*, TAcquRoot* = NULL,
+  TDAQexperiment( const Char_t*, const Char_t*, const Char_t*, TAcquRoot* = NULL,
 		  Int_t = EExpInit0 );
   virtual ~TDAQexperiment();
   void SetConfig( Char_t*, Int_t );   // configure experiment
@@ -149,6 +156,7 @@ class TDAQexperiment : public TA2System {
   void RunStoreData();                // loop for data storage
   void StoreEvent( Char_t* );         // write one event to buffer
   void StoreBuffer( Char_t* );        // write one complete buffer of data
+  void BuffStore( void**, UInt_t );   // write a 4-bytes to the output buffer
   void PostReset();                   // stuff to be done after general reset
   void ZeroNEvent(){ fNEvent = 0; }   // zero event number
   UInt_t GetNEvent(){ return fNEvent; }   // current event #
@@ -167,6 +175,7 @@ class TDAQexperiment : public TA2System {
   Char_t* GetFileName(){ return fFileName; }
   TDAQmodule* GetIRQMod(){ return fIRQMod; }
   TDAQmodule* GetStartMod(){ return fStartMod; }
+  TDAQmodule* GetSynchMod(){ return fSynchMod; }
   Int_t GetRunStart(){ return fRunStart; }
   Int_t GetNModule(){ return fNModule; }
   Int_t GetNADC(){ return fNADC; }
@@ -194,6 +203,8 @@ class TDAQexperiment : public TA2System {
   Bool_t IsCtrl(){ return fIsCtrl; }
   Bool_t IsStore(){ return fIsStore; }
   Bool_t IsLocalAR(){ return fIsLocalAR; }
+  Bool_t IsEvIDMaster(){ return fIsEvIDMaster; }
+  Bool_t IsRunTerm(){ return fIsRunTerm; }
   //  Bool_t IsTrigCtrl(){ return fIsTrigCtrl; }
   //  void SetTrigCtrl(){ fIsTrigCtrl = kTRUE; }
   void IncADCError(){ fNADCError++; }
@@ -209,6 +220,7 @@ inline void TDAQexperiment::StoreEvent( Char_t* evPos )
   // If it will not fit try the next buffer
   // Write end-of-buffer marker if space
   // 21/05/12 JRMA don't wait for buffer empty if not storing data (diagnostic)
+  // 09/09/13 JRMA end-of-run detected force send of current data buffer.
   //
   Char_t* pbuff;
   Int_t evsize = evPos - fEventBuff;              // size of event in bytes
@@ -223,7 +235,19 @@ inline void TDAQexperiment::StoreEvent( Char_t* evPos )
   }
   if( pbuff <= ((Char_t*)fOutBuff->GetStore() + 
 		fOutBuff->GetLenBuff() - sizeof(UInt_t)) )
-    fOutBuff->Trailer(); 
+    fOutBuff->Trailer();
+  // If its run end flush the current buffer and prepare the next
+  // only happens if storing
+  // reset of fIsRunTerm delayed...hack for now until more intelligent
+  // handshake with supervisor devised
+  if( fIsRunTerm ){
+    fOutBuff->FNext();
+    fNRec++;
+    fOutBuff->WaitEmpty();                                   // check empty
+    if( !fIsEvIDMaster ) fOutBuff->Header(fDataHeader);
+    sleep(1);                                                // wait a bit
+    fIsRunTerm = kFALSE;
+  }
 }
 
 //---------------------------------------------------------------------------
@@ -244,6 +268,15 @@ inline void TDAQexperiment::StoreBuffer( Char_t* buffData )
     PrintError("StoreBuffer","<Buffer write failed>",EErrFatal);
   fOutBuff->FNext();         // show its full and go to next
   fNRec++;                   // increment record counter
+}
+
+//---------------------------------------------------------------------------
+inline void TDAQexperiment::BuffStore( void** out, UInt_t scaler )
+{
+  // Write 4-byte value to output data buffer
+  UInt_t* buff = (UInt_t*)(*out);
+  *buff++ = scaler;
+  *out = buff;
 }
 
 #endif

@@ -1,0 +1,9 @@
+##	Scaler time dependence config file
+##	JRM Annand	 27th Jun 2004
+##
+##	Ratios of scalers as a function of time
+Number-Rates: 3
+##	     Name	Scaler	Clock	Frequency	Normalisation
+RateData: ScInt4	300	304	1		10000.
+RateData: ScLiveTime	305	304	1		100.
+RateData: ScG175	575	304	1		10000.

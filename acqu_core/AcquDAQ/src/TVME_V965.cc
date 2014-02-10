@@ -82,11 +82,11 @@ Bool_t TVME_V965::CheckHardID( )
   Int_t id = Read(EV7XX_ID2) & 0xff;
   id |= (Read(EV7XX_ID1) & 0xff) << 8;
   id |= (Read(EV7XX_ID0) & 0xff) << 16;
-  fprintf(fLogStream,"V965 ID Read: %d  Expected: %d\n",id,fHardID);
   Int_t fw = Read(EV7XX_Firmware) & 0xffff;
-  fprintf(fLogStream,"Firmware version: %x\n",fw);
+  fprintf(fLogStream,"V965 ID Read: %d  Expected: %d  Firmware: %x\n",
+	  id,fHardID,fw);
   if( id == fHardID ) return kTRUE;
   else
-    PrintError("","<CAEN V965 ADC/TDC hardware ID read error>",EErrFatal);
+    PrintError("","<CAEN V965 ADC hardware ID read error>",EErrFatal);
   return kFALSE;
 }

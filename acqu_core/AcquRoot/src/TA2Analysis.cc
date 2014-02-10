@@ -151,6 +151,12 @@ TA2Analysis::TA2Analysis( const char* name )
 
   fprintf(fLogStream," %s analysis linked to Acqu-to-Root interface\n\n",
 	 this->ClassName() );
+
+  // reserve some space for the array
+  // should be somewhat larger
+  // than the number of MultiADC hits
+  // in one event
+  fMultiADCIds.reserve(1000);
 }
 
 

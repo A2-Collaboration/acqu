@@ -451,7 +451,7 @@ void TA2Ladder::ReadDecoded( )
   UInt_t iHit = TMath::BinarySearch( fNelem, fECalibration, Ee );
   //
   //  Double_t El0,Em0,Eh0,dE0, El1,Em1,Eh1,dE1, El2,Em2,Eh2,dE2;
-  Double_t El0,Eh0,dE0,Eh1,dE1,El2,dE2;
+  Double_t El0,Eh0,Eh1,El2; // dE0, dE1,dE2 unused
   //dE0 = fEOverlap[iHit];
   //Eh0 = fECalibration[iHit] + 0.5*dE0;
   Eh0 = fEOverlap[iHit];
@@ -463,7 +463,7 @@ void TA2Ladder::ReadDecoded( )
   }
   fHits[fNhits] = fHitsPrompt[fNhits] = fHitsAll[fNhits] = iHit;
   fNhits++;
-  El0 = Eh0 - dE0;
+  El0 = Eh0;
   if( iHit < (fNelem-1) ){
     //dE2 = fEOverlap[iHit+1];
     //El2 = fECalibration[iHit+1] - 0.5*dE2;

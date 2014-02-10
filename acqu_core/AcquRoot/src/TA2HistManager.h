@@ -53,7 +53,7 @@ public:
   virtual void DecodeSaved( );
   virtual void Reconstruct();
   virtual void SetConfig( Char_t*, int ) = 0;   // class-dependent setup
-  virtual void ParseDisplay( Char_t* );         // histogram setup
+  virtual void ParseDisplay(const Char_t * );         // histogram setup
   virtual void ReadChanLim(Int_t, Double_t**, Char_t*);
   template<typename T>
     void Setup1D( Char_t*, T*, Int_t = EHistSingleX, Double_t* = NULL,

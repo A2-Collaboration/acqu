@@ -1,0 +1,31 @@
+
+##         HexBase #Registers ModuleType MapSize
+BaseSetup: 0       0          ADC-Scaler     4000
+# firmware id of the VUPROM
+Hardware-ID: 03000030
+
+# we define what is the first and the last module
+# (by name) in the chain of readout Vuproms 
+# (controls the global NIM DAQ enable signal) 
+ModuleChain: vup11 vup14
+
+# Combinations of left Channels with right channel
+# for Moeller events
+#             NoOfLeftChannels   NoOfPairsPerCh
+ChannelPairs: 10                 5
+
+# Number of Bins of each histogram (determined by firmware)
+# Wrong value may lead to wrong readout!
+NBins: 256
+
+# Number of VME reads per Interrupt
+# this can be adapted to optimize the livetime of the CPU
+# but a higher value leads to a worse livetime
+# for the actual Moeller measurement. 
+# note that this is per module!
+NReadsPerIRQ: 25
+
+# Number of scaler events between Moeller readout
+# this can be used to optimize the livetime
+# of the Moeller measurement
+ScalerModulo: 25

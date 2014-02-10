@@ -1,0 +1,57 @@
+##-----------------------------------------------------------------------
+##--Author	JRM Annand   13th Jan 2004
+##--Update	JRM Annand...
+##--Description
+##                *** Acqu++ <-> Root ***
+## Online/Offline Analysis of Sub-Atomic Physics Experimental Data
+##
+## Parameter File: ServerSetup.dat
+## Default master parameter file for DataServer (data input for analysis)
+## Online data taking, merged ACQU & TAPS
+##
+##-----------------------------------------------------------------------
+## Number of Input streams (sources of data), Record length to write data
+## and switch 0/1 = no/yes to control data write
+##              Number streams	Record Len	Save Data
+Input-Streams:	11		32768		1
+##
+## Optional directory spec. If not specified File-Names must contain the full
+## directory path
+File-Directory:	scratch/
+##
+## Specify each network-socket input stream
+##            	Source	Format	Save?	Node	   Port	Buffers MkID	Swap
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-trigger 5000 64	400
+File-Name:	tapstrig	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-baf-a 5010 128	400
+File-Name:	tapsbafa	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-baf-b 5011 128	400
+File-Name:	tapsbafb	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-baf-c 5012 128	400
+File-Name:	tapsbafc	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-baf-d 5013 128	400
+File-Name:	tapsbafd	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-baf-e 5014 128 400
+File-Name:	tapsbafe	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-baf-f 5015 128	400
+File-Name:	tapsbaff	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-veto-ab 5016 128 400
+File-Name:	tapsvab 	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-veto-cd 5017 128 400
+File-Name:	tapsvcd	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-veto-ef 5018 128 400
+File-Name:	tapsvef	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-pwo 5019 128	400
+File-Name:	tapspwo	0	0
+#

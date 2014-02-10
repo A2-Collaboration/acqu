@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash
 #A recursive program to print out the hierarchy of setup files for Acqu.
 print_usage()
 {

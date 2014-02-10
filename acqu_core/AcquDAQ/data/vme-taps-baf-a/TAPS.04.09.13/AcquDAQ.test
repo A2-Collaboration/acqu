@@ -1,0 +1,21 @@
+###
+##Description: CAEN V784 debugging
+Mk1-Format:
+File-Name: /home/acqu/AcquDAQ 32	500000	32768	Disk  32768       5010
+#                      Freq
+Event-Counters:		0	0
+Start-Run: 0
+#
+Control:  Local    0     0
+#Control:   ENet  localhost 6020
+#Control:   GUI-Local  localhost 6020
+
+#	module	   Name		configFile		BaseAdr		BaseIndex	Nchannel	NBits
+Module:	KPH_I686   kphi686_0	kphi686.dat		0		0
+#Module: CBD_8210   cbd_0	cbd8210_0.dat		800000		0		0
+#Module: CAEN_V874  caen_0	caen_874.dat		ee000000   	20000		19		16
+Module: CAEN_V965  v965_0	v965_0.noped		22000000   	200		32		12
+#
+#Module: Virtual   vADC_0	vADC_0.dat		ADC		200		32		12
+#
+IRQ-Ctrl: cbd_0

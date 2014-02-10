@@ -1,0 +1,37 @@
+##--Author	Baya Oussena	 24 Apr 2012
+##--Update	Baya Oussena     
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+##              Dummy Base	#Registers	Module type
+BaseSetup:	0		4		NULL
+##
+## Enter CNAFS
+##		Datum	F	A0	A1	Register Type
+CAMAC-CNAF:	fffff	26	0	0	Init	
+CAMAC-CNAF:	0	16	0	0	Init	
+CAMAC-CNAF:	fffff	25	0	0	Init	
+#CAMAC-CNAF:     fa      17      0       0       Init
+#CAMAC-CNAF:     64      17      0       0       Init
+#CAMAC-CNAF:     1F4      17      0       0       Init
+#
+# ~43.5 MeV
+#
+#CAMAC-CNAF:     64      17      0       0       Init
+#
+# 250MeV
+#
+# 350
+#CAMAC-CNAF:     23f      17      0       0       Init
+# > 300
+#CAMAC-CNAF:     1F4      17      0       0       Init
+# 200
+#CAMAC-CNAF:     187      17      0       0       Init
+# 250
+CAMAC-CNAF:     1B5      17      0       0       Init
+#
+# 180mV
+#CAMAC-CNAF:     B4      17      0       0       Init
+##
+#	End of File

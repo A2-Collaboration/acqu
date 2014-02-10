@@ -1,0 +1,39 @@
+###
+Description: CAEN V784 debugging
+#Mk1-Format:
+#File-Name: /home/acqu/AcquDAQ 32	500000	32768	Disk	32768  5010
+#File-Name: /scratch/TAPStest 32   	500000	32768   ENet	32768  5010
+File-Name: /scratch/TAPS  32   	        500000	32768   ENet	32768  5010
+#File-Name: scratch/AcquDAQ 32   	500000	32768 No-Store  32768  5010
+#                      Freq
+Event-Counters:	       100000	100000
+Start-Run: 0
+#
+#Control:  Local    0     0
+Control:   ENet  localhost 6020
+#Control:   GUI-Local  0 0
+
+#	module	   Name		configFile		BaseAdr		BaseIndex	Nchannel	NBits
+Module:	KPH_I686   kphi686_0	kphi686.dat		0		0
+#Module: KPH_VITEC vit_0	vitec_0.dat		8000		0		0
+Module: CAEN_V874  v874_0	v874_404.dat		20000000   	20000		22		12
+Module: CAEN_V874  v874_1	v874_404.dat		21000000   	20032		22		12
+Module: CAEN_V874  v874_2	v874_404.dat		22000000   	20064		22		12
+Module: CAEN_V874  v874_3	v874_404.dat		23000000   	20096		22		12
+Module: CAEN_V874  v874_4	v874_404.dat		24000000   	20128		22		12
+Module: CAEN_V874  v874_5	v874_404.dat		25000000   	20160		22		12
+Module: CAEN_V874  v874_6	v874_404.dat		26000000   	20192		22		12
+Module: CAEN_V874  v874_7	v874_404.dat		27000000   	20224		22		12
+Module: CAEN_V874  v874_8	v874_404.dat		28000000   	20256		22		12
+Module: CAEN_V874  v874_9	v874_404.dat		29000000   	20288		22		12
+Module: CAEN_V874  v874_a	v874_404.dat		2a000000   	20320		22		12
+Module: CAEN_V874  v874_b	v874_404.dat		2b000000   	20352		22		12
+Module: CAEN_V874  v874_c	v874_404.dat		2c000000   	20384		22		12
+Module: CAEN_V874  v874_d	v874_404.dat		2d000000   	20416		22		12
+Module: CAEN_V874  v874_e	v874_404.dat		2e000000   	20448		22		12
+Module: CAEN_V874  v874_f	v874_406.dat		2f000000   	20480		22		12
+#Module: CAEN_V965  v965_0	v965_0.noped		22000000   	200		22		12
+#
+# Switch this to VITEC card
+#IRQ-Ctrl: vit_0
+IRQ-Ctrl: v874_0

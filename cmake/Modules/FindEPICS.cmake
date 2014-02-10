@@ -75,7 +75,7 @@ endif()
 message(STATUS "Looking for EPICS... - Found ${EPICS_EXTENSIONS}")
 
 # find the includes directories
-find_path(EPICS_BASE_INCLUDE NAMES tsDefs.h 
+find_path(EPICS_BASE_INCLUDE NAMES cadef.h
   PATHS "${EPICS_BASE}/include"
   NO_DEFAULT_PATH
   )
@@ -91,6 +91,17 @@ if(NOT EPICS_BASE_INCLUDE_OS)
   message(FATAL_ERROR "No EPICS base include (os-dependent) found. "
     "EPICS incomplete or unsupported platform?")
 endif()
+
+find_path(EPICS_BASE_INCLUDE_COMPILER NAMES compilerSpecific.h
+  PATHS "${EPICS_BASE_INCLUDE}/compiler"
+  PATH_SUFFIXES gcc
+  NO_DEFAULT_PATH
+  )
+if(EPICS_BASE_INCLUDE_COMPILER)
+  message(STATUS "Looking for EPICS... - Compiler-specific (for 3.15) found.")
+  list(APPEND EPICS_INCLUDES ${EPICS_BASE_INCLUDE_COMPILER})
+endif()
+
 
 # this is extension specific, can be generalized later
 find_path(EPICS_EXTENSIONS_INCLUDE NAMES ezca.h 
@@ -139,6 +150,6 @@ else()
 endif()
 
 
-set(EPICS_INCLUDES ${EPICS_BASE_INCLUDE} ${EPICS_BASE_INCLUDE_OS}
+list(APPEND EPICS_INCLUDES ${EPICS_BASE_INCLUDE} ${EPICS_BASE_INCLUDE_OS}
   ${EPICS_EXTENSIONS_INCLUDE})
 set(EPICS_FOUND TRUE)

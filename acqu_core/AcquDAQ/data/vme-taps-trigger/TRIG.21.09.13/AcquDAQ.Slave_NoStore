@@ -1,0 +1,58 @@
+####
+Description: Test New DAQ on TAPS
+#File-Name: scratch/TAPS  32	500000	32768	ENet  32768  5000
+File-Name: scratch/TAPS  32	500000	32768	No-Store  32768  5000
+# Frequency            Scaler	Slow-Control
+Event-Counters:	       10000	0			
+Start-Run: 0
+#
+#Control:  Local    0     0
+#Control:   ENet	    localhost 4040
+#Control:   GUI-Local	    0 0
+Control:    Slave	    0 0
+#Control:   ENetSlave	    localhost 4040
+#
+#	module	   Name		configFile
+Module:	KPH_I686   kphi686_0	kphi686.dat		0	 0
+Module: KPH_VITEC   vit0        vitec_0.dat     0000    0       0
+Module: GSI_VUPROMT vup0        vuprom.slave		0a000000 1000 96 32 
+Module: GSI_VUPROMT vup1        vuprom.bafA     	01000000 10010 6 8
+Module: GSI_VUPROMT vup2        vuprom.bafB     	02000000 10020 6 8
+Module: GSI_VUPROMT vup3        vuprom.bafC     	03000000 10030 6 8
+Module: GSI_VUPROMT vup4        vuprom.bafD     	04000000 10040 6 8
+Module: GSI_VUPROMT vup5        vuprom.bafE     	05000000 10050 6 8
+Module: GSI_VUPROMT vup6        vuprom.bafF     	06000000 10060 6 8
+Module: GSI_VUPROMT vup7        vuprom.vetoAB     	07000000 10070 6 8
+Module: GSI_VUPROMT vup8        vuprom.vetoCD     	08000000 10080 6 8
+Module: GSI_VUPROMT vup9        vuprom.vetoEF     	09000000 10090 6 8
+
+#
+#EPICS Slow control readout. Readout at beginning and end of each data file, and periodically as specified
+#
+#                                                       Period Mode     Period (ms for timer mode)
+#                                                      (timer/scaler)   Period (#scaler events for scaler mode)
+#                                                                       (0 = only at beginning of run file)
+#Module:   EPICS       EPICS   data/EpicsEvent_0.dat        timer         3000
+#Module:   EPICS       EPICS   data/EpicsCbrem.dat  	    scaler        2
+#Module:   EPICS       EPICS   data/EpicsEvent_Scalers.dat  scaler        2
+#Module:   EPICS       EPICS   data/EpicsEvent_2.dat        scaler        0
+#
+Reset-Ctrl: kphi686_0
+#
+## Interrupt control module
+IRQ-Ctrl: vit0
+##
+## Trigger enable and TCS start/stop module, 
+## and delay in usec after CATCH reset
+Start-Ctrl: vup0 555000
+#
+## Event info provider module
+#EventID-Send: vup0
+#
+##
+## Event Synchronisation info provider module and event ID index
+#EventID-Master: 400
+Synch-Ctrl: vit0 400
+########### End of File #######################
+
+

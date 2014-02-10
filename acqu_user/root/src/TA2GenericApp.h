@@ -17,6 +17,7 @@
 #include "TA2LongScint.h"              // array long scintillator bars
 #include "TA2PlasticPID.h"             // auxiliary trigger detectors
 #include "TA2FPMicro.h"                // tagger microscope tests
+#include "TA2PairSpec.h"               // Pair Spectrometer
 
 class TA2GenericApp : public TA2Apparatus {
 protected:
@@ -25,6 +26,7 @@ protected:
   TA2LongScint* fLTrig;                    // Long scntillator trigger
   TA2PlasticPID* fTrig;                    // Small trigger scint
   TA2FPMicro* fFPMic;                      // microscope tests
+  TA2PairSpec* fPairSpec;                      // Pair spectrometer
 
 public:
   TA2GenericApp( const char*, TA2System* ); // pass ptr to analyser

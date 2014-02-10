@@ -1,0 +1,15 @@
+##
+Detector: BaF2_LG       TA2GenericDetector      DetectorOffline-BaF2_LG.dat
+Detector: BaF2_LGS      TA2GenericDetector      DetectorOffline-BaF2_LGS.dat
+Detector: BaF2_SG       TA2GenericDetector      DetectorOffline-BaF2_SG.dat
+Detector: BaF2_SGS      TA2GenericDetector      DetectorOffline-BaF2_SGS.dat
+Detector: Veto          TA2GenericDetector      DetectorOffline-Veto.dat
+Detector: PWO           TA2GenericDetector      DetectorOffline-PbWO4.dat
+Detector: PWO_S         TA2GenericDetector      DetectorOffline-PbWO4_S.dat
+Detector: PWO_Veto      TA2GenericDetector      DetectorOffline-PbWO4_Veto.dat
+Detector: PWO_Veto_S    TA2GenericDetector      DetectorOffline-PbWO4_Veto_S.dat
+##
+Reconstruct:
+##
+Initialise:
+##

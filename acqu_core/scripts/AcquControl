@@ -1,0 +1,230 @@
+#!/bin/bash --login
+
+# This script manages the AcquDAQ start/stop gracefully
+# It has also some support for initialization
+
+# parse command line options
+# Reset all variables that might be set
+
+# how many seconds maximum for AcquDAQ to output:
+# <Waiting to connect to data receiver>
+# default value
+TIMEOUT=""
+
+# in init mode, force start even
+# if INIT_PIDFILE exists
+INIT_PIDFILE=/tmp/AcquControl-init # /tmp is empty after reboot!
+FORCE=0
+
+while :
+do
+    case $1 in
+        -t)
+            TIMEOUT=$2
+            shift 2
+            ;;
+        -f)
+            FORCE=1
+            shift 1
+            ;;
+        --) # End of all options
+            shift
+            break
+            ;;
+        *)  # no more options. Stop while loop
+            break
+            ;;
+    esac
+done
+
+# TIMEOUT should be at least 1,
+if ! (( $TIMEOUT > 0 )) 2>/dev/null ; then
+    TIMEOUT=5
+fi
+
+# write everything to the syslog as well as to STDERR
+# since the logger command outputs to STDERR, we swap STDOUT
+# and STDERR permanently
+exec 3>&2
+exec 2>&1
+exec 1>&3
+
+HOSTNAME=`hostname -s`
+function echo_log {
+    # prepend the hostname
+    echo "$1" | logger -s -t "$HOSTNAME/AcquControl"
+}
+
+function error_exit {
+    code=$2
+    if [[ -z "$2" ]]; then
+        code=1 # exit with error code 1 by default (fatal error)
+    fi
+    # errors are output to STDERR again
+    # so undo the previous swap
+    exec 4>&2
+    exec 2>&1
+    exec 1>&4
+    echo_log "Error: $1"
+    exit $code
+}
+
+function error_timeout {
+    # check a bit more precise why the timeout happened
+    # if the screen is still running, AcquDAQ just hangs
+    # if the screen is dead, then AcquDAQ exited with error
+    # we cannot use the PID, since screen does some funny forking
+    pkill --signal 0 -f 'SCREEN -A -m -d -S AcquDAQ' || error_exit "$1 (fatal error)" 1
+    # kill says screen is still running, so return 2 as code
+    echo_log "AcquDAQ seems to hang. Investigate with 'screen -r AcquDAQ' on $HOSTNAME"
+    error_exit "$1 (maybe hanging)" 2 # exit with code 2, indicating hang
+}
+
+function start_prepare() {
+    ACQU_WORKDIR=/root/acqu
+    DATA_DIR=/opt/acqu/acqu_core/AcquDAQ/data/$(hostname -s)/current
+    
+    # ensure there is no other instance of AcquDAQ running
+    pgrep AcquDAQ > /dev/null
+    if [[ $? = 0 ]]; then
+        error_exit "AcquDAQ process already running, stop it first or use restart"
+    fi
+
+    # ensure there is a working directory
+    mkdir -p ${ACQU_WORKDIR}
+    cd ${ACQU_WORKDIR} || error_exit "Cannot change to ${ACQU_WORKDIR}"
+    echo_log "Changed to ${ACQU_WORKDIR}..."
+
+    # ensure there is a correct symlink
+    echo_log "Linking data to ${DATA_DIR}..."
+    ln -Tfs ${DATA_DIR} data || error_exit "Cannot create data symlink"
+}
+
+function start() {
+
+    start_prepare
+    
+    echo_log "Starting AcquDAQ in background, logging to syslog..."
+
+    # in normal mode, the next command does not finish until the
+    # grep pattern matches.
+    # tail -F instead of -f is important, see manpage
+    timeout ${TIMEOUT} grep -m 1 -q \
+        -e 'AcquDAQ: <Waiting to connect to data receiver>' \
+        -e 'AcquDAQ: <TDAQstore successfully started>' \
+        <(tail --pid=$$ -n 0 -F /var/log/syslog) &
+    GREP_PID=$!
+        
+    # when AcquDAQ is started, it should output that it's waiting
+    # or in NoStore mode, it at least outputs it's successfully started
+    screen -A -m -d -S AcquDAQ /bin/bash -c "AcquDAQ $@ 2>&1 | logger -s -t AcquDAQ"
+
+    # now wait until the background process is done,
+    # this is the case if AcquDAQ outputs it's ready...
+    wait ${GREP_PID} || error_timeout "AcquDAQ did not properly run after ${TIMEOUT} s"
+    echo_log "AcquDAQ started (and might await data server connection)"
+}
+
+function init() {
+
+    # init mode expects something to run
+    # and AcquManager expects that we stop it
+    # no matter if we really do an init (see skipping below)
+    stop 
+
+    # with no force, check if we really need to init
+    if [[ $FORCE = 0 && -f $INIT_PIDFILE ]]; then
+        echo_log "AcquDAQ has already been initialized, skipping."
+        return
+    fi
+
+    # always remove the file
+    # at the start
+    rm -f $INIT_PIDFILE 2> /dev/null
+    
+    # prepare the start
+    start_prepare
+
+    echo_log "Entering initialization mode...waiting $TIMEOUT s maximum to finish"
+    INITARG="2" # the magic 2 which makes AcquDAQ initializing
+    
+    screen -A -m -d -S AcquDAQ /bin/bash -c "AcquControl init_wrapper $@ ${INITARG}"
+
+    # wait until PID file appears
+    T=$TIMEOUT
+    while true; do
+        if [[ $T = 0 ]]; then
+            # fatally exit, this prevents
+            # AcquManager from retrying
+            killall -9 -q AcquDAQ
+            rm $INIT_PIDFILE
+            error_exit "AcquDAQ did not finish init after $TIMEOUT s"
+        fi
+        if [[ -f $INIT_PIDFILE ]]; then
+            if [[ $(cat $INIT_PIDFILE) = 0 ]]; then
+                break
+            else
+                # remove the file again
+                rm -f $INIT_PIDFILE 2> /dev/null
+                error_exit "AcquDAQ finished init with non-zero exit code"
+            fi
+        fi
+        sleep 1
+        T=$(($T-1))
+    done
+    
+    echo_log "AcquDAQ finished initialization"
+}
+
+function init_wrapper() {
+    AcquDAQ $@ 2>&1 | logger -s -t AcquDAQ
+    echo ${PIPESTATUS[0]} >$INIT_PIDFILE
+}
+
+function stop() {
+    # only do something if there is something to stop
+    pgrep AcquDAQ > /dev/null
+    if [[ $? != 0 ]]; then
+        error_exit "No AcquDAQ processes running"
+    fi
+    # kill all previous instances, ignore errors silently
+    # and wait until the processes are killed
+    echo_log "Killing AcquDAQ processes with SIGTERM..."
+    killall -q AcquDAQ && return
+    # after some time, we are brutal
+    sleep 2
+    echo_log "Killing AcquDAQ processes with SIGKILL..."
+    killall -9 -w -q AcquDAQ
+}
+
+# Now, Make sure only root can run our script
+if [ "$(id -u)" != "0" ]; then
+    error_exit "This script must be run as root (VME access needs it)"
+fi
+
+
+# Then, what to do finally?
+case $1 in
+    start)
+        start "${@:2}"
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start "${@:2}"
+        ;;
+    init)
+        init "${@:2}"
+        ;;
+    init_wrapper)
+        init_wrapper "${@:2}"
+        ;;    
+    *)
+        echo "Usage: $0 (start|stop|restart|init) [optional arguments for AcquDAQ]"
+        exit 255
+        ;;
+esac
+
+exit 0;

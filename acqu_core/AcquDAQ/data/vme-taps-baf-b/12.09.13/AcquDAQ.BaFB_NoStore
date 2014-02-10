@@ -1,0 +1,37 @@
+###
+Description: BaF Sector B readout
+#File-Name: /scratch/TAPS  32    500000	32768   ENet	32768  5011
+File-Name: scratch/TAPS  32   	500000	32768 No-Store  32768  5011
+#                      Freq
+Event-Counters:	       0	0
+Start-Run: 0
+#
+#Control:  Local    0     0
+#Control:   ENet  localhost 6020
+#Control:   ENetSlave  localhost 6020
+Control:    Slave      0 0
+#Control:   GUI-Local  0 0
+
+#	module	   Name		configFile		BaseAdr		BaseIndex	Nchannel	NBits
+Module:	KPH_I686   kphi686_0	kphi686.dat		0		0
+Module: KPH_VITEC  vit_0	vitec_0.dat		0000		0		0
+Module: CAEN_V874  v874_0	Module_00.dat		30000000   	21000		22		12
+Module: CAEN_V874  v874_1	Module_01.dat		21000000   	21032		22		12
+Module: CAEN_V874  v874_2	Module_02.dat		22000000   	21064		22		12
+Module: CAEN_V874  v874_3	Module_03.dat		23000000   	21096		22		12
+Module: CAEN_V874  v874_4	Module_04.dat		24000000   	21128		22		12
+Module: CAEN_V874  v874_5	Module_05.dat		25000000   	21160		22		12
+Module: CAEN_V874  v874_6	Module_06.dat		26000000   	21192		22		12
+Module: CAEN_V874  v874_7	Module_07.dat		27000000   	21224		22		12
+Module: CAEN_V874  v874_8	Module_08.dat		28000000   	21256		22		12
+Module: CAEN_V874  v874_9	Module_09.dat		29000000   	21288		22		12
+Module: CAEN_V874  v874_a	Module_10.dat		2a000000   	21320		22		12
+Module: CAEN_V874  v874_b	Module_11.dat		2b000000   	21352		22		12
+Module: CAEN_V874  v874_c	Module_12.dat		2c000000   	21384		22		12
+Module: CAEN_V874  v874_d	Module_13.dat		2d000000   	21416		22		12
+Module: CAEN_V874  v874_e	Module_14.dat		2e000000   	21448		22		12
+Module: CAEN_V874  v874_f	Module_15.dat		2f000000   	21480		22		12
+# Switch this to VITEC card
+IRQ-Ctrl: vit_0
+#IRQ-Ctrl: v874_0
+Synch-Ctrl: vit_0 400

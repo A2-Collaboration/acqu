@@ -1,0 +1,55 @@
+*	KELVIN LABORATORY, UNIVERSITY OF GLASGOW
+*
+*	**********  caen_208.d ***********
+*
+*	JRM Annand	27th Aug 1997
+*	Parameter file for CAEN 208 Constant Fraction Discriminator
+*
+*	thresholds to be entered in hexadecimal:
+*	range 16--1020 mV in 4mV steps, corresponding register values:
+*	4 -> 16 mV (do not go below this)
+*	ff-> 1020 mV (ff hex = 255 decimal)
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+*	Mask register: channel n is disabled if bit n in the mask reg is SET, e.g.
+*	0 -> no channels masked
+*	ffff -> all channels masked
+*	1843 -> channels 0,1,6,11,12
+*	fff7
+* Normal operation with CB-Energy-Sum, PID TAPS, TAPS-Pulser: ffe6
+ffe2
+* Only CB: fffe
+*fffe
+* Only TAPS and TAPS-Pulser: ffe7
+*ffe7
+* Only CB and TAPS-Pulser: ffee
+*ffee
+*
+*	Output width 60--300 ns (register set 0 -- ff)
+*	0 -> 300 ns
+*	ff -> 60 ns
+ff
+*	Module deadtime 60 -- 300 ns (register set 0 -- ff)
+*	Deadtime must be set >= output width
+*	0 -> 300 ns
+*	ff -> 60 ns
+ff
+*	Majority threshold (register set 0 -- ff)
+0
+*
+*	end of input
+

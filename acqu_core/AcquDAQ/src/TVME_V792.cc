@@ -4,6 +4,7 @@
 //--Rev 	JRM Annand..28th Apr 2009..remove TDAQmemmap.h
 //--Rev 	JRM Annand.. 2nd May 2011..no pedestal suppress option
 //--Update	JRM Annand..13th Apr 2013..tidy up coding...fix pedestals
+//--Update	D. Werthmueller..27th Jan 2014..added support for high threshold range
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -19,12 +20,13 @@
 
 ClassImp(TVME_V792)
 
-enum { ECAEN_Threshold=200, ECAEN_NoThreshold, ECAEN_IPed, ECAEN_FCWind };
+enum { ECAEN_Threshold=200, ECAEN_NoThreshold, ECAEN_IPed, ECAEN_FCWind, ECAEN_HighThrRange };
 static Map_t kCAENKeys[] = {
   {"Threshold:",          ECAEN_Threshold},
   {"No-threshold:",       ECAEN_NoThreshold},
   {"Pedestal-Current:",   ECAEN_IPed},
   {"FC-Window:",          ECAEN_FCWind},
+  {"High-Thr-Range:",     ECAEN_HighThrRange},
   {NULL,                  -1}
 };
 
@@ -60,10 +62,11 @@ TVME_V792::TVME_V792( Char_t* name, Char_t* file, FILE* log,
   // Basic initialisation 
   fCtrl = NULL;                            // no control functions
   fType = EDAQ_ADC;                        // analogue to digital converter
-  fNreg = fMaxReg = EV7XX_ID2 + 1;         // Last "hard-wired" register
+  fNreg = EV7XX_ID2 + 1;                   // Last "hard-wired" register
   fHardID = 792;                           // ID read from hardware
   fNBits = 12;                             // 12-bit ADC
   fIsThreshold = kTRUE;                    // default suppress pedestals
+  fIsHighThrRange = kFALSE;                // use low (thr x 2) threshold range 
   AddCmdList( kCAENKeys );                 // CAEN-specific setup commands
 }
 
@@ -93,7 +96,8 @@ void TVME_V792::SetConfig( Char_t* line, Int_t key )
       PrintError(line,"<Threshold index > # channels in module>");
       break;
     }
-    fThresh[ithr] = thr>>1;   // divide by 2 (only 8 bits in register)
+    if( fIsHighThrRange) fThresh[ithr] = thr>>4;   // divide by 16 (only 8 bits in register)
+    else fThresh[ithr] = thr>>1;                   // divide by 2 (only 8 bits in register)
     break;
   case ECAEN_NoThreshold:
     // Turn off pedestal suppress
@@ -112,6 +116,9 @@ void TVME_V792::SetConfig( Char_t* line, Int_t key )
       break;
     }
     fData[EV7XX_FCLRWind] = i;
+    break;
+  case ECAEN_HighThrRange:
+    fIsHighThrRange = kTRUE;
     break;
   default:
     // default try commands of TDAQmodule
@@ -174,7 +181,8 @@ void TVME_V792::PostInit( )
   // If OK carry out default init to perform write initialisation of registers
   if( fIsInit ) return;            // Init already done?
   InitReg(V792reg);
-  fData[EV7XX_BitSet2] = 0x104;
+  if( fIsHighThrRange ) fData[EV7XX_BitSet2] = 0x4;
+  else fData[EV7XX_BitSet2] = 0x104;
   // If no pedestal suppression set the "Low threshold enable bit 4
   if( !fIsThreshold )  fData[EV7XX_BitSet2] |= 0x10;
   fData[EV7XX_BitClr2] = 0x4;                       // clear data reset

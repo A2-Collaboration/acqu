@@ -1,0 +1,42 @@
+************************************************************************
+*       ACQU Data Acquisition System for Nuclear Physics
+*
+*       ************** prescale.gdh ****************
+*
+*       Trigger input prescaler control
+*	KPh design prescaler has 10 channels A = 0--9
+*	Values 0-ffff(hex) accepted
+*
+*       Every value is entered in hexadecimal!!!
+*
+*       JRM Annand	25th Nov 1996	1st edition
+***********************************************************************
+*       A0 Trigger
+0
+*
+* ---------------------------------------------------------------------
+*	A1 Trigger
+*  Value 30 set for M2 mu-Delta run
+*30
+*  No (i.e. 0) M2 prescale for gamma+D run 26/10/04
+1
+* Value 2 (factor 3) set for M2 rare eta experiments
+*2
+* Value 1 (factor 2) set for M2 Ca (testing)
+*1
+*
+* ---------------------------------------------------------------------
+*	A2 Trigger
+0
+*
+* ---------------------------------------------------------------------
+*       A3 Trigger
+0
+*
+* ---------------------------------------------------------------------
+*	A4 Trigger
+0
+* ---------------------------------------------------------------------
+*	A5 Trigger
+0
+*

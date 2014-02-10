@@ -1,0 +1,8 @@
+*	KELVIN LABORATORY, UNIVERSITY OF GLASGOW
+*	Test pedestal subtract for STR136
+*	JRM Annand	 2nd Jun 1993
+*	Register Subaddr	Data
+	pd0			900
+	pd1			900
+	pd2			900
+	pd3			900

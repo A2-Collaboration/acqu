@@ -199,7 +199,8 @@ inline void TA2UserAnalysis::Decode()
 inline void TA2UserAnalysis::Process()
 {
   //Measure processed events per second
-  Speed();
+  // This was a most irritating feature JRMA
+  // Speed();
 
   //Call standard decode
   TA2Analysis::Process();

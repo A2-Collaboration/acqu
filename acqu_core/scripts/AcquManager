@@ -1,0 +1,1610 @@
+#!/usr/bin/perl
+
+# This script has been written
+# by A. Neiser <neiser@kph.uni-mainz.de>
+# Call it with  `AcquManager --man`
+# to see what it can do
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper;
+use Switch;
+use Net::OpenSSH;
+use Logger::Syslog;
+use LWP::Simple;
+use Expect;
+use Storable qw(dclone);
+
+use lib '/opt/epics/base/lib/perl';
+use CA;
+
+
+# define the runsets here
+# as a hashref, the key is the "name" of the runset
+# please provide a meaningful description of the runset,
+# and note that there are subtle differences in the TAG field
+# of the host list
+# Furthermore, NOTE: The host running AcquDAQ GUI must be listed first!
+
+our $runsets = {}; # define as our, to be modified by runsetfile maybe
+
+# define runset CBTaggTAPS
+$runsets->{CBTaggTAPS} =
+  {
+   'Description' => 'The full system including CB, Tagger, TAPS',
+   'DefaultTriggerId' => 23,
+   'Hosts' => [
+               ['vme-exptrigger',   'VupromT'], # first, the host where the AcquDAQ GUI is started
+               ['vme-cb-adc-1a',    'SADC1A'],
+               ['vme-cb-adc-1b',    'SADC1B'],
+               ['vme-cb-adc-2a',    'SADC2A'],
+               ['vme-cb-adc-2b',    'SADC2B'],
+               ['vme-cb-tdc-a',     'TDCA'],
+               ['vme-cb-tdc-b',     'TDCB'],
+               ['vme-mwpc-adc-a',   'WCA'],
+               ['vme-mwpc-adc-b',   'WCB'],
+               ['vme-tagg-tdc-a',   'TAGGA'],
+               ['vme-tagg-tdc-b',   'TAGGB'],
+               ['vme-taps-trigger', 'Slave'], # TAPS is in slave mode
+               ['vme-taps-baf-a',   'BaFA'],
+               ['vme-taps-baf-b',   'BaFB'],
+               ['vme-taps-baf-c',   'BaFC'],
+               ['vme-taps-baf-d',   'BaFD'],
+               ['vme-taps-baf-e',   'BaFE'],
+               ['vme-taps-baf-f',   'BaFF'],
+               ['vme-taps-veto-ab', 'VetoAB'],
+               ['vme-taps-veto-cd', 'VetoCD' ],
+               ['vme-taps-veto-ef', 'VetoEF'],
+               ['vme-taps-pwo',     'PbWO4.Sens'],
+               ['vme-beampolmon',   'BEAM']
+              ],
+   'TCS' => undef # a bit unnecessary for the whole system
+  };
+
+# define runset CBTagg
+$runsets->{CBTagg} =
+  {
+   'Description' => 'CB and Tagger in standalone, without TAPS',
+   'DefaultTriggerId' => 23,
+   'Hosts' => [
+               ['vme-exptrigger',   'Vuprom'], # first, the host where the AcquDAQ GUI is started
+               ['vme-cb-adc-1a',    'SADC1A'],
+               ['vme-cb-adc-1b',    'SADC1B'],
+               ['vme-cb-adc-2a',    'SADC2A'],
+               ['vme-cb-adc-2b',    'SADC2B'],
+               ['vme-cb-tdc-a',     'TDCA'],
+               ['vme-cb-tdc-b',     'TDCB'],
+               ['vme-mwpc-adc-a',   'WCA'],
+               ['vme-mwpc-adc-b',   'WCB'],
+               ['vme-tagg-tdc-a',   'TAGGA'],
+               ['vme-tagg-tdc-b',   'TAGGB'],
+               ['vme-beampolmon',   'BEAM']
+              ],
+   'TCS' => 'vme-tagg-tdc-b' # which host has access to the Trigger Control System (TCS)
+  };
+
+# define runset TAPS
+$runsets->{TAPS} = MakePedRunset(
+  {
+   'Description' => 'TAPS in standalone, without CB, MWPC and Tagger',
+   'DefaultTriggerId' => undef, # TAPS does not have a trigger ID
+   'Hosts' => [
+               ['vme-taps-trigger', 'Master'], # first, the host where the AcquDAQ GUI is started
+               ['vme-taps-baf-a',   'BaFA'],
+               ['vme-taps-baf-b',   'BaFB'],
+               ['vme-taps-baf-c',   'BaFC'],
+               ['vme-taps-baf-d',   'BaFD'],
+               ['vme-taps-baf-e',   'BaFE'],
+               ['vme-taps-baf-f',   'BaFF'],
+               ['vme-taps-veto-ab', 'VetoAB'],
+               ['vme-taps-veto-cd', 'VetoCD' ],
+               ['vme-taps-veto-ef', 'VetoEF'],
+               ['vme-taps-pwo',     'PbWO4.Sens'],
+              ],
+   'TCS' => undef # TAPS does not know about TCS...
+  });
+
+$runsets->{TAPSPulser} = dclone($runsets->{TAPS});
+$runsets->{TAPSPulser}->{Description} .= ', Pulser only';
+$runsets->{TAPSPulser}->{Hosts}->[0]->[1] = 'MasterP';
+
+# define runset TaggEff
+$runsets->{TaggEff} =
+  {
+   'Description' => 'Tagging efficiency setup without TAPS or CB',
+   'DefaultTriggerId' => 23,
+   'Hosts' => [
+               ['vme-exptrigger',   'TaggEff'], # first, the host where the AcquDAQ GUI is started
+               ['vme-tagg-tdc-a',   'TAGGA'],
+               ['vme-tagg-tdc-b',   'TAGGB'],
+               ['vme-beampolmon',   'BEAM']
+              ],
+   'TCS' => 'vme-tagg-tdc-b'
+  };
+
+# define TaggEffBg, just another tag for the GUI host
+# commented out, not used at the moment
+#$runsets->{TaggEffBg} = dclone($runsets->{TaggEff});
+#$runsets->{TaggEffBg}->{Description} .= ', background measurement';
+#$runsets->{TaggEffBg}->{Hosts}->[0]->[1] = 'TaggEffBg'; # change the tag
+
+# define pedestal versions of TAPS-related runsets
+# it adds to some hosts the string '_Ped' to the tagg column
+# see the subfunction MakePedRunset for details
+# commented out since not needed at the moment?
+#$runsets->{TAPSPed}
+#  = MakePedRunset($runsets->{TAPS});
+$runsets->{CBTaggTAPSPed}
+  = MakePedRunset($runsets->{CBTaggTAPS});
+$runsets->{CBTaggPed}
+  = MakePedRunset($runsets->{CBTagg});
+
+
+
+# register a cleanup handler for signals
+# quite early
+$SIG{TERM} = $SIG{INT}
+  = $SIG{QUIT} = $SIG{HUP} =
+  sub { print " ==> Interrupted by signal, cleaning up.\n"; };
+our $cleanup = [];
+END {
+  foreach my $cb (reverse @$cleanup) {
+    $cb->();
+  }
+}
+
+# some default config options
+# and provide nice help documentation
+# some global variables, needed everywhere
+
+my $man = 0;
+my $help = 0;
+my $verbose = 0;
+my $warnings = 1;
+my $nostore = 0;
+my $eventmerger = 1; # start the event merger?
+my $runsetfile;
+my $force = 0;
+my $retry = 10;
+my $exclude = "";
+my $SSH;  # stores the SSH connections to the hosts
+my $RAMs; # temporarily stores trigger RAMs
+my $statusToString =
+  {
+   0 => 'Started',
+   1 => 'Stopped',
+   2 => 'Started in NoStore mode',
+   3 => 'Stopped (but partially started or inconsistent)',
+   4 => 'Unknown / SSH Error'
+  };
+my $trigger_baseurl = 'http://wwwa2.kph.uni-mainz.de/intern/trigger';
+my $acqu_datadir = '$HOME/acqu/data'; # were to find the data dir on VME hosts
+my $AcquBin = '/opt/acqu/build/bin'; # where can we find RSupervise, AcquControl, ...
+my $InitTriggerId = 73; # trigger providing some interrupts
+my $InitCPUEnable = '0x2000'; # the correct CPU Enable for init (all hosts disabled)
+
+Getopt::Long::Configure(qw(gnu_getopt));
+GetOptions(
+           'help|h' => \$help,
+           'man' => \$man,
+           'verbose|v+' => \$verbose,
+           'warnings|w!' => \$warnings,
+           'nostore|n' => \$nostore,
+           'eventmerger!'=> \$eventmerger,
+           'runsetfile|r=s' => \$runsetfile,
+           'force|f' => \$force,
+           'retry' => \$retry,
+           'exclude|e=s' => \$exclude
+          ) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-exitval => 0, -verbose => 2) if $man;
+
+if ($verbose) {
+  # always enable warnings if verbose
+  $warnings = 1;
+}
+
+# syslog prefix
+logger_prefix("AcquManager");
+
+# this loads some additional runsets
+&LoadRunsetfile;
+
+# jump to subroutine which handles the job,
+# depending on the options
+my $mode = shift @ARGV || "";
+
+switch($mode) {
+  case "start" { &Start; }
+  case "restart" { &Stop; &Start}
+  case "status" { &Status; }
+  case "stop" { &Stop; }
+  case "list" { &List; }
+  case "trigger" { &Trigger; }
+  case "init" { &Init; }
+  case "do" { &Do; }
+  else {
+    Logger("Supplied mode not recognized, try --help or --man");
+  }
+}
+
+##############
+# Start mode #
+##############
+
+sub Start {
+  my $runset = $ARGV[0] || "";
+
+  # sanity checks by guessing the status beforehand (disallowing all)
+  # this also checks if the status is there at all
+  if(GuessStatus($runset, 1) != 1 && !$force) {
+    Logger("Cannot start runset $runset which is not properly stopped.\n".
+           "Check `AcquManager status` what is going on.\n".
+           "Use option --force if you really want to do that.");
+  }
+
+  Logger("Starting Runset $runset",1);
+  my $nHosts = StartAcquDAQ($runset);
+
+  Logger("AcquDAQ processes successfully launched on $nHosts VME hosts.",1);
+
+  # in Nostore mode, we're done now (no eventmerger needed)
+  return if $nostore || !$eventmerger;
+
+  # Start the AcquRoot event merger in a xterm window,
+  # which connects to the previously started AcquDAQ processes
+  my $cmd = GenerateAcquRootCmd($runset);
+  Logger("Starting event merger for $runset in xterm...",1);
+  chdir "$ENV{HOME}/acqu" or die "Can't chdir to acqu folder in home directory";
+  Logger("Starting in background with $cmd",3);
+  system("nohup $cmd 2>/dev/null >/dev/null < /dev/null &") == 0
+    or Logger("Cannot start $cmd in background");
+}
+
+sub StartAcquDAQ {
+  # this routine can be called directly from Init mode
+  my $runset = shift;
+  # but we need some specialized stuff in this mode
+  my $AcquControl_mode = shift || 'start'; # could also be 'init'
+  my $blacklist = shift || []; # list of hosts which should be excluded
+  my $whitelist = shift || []; # list of hosts which should be started only
+
+  # define a shortcut to the actual runset data
+  my $r = $runsets->{$runset};
+
+  # copy the xauth information and use the fact that
+  # sshd on daq-master is configured with X11UseLocalhost no
+  Logger("DISPLAY environment variable must be set. Have you tried 'ssh -Y'?") unless $ENV{DISPLAY};
+  Logger("DISPLAY must not contain localhost. Set 'X11UseLocalhost no' in /etc/ssh/sshd_config.")
+    if $ENV{DISPLAY} =~ /localhost/;
+
+  my $xauth = `xauth list $ENV{DISPLAY}`;
+  Logger("Xauth: $xauth",3);
+
+  # this opens the SSH sessions in $r->{SSH}, if not already done
+  InitSSH($r);
+
+  my $host_gui = $r->{Hosts}->[0]->[0];
+  Logger("The host running the GUI is: $host_gui",3);
+
+  # this subroutine actually starts AcquDAQ
+  my $starter = sub {
+    my $h = shift;
+    my $host = $h->[0];
+    my $ssh = $SSH->{$host};
+    my $arg = GenerateArgument($h)->[$nostore]; # nostore is a flag which is used as an index here
+    # copy the xauth if X is needed (currently only for the GUI)
+    if ($host eq $host_gui) {
+      $ssh->system("xauth add $xauth")
+        or Logger("Remote xauth failed for $host: ".$ssh->error);
+    }
+    Logger("Starting AcquDAQ on $host with $arg",2);
+    # $AcquControl_mode is usually "start", but
+    # we also tell AcquControl if force should be used
+    # since the AcquControl is a stupid bash script, we need
+    # to **prepend** this option
+    $AcquControl_mode = "-f $AcquControl_mode" if $force; 
+    my $cmd = "$AcquBin/AcquControl $AcquControl_mode $arg";
+    if ($host eq $host_gui) {
+      # prepend the DISPLAY setting
+      $cmd = "DISPLAY=$ENV{DISPLAY} $cmd";
+    }
+    Logger("Command used: $cmd",3);
+    # launch AcquDAQ, discard stdout unless very verbose (-vvvv)
+    return $ssh->system({async=>1, stdout_discard=>$verbose<4}, $cmd);
+  };
+
+  # create some handy hashes...
+  # at first, all hosts are to be started
+  my %pending = map {$_->[0]=>$_} @{$r->{Hosts}};
+  my %blacklist = map {$_=>1} @$blacklist;
+  # whitelist all hosts in runset if none are given
+  my %whitelist = @$whitelist==0 ? %pending : map {$_=>1} @$whitelist;
+
+  my $tries = $retry;
+  while(1) {
+    my $pid = {};
+    foreach my $host (keys %pending) {
+      next if exists $blacklist{$host};
+      next unless exists $whitelist{$host};
+      $pid->{$host} = $starter->($pending{$host});
+    }
+
+    my $failed = WaitForPIDs($pid);
+
+    # exit code 1 of AcquControl indicates fatal error, we exit then!
+    my @failed_hosts = grep { $failed->{$_}==1 } keys $failed;
+    if(@failed_hosts>0) {
+      # if verbose, dump the logfile for convenience
+      # in init mode, we're by default verbose...
+      if($verbose>0) {
+        foreach my $host (@failed_hosts) {
+          my $logfile = "/var/log/syslog-$host.log";
+          my $lines = 20;
+          print "===== Dumping last $lines lines of $logfile:\n";
+          system("grep AcquDAQ: $logfile | tail -$lines");
+          print "===== End of dumping last $lines lines of $logfile:\n";
+        }
+      }
+      Logger("AcquDAQ fatally failed on hosts: ".join(" ", @failed_hosts));
+    }
+
+    # exit code 2 indicates hanging AcquDAQ, so retrying could help
+    my @hanging_hosts = grep { $failed->{$_}==2 } keys $failed;
+    if(@hanging_hosts) {
+      $tries--;
+      if($tries<=0) {
+        Logger("No retries for hosts ".join(" ", @hanging_hosts).
+               " left. Giving up. Examine with 'screen -r AcquDAQ' on VMEs!");
+      }
+      Logger("($tries retries left) AcquDAQ hangs on host(s): ".join(" ", @hanging_hosts),-1);
+      my $nhosts = StopHosts(@hanging_hosts);
+      if($nhosts!=@hanging_hosts) {
+        Logger("Could not stop all hanging hosts. That's weird. Giving up.");
+      }
+      # reset the pending hosts to the hanging ones, then start again
+      %pending = map {$_=>$pending{$_}} @hanging_hosts;
+      next;
+    }
+
+    # nothing failed, nothing hanged, then just exit the endless loop
+    last;
+  }
+
+  return scalar @{$r->{Hosts}}; # return the number of hosts which have been started
+}
+
+###############
+# Status mode #
+###############
+
+sub Status {
+  my $runset = $ARGV[0] || "ALL";
+  # this sets a code in $r->{Status}
+  GuessStatus($runset);
+
+  my $printStatus = sub {
+    my $runset = shift;
+    my $r = $runsets->{$runset};
+    my $s = $r->{Status};
+    printf("%-10s\t%s",
+           $runset,
+           $statusToString->{$s});
+    if($s==0) {
+      my ($em, $from) = CheckEventMerger($runset);
+      if($em) {
+        print " from host $from\n";
+      }
+      else {
+        print "\n";
+        Logger("Eventmerger for $runset was not found",-1);
+      }
+    }
+    else {
+      print "\n";
+    }
+  };
+
+  if ($runset eq 'ALL') {
+    foreach my $runset (keys $runsets) {
+      $printStatus->($runset);
+    }
+  } else {
+    $printStatus->($runset);
+  }
+}
+
+#############
+# Stop Mode #
+#############
+
+sub Stop {
+  my $runset = $ARGV[0] || "";
+
+  # sanity checks by guessing the status beforehand
+  GuessStatus($runset);
+
+  # gather together all hosts,
+  if ($runset eq 'ALL') {
+    if(!$force) {
+      Logger("Cannot stop ALL runsets without option --force. Be careful!");
+    }
+    Logger("Stopping all known runsets", 1);
+    foreach my $runset (keys $runsets) {
+      my $r = $runsets->{$runset};
+      InitSSH($r);
+    }
+  } else {
+    my $r = $runsets->{$runset};
+    unless($force || $r->{Status} == 0 || $r->{Status} == 2) {
+      Logger("Cannot stop non-started runset without option --force.");
+    }
+    Logger("Stopping Runset $runset", 1);
+    InitSSH($r);
+  }
+
+  # try stop on all hosts
+  my $nhosts = StopHosts(keys $SSH);
+
+  # kill the locally started eventmerger now (if in normal mode)
+  if ($runset eq 'ALL') {
+    foreach my $runset (keys $runsets) {
+      my $r = $runsets->{$runset};
+      KillEventMerger($runset) if $r->{Status} != 2; # not in NoStore mode
+    }
+  } else {
+    my $r = $runsets->{$runset};
+    KillEventMerger($runset) if $r->{Status} != 2;
+  }
+
+  Logger("AcquDAQ processes stopped on $nhosts VME hosts.",1);
+}
+
+sub List {
+  print "The following runsets are available:\n";
+  foreach my $runset (sort keys $runsets) {
+    printf("* %-10s\t%s\n",$runset,,$runsets->{$runset}->{Description});
+  }
+}
+
+################
+# Trigger mode #
+################
+
+sub Trigger {
+  my $runset = $ARGV[0] || 'ALL';
+  my $trigid = $ARGV[1] || ''; # should be a decimal number
+
+  # no trigger number, just status stuff (ALL is allowed)
+  if($trigid eq '') {
+    TriggerStatus($runset);
+    return;
+  }
+
+  Logger("Specified trigger ID is not a number") unless $trigid =~ /^\d+$/; # check num
+  # sanity checks by guessing the status beforehand (disallow ALL),
+  # this also checks if the status is there at all
+  if (GuessStatus($runset, 1) != 1) {
+    Logger("Cannot change trigger of runset $runset which is not properly stopped.\n".
+           "Check `AcquManager status` what is going on.\n".
+           "Hint: Even --force does not help here!");
+  }
+
+  # we check /opt here since TriggerSetup relies on it
+  # this is all due to init mode, which uses this routines
+  # in a somewhat different way
+  my $r = $runsets->{$runset};
+  my $host_gui = $r->{Hosts}->[0]->[0];
+  EnsureOptIsMounted($host_gui);
+  # then start the new trigger setup
+  TriggerSetup($runset, $trigid);
+}
+
+sub TriggerSetup {
+  # this routine can be directly called from Init mode
+  # but it is assumed that /opt on $host_gui is already mounted
+  my $runset = shift;
+  my $trigid = shift;
+
+  # get some info about the trigger ID
+  # $cfg holds information for the new AcquDAQ config file
+  # add the config line telling the trigger ID (see below where the new config file is created)
+  my($info,$cfg) = TriggerInfo($trigid);
+  $cfg->{'RAM-Download'} = $trigid; # add a line telling AcquDAQ the RAM ID
+  my $trigname = $info->{Name};
+
+  # define some abbreviations
+  Logger("Setting up new Trigger ID $trigid, Name: '$trigname'...",1);
+  my $r = $runsets->{$runset};
+  my $host_gui = $r->{Hosts}->[0]->[0];
+  my $ssh = $SSH->{$host_gui};
+
+  # already prepare the $linktarget
+  my ($trigid_prev, $vupromfile, $linktarget_prev) = TriggerGuessId($runset);
+  Logger("Previous Trigger ID on GUI host $host_gui: $trigid_prev",2);
+  Logger("New and old trigger ID are equal. Sure you wanted that?",-1)
+    if $trigid eq $trigid_prev;
+
+  # check if the RAM files are there,
+  # download them if necesssary (can be --force'd)
+  my $L1_file = "$acqu_datadir/TriggerRAML1_$trigid.dat";
+  my $L2_file = "$acqu_datadir/TriggerRAML2_$trigid.dat";
+  if($force ||
+     !$ssh->test("ls $L1_file && ls $L2_file")) {
+
+    Logger("(Re)creating L1/L2 Trigger RAMs for $trigid...",2);
+
+    # download, this takes some time
+    my ($L1,$L2) = TriggerDownloadRAM($trigid);
+
+    # use some scp like file transfer
+    # to copy $L1 and $L2 to the appropiate files
+    my ($L1_in, undef) = $ssh->pipe_in("cat >$L1_file")
+       or Logger("Writing L1 file $L1_file failed: " . $ssh->error);
+    print $L1_in $L1;
+    close $L1_in or Logger("Writing L1 file $L1_file failed at close: $!");
+
+    my ($L2_in, undef) = $ssh->pipe_in("cat >$L2_file")
+      or Logger("Writing L2 file $L2_file failed: " . $ssh->error);
+    print $L2_in $L2;
+    close $L2_in or Logger("Writing L2 file $L2_file failed at close: $!");
+  }
+
+  # check if there is a link target (the actual file),
+  # if not create it based on the previous file
+  my $linktarget = $linktarget_prev;
+  $linktarget =~ s/$trigid_prev/$trigid/; # replace the number in the filename
+
+  my $ret = MakeAcquDAQConfigFile($ssh,
+                                  "$acqu_datadir/$linktarget_prev",
+                                  "$acqu_datadir/$linktarget",
+                                  $cfg);
+  if($ret) {
+    # print some warnings since the creation of the trigger config file
+    # is more than perfect...
+    Logger("(Re)created trigger config file for trigger ID $trigid.",-1);
+    Logger("Please check on '$host_gui' if $acqu_datadir/$linktarget is really correct!",-1);
+  }
+
+  # as the last step, reset the link to the new target (use -f to be sure)
+  $ssh->system("cd $acqu_datadir; ".
+               "ln -sf $linktarget $vupromfile")
+    or Logger("Can't set link to trigger config file: ".$ssh->error);
+
+
+  Logger("Trigger ID $trigid '$trigname' successfully activated.",1);
+}
+
+
+
+
+#############
+# Init mode #
+#############
+
+sub Init {
+  my $runset = $ARGV[0] || '';
+
+  # sanity checks by guessing the status beforehand (disallow ALL),
+  # this also checks if the status is there at all
+  if (GuessStatus($runset, 1) != 1) {
+    Logger("Cannot initialize $runset which is not properly stopped.\n".
+           "Check `AcquManager status` what is going on.\n".
+           "Hint: Even --force does not help here.");
+  }
+
+  my $r = $runsets->{$runset};
+  my $nHosts; # number of stopped hosts, used several times in the following
+
+  # TCS host available?
+  unless(defined $r->{TCS}) {
+    Logger("This runset has no TCS host defined. Initialization is meaningless then.");
+  }
+  my $host_tcs = $r->{TCS};
+
+  # GUI host is the first one in the list
+  my $h = $r->{Hosts}->[0];
+  my $host_gui = $h->[0];
+
+  # ensure SSH is initialized
+  InitSSH({'Hosts' => [[$host_gui],[$host_tcs]]});
+  my $ssh_gui = $SSH->{$host_gui};
+  my $ssh_tcs = $SSH->{$host_tcs};
+
+  # we need NoStore mode, so force enabled (global variable!)
+  # set it at the very beginning so that everything else (trigger, starting)
+  # knows about it
+  $nostore = 1;
+  # since all the actions take long, we're a bit more verbose in this mode
+  $verbose++;
+  # prefix for the verbose output
+  my $prefix = '== Init:';
+
+  # first of all, the TCS must be initialized
+  # we start the AcquDAQ process on the TCS host,
+  # which is stopped again by the following init
+  Logger("$prefix Starting AcquDAQ on $host_tcs (just for checking)",1);
+  StartAcquDAQ($runset, 'start',
+               [],               # blacklist none, since we...
+               [$host_tcs]       # ...whitelist only TCS host
+              );
+  Logger("$prefix Initializing TCS (and TDCs) on '$host_tcs'. ".
+         "Be patient (takes about one minute to finish!)",1);
+  StartAcquDAQ($runset, '-t 80 init', # give it 80 s to finish
+               [],                    # blacklist none, since we...
+               [$host_tcs]            # ...whitelist only TCS host
+              );
+
+  # get the old trigger in NoStore mode
+  my ($trigid_old, undef, undef) = TriggerGuessId($runset);
+  Logger("$prefix Current trigger ID: $trigid_old (will be restored in the end)",1);
+
+  # activate the special trigger needed for programming the GeSiCas
+  # and register the callback to properly restore it if something fails
+  Logger("$prefix Activating specific trigger $InitTriggerId",1);
+  EnsureOptIsMounted($host_gui); # don't forget to make /opt writeable
+  TriggerSetup($runset, $InitTriggerId);
+  push(@$cleanup,
+       sub {
+         # never use force to restore the trigger
+         $force=0;
+         Logger("$prefix Cleanup: Trying to restore the old trigger $trigid_old",1);
+         TriggerSetup($runset, $trigid_old);
+         });
+
+  # start the whole runset in NoStore mode
+  # (this can fail since we base it on the existing config)
+  # but we use a modified config file, which let's us remotely control
+  # the AcquDAQ experiment via RSupervise
+  Logger("$prefix Creating specific config file for $host_gui based on current one", 1);
+  my $datfile = GenerateArgument($h)->[$nostore];
+  $h->[1] = $h->[1]."_Init"; # append init to the TAG...
+  my $datfile_init = GenerateArgument($h)->[$nostore]; # ..then get the new filename
+  # the "Control:" option makes AcquDAQ listen locally (similar to the instance on vme-tagg-tdc-b)
+  my $cfg = { 'Control' => 'ENet localhost 4029' };
+  MakeAcquDAQConfigFile($ssh_gui,
+                        "$acqu_datadir/$datfile",
+                        "$acqu_datadir/$datfile_init",
+                        $cfg,
+                        1  # force creation of file!
+                       );
+
+  # now start with the modified TAG from above
+  Logger("$prefix Starting all AcquDAQ processes in NoStore mode, but $host_gui with Init config.",1);
+
+  StartAcquDAQ($runset);
+
+  # now, set the proper CPU Enable and do Go:
+  # Note that Start:/Run: is not correct and Go: issues an
+  # TCS Reset at the beginning!
+  # Remember: Once we close this RSupervise connection, AcquDAQ crashes!
+  Logger("$prefix Setting CPUEnable $InitCPUEnable, issueing Go: via RSupervise",1);
+  my $supervise_gui =
+    DoRSupervise($ssh_gui,
+                 sprintf('VUPROM: Enable-CPU: %d', hex($InitCPUEnable)),
+                 'Go:'
+                );
+  Logger("$prefix DAQ has been started. Checking trigger rate.",1);
+  CheckTriggerRate();
+
+  # now, with an working TCS and interrupts, we can initialize the
+  # all the remaining modules
+  Logger("$prefix Initializing all hosts of runset in parallel (except $host_gui and $host_tcs). ".
+         "Be patient (takes about four minutes to finish!)",1);
+  StartAcquDAQ($runset, '-t 240 init', # give it 240 s to finish
+               [$host_gui, $host_tcs], # blacklist the GUI and TCS host
+               [] # whitelist defaults to empty, just for completeness
+              );
+
+  Logger("$prefix Checking trigger rate again (should still run).",1);
+  CheckTriggerRate();
+
+
+  Logger("$prefix Issueing ConfigTCS: on $host_tcs via RSupervise",1);
+  my $supervise_tcs =
+    DoRSupervise($ssh_tcs, 'ConfigTCS:');
+
+  # now, all AcquDAQ sessions should be exited except on $host_gui and $host_tcs
+  Logger("$prefix Stopping the last standing AcquDAQs on $host_gui and $host_tcs. ",1);
+  $nHosts = StopHosts($host_gui, $host_tcs);
+  if ($nHosts != 2) {
+    Logger("Could not stop AcquDAQ on $host_gui or $host_tcs which should have been still running. ".
+           "That's unexpected.");
+  }
+
+  # the processes have been killed anyway,
+  # so this is just pedantic cleanup here
+  # (to remind you that RSupervise must stay open)
+  $supervise_tcs->hard_close();
+  $supervise_gui->hard_close();
+
+  Logger("$prefix Initialization completely done!",1);
+}
+
+
+###########
+# Do mode #
+###########
+
+sub Do {
+  # use shift to keep in the rest of @ARGV the cmd and its arguments
+  my $runset = shift @ARGV || "";
+  my $cmd = join(" ", @ARGV);
+
+  my %exclude = map { $_ => 1 } split(/,/,$exclude); # comma separated list
+
+  # sanity checks by guessing the status beforehand
+  # already checks if runset is defined
+  GuessStatus($runset);
+
+  # some simple logic to catch the ALL keyword properly
+  # and init the necessary SSH connections
+  if ($runset eq 'ALL') {
+    if (!$force) {
+      Logger("Cannot 'do' for ALL runsets without option --force. Be careful!");
+    }
+    foreach my $runset (keys $runsets) {
+      InitSSH($runsets->{$runset});
+    }
+  }
+  else {
+    my $r = $runsets->{$runset};
+    if(!$force && $r->{Status} != 1) {
+      Logger("Cannot 'do' on non-stopped runset without option --force.");
+    }
+    my $h = $r->{Hosts}->[0];
+    my $host_gui = $h->[0];
+    InitSSH($r);
+    # some special replacements
+    if(exists $exclude{GUI}) {
+      delete $exclude{GUI};
+      $exclude{$host_gui} = 1;
+    }
+    if(exists $exclude{TCS}) {
+      delete $exclude{TCS};
+      if(defined $r->{TCS}) {
+        $exclude{$r->{TCS}} = 1;
+      }
+    }
+  }
+
+
+  # in $SSH all hosts are initialized,
+  # now execute the given command
+  my $pid;
+  foreach my $host (keys $SSH) {
+    my $ssh = $SSH->{$host};
+    next if exists $exclude{$host};
+    # the perl pipe formats the output (prepends the hostname)
+    $pid->{$host} = $ssh->system({async=>1},
+                                 "bash -l -c \"$cmd\" 2>&1".
+                                 " | perl -pe 'chomp(\$h=`hostname -s`); printf(\"%-17s %s\",\$h);'");
+  }
+
+  # Wait and check result
+  my @failed_hosts = WaitForPIDs($pid);
+  if (@failed_hosts) {
+    Logger("The command could not be executed on ".join(" ", @failed_hosts), -1)
+  }
+}
+
+####################
+# Helper Functions #
+####################
+
+sub CheckTriggerRate {
+  # poll the TRIG:Trigger rate via EPICS...
+  # we expect it to be more than 1000
+  my $chan = CA->new('TRIG:Trigger');
+  CA->pend_io(1);
+
+  my $tries = $retry;
+  while (1) {
+    $chan->get;
+    CA->pend_io(1);
+    if ($chan->value>1000) {
+      Logger("TRIG:Trigger rate: ".$chan->value." > 1000, Ok!",1);
+      last;
+    } elsif ($tries==0) {
+      Logger("TRIG:Trigger rate did not exceed 1000 (says EPICS). Last value: ".$chan->value);
+    } else {
+      $tries--;
+      sleep(1);
+    }
+  }
+}
+
+sub DoRSupervise {
+  my $ssh = shift;
+  my @cmds = @_;
+
+  # fiddle out the port AcquDAQ is listening on
+  # this also checks if AcquDAQ is properly running
+  my $tries = $retry;
+  my @lines;
+  while(1) {
+    @lines = $ssh->capture({stderr_discard=>1}, # netstat outputs warnings if run non-root...
+                           "netstat -anp | grep AcquDAQ");
+    if(@lines == 0 && $tries>0) {
+      $tries--;
+      sleep 1;
+      next;
+    }
+    elsif(@lines == 1) {
+      last;
+    }
+    else {
+      Logger("AcquDAQ on '".$ssh->get_host."' does not listen on exactly one port after $retry retries. ".
+             "Maybe AcquDAQ could not be started?");
+    }
+  }
+
+  my @cols = split(/\s+/,$lines[0]);
+  if($cols[5] ne 'LISTEN') {
+    Logger("AcquDAQ on '".$ssh->get_host."' does not listen on the port. ".
+           "Check with `netstat -anp | grep AcquDAQ`.");
+  }
+  # get the local port
+  my (undef, $port) = split(/:/,$cols[3]);
+
+  Logger("Found AcquDAQ listening on port $port",2);
+
+  my ($pty, $pid) = $ssh->open2pty("$AcquBin/RSupervise localhost $port")
+    or die "Cannot start RSupervise on port $port: ".$ssh->error;
+  my $exp = Expect->init($pty);
+  my $timeout = 5;
+  #$exp->debug(1);
+  #$exp->log_stdout(1);
+  $exp->raw_pty(1);
+
+
+  my $prompt = 'AcquDAQ>';
+
+  # send each command, and wait always for the prompt again
+  foreach my $cmd (@cmds) {
+    Logger("Waiting for RSupervise to show the $prompt prompt...",2);
+    $exp->expect($timeout, $prompt) or
+      Logger("Did not see prompt $prompt on RSupervise after $timeout seconds");
+    Logger("Sending command '$cmd'...",2);
+    $exp->send("$cmd\n");
+  }
+
+  # wait one last time,
+  # ensures the last command has finished processing
+  Logger("Waiting for RSupervise to show the $prompt a last time...",2);
+  $exp->expect($timeout, $prompt) or
+    Logger("Did not see prompt $prompt on RSupervise after $timeout seconds");
+
+  # DO NOT close the pty at the end, since
+  # this makes AcquDAQ crash.
+  return $exp;
+}
+
+sub EnsureOptIsMounted {
+  my $host = shift;
+  my $ssh = $SSH->{$host};
+  # check the status of the /opt mount
+  # try to mount it
+  my $mounted = $ssh->test('mountpoint /opt');
+  if (!$mounted) {
+    Logger("Temporarily mounting /opt to apply the changes...",2);
+    $ssh->system({stdout_discard=>1}, 'mount /opt') or
+      Logger("Can't mount /opt on $host: ".$ssh->error);
+    # register an unmount cleanup since we mounted it
+    push(@$cleanup, sub {
+           Logger("Cleanup: Unmounting /opt again",2);
+           $ssh->system({stdout_discard=>1}, 'umount /opt') or
+             Logger("Can't umount /opt on $host. Check that: ".$ssh->error,-1);
+         });
+  } else {
+    Logger("/opt already mounted read-write on $host. This should NOT be default.",-1);
+  }
+}
+
+sub MakeAcquDAQConfigFile {
+  # Beware: This procedure assumes that /opt is mounted rw!
+  
+  my $ssh = shift; # determines on what host
+  my $file_old = shift; # determindes "basis" file (full path!)
+  my $file_new = shift; # name of the new file
+  my $cfg = shift; # hashref with to be modified content
+  my $force_tmp = shift || $force; # force can be temporarily enabled
+
+  # if new file is already there, skip it if not forced...
+  if(!$force_tmp && $ssh->test("ls $file_new")) {
+    Logger("Skipping creation of config file '$file_new' on '".
+           $ssh->get_host."': Already existing. ".
+           "Use --force if you want to recreate it.", 2);
+    return 0;
+  }
+
+  # starting from the old file, we create new one
+  # which is modified correctly (hopefully...)
+  my @lines = $ssh->capture("cat $file_old");
+  $ssh->error and
+    Logger("Could not retrieve $file_old: ".$ssh->error);
+  my ($out, undef) = $ssh->pipe_in("cat >$file_new")
+    or Logger("Writing $file_new failed: ".$ssh->error);
+
+  for (@lines) {
+    my($tag,$val) = split(/:\s*/, $_, 2);
+    if (exists $cfg->{$tag}) {
+      # replace the line with new value
+      printf $out "%s: %s\n", $tag, $cfg->{$tag};
+      delete $cfg->{$tag};
+    } else {
+      # keep the line
+      print $out "$_";
+    }
+  }
+  # append missing config lines
+  foreach my $tag (keys $cfg) {
+    printf $out "%s: %s\n", $tag, $cfg->{$tag};
+    Logger("Did not find '$tag:' line in previous config file '$file_old'. Appending it to new file.",-1);
+  }
+
+  # flush out
+  close $out or
+    Logger("Writing $file_new failed at close: ".$ssh->error);
+
+  # return success
+  return 1;
+}
+
+sub StopHosts {
+  my @hosts = @_;
+  # Call "AcquControl stop" on all hosts
+  my $pid;
+  foreach my $host (@hosts) {
+    my $ssh = $SSH->{$host};
+    Logger("Stopping AcquDAQ on $host",2);
+    $pid->{$host} = $ssh->system({async=>1, stdout_discard=>$verbose<4,
+                                  stderr_discard=>$verbose<1},
+                                 "$AcquBin/AcquControl stop");
+  }
+
+  # Wait and check result (print only warnings)
+  my @failed_hosts = WaitForPIDs($pid);
+  if (@failed_hosts) {
+    Logger("Stopping AcquDAQ failed on hosts: ".join(" ", @failed_hosts), -1)
+  }
+
+  # return how many have been successfully stopped
+  return (scalar keys $pid) - scalar @failed_hosts;
+}
+
+sub LoadRunsetfile {
+  return unless defined $runsetfile;
+  do $runsetfile or Logger("Can't load runsetfile $runsetfile: $!",-1);
+}
+
+sub MakePedRunset {
+  my $r = dclone(shift);
+  $r->{Description} .= ', including pedestals';
+  # patterns for hosts whose taggs should be
+  # suffixed with _Ped
+  my @PedHosts = qw(vme-exptrigger vme-cb-adc-2b vme-taps-pwo);
+
+  foreach my $h (@{$r->{Hosts}}) {
+    foreach my $patt (@PedHosts) {
+      if($h->[0] =~ /$patt/) {
+        $h->[1] .= '_Ped';
+      }
+    }
+  }
+  #print Dumper($r);
+  return $r;
+}
+
+sub GuessStatus {
+  my $runset = shift;
+  my $noall = shift || 0; # flag if ALL runset is valid string
+
+  Logger("Guessing status for Runset $runset...",1);
+
+  # some simple logic to catch the ALL keyword properly
+  # and init the necessary SSH connections
+  if(!$noall && $runset eq 'ALL') {
+    foreach my $runset (keys $runsets) {
+      InitSSH($runsets->{$runset})
+    }
+  } else {
+    Logger("Specified runset '$runset' not found") unless $runsets->{$runset};
+    InitSSH($runsets->{$runset})
+  }
+
+  # get the AcquDAQ processes started on the HOSTS
+  # since we capture the output we can't do this async
+  my $AcquDAQ = {};
+  foreach my $host (keys $SSH) {
+    my $ssh = $SSH->{$host};
+    Logger("Gathering AcquDAQ processes on $host",3);
+    my @lines = $ssh->capture("ps -eo pid,args");
+    if($ssh->error) {
+      Logger("Cannot get AcquDAQ processes on $host: ". $ssh->error,-1);
+      next;
+    }
+    $AcquDAQ->{$host} = []; # empty array reference
+    foreach my $line (@lines) {
+      chomp $line;
+      $line =~ s/^\s+//;
+      my ($pid,$cmd,$arg) = split(/\s+/,$line);
+      next unless $cmd =~ /AcquDAQ$/; # should at least end with AcquDAQ
+
+      # check if we already found a AcquDAQ process,
+      # if yes, it's fatal...
+      if(@{$AcquDAQ->{$host}}>0) {
+        Logger("More than one AcquDAQ process (PID $pid) detected on $host, that's weird!");
+      }
+      Logger("Found AcquDAQ process on $host",2);
+      $AcquDAQ->{$host} = [$pid, $arg];
+    }
+  }
+
+  # this compares the gathered info in $AcquDAQ
+  # to a specific runset
+  my $compare = sub {
+    my $runset = shift;
+    Logger("Comparing current state to runset $runset",3);
+    my $r = $runsets->{$runset};
+    my $all = 1;
+    my $none = 1;
+    my $all_nostore = 1;
+    my $ssh_fail = 0;
+    foreach my $h (@{$r->{Hosts}}) {
+      my $host = $h->[0];
+      my $args = GenerateArgument($h); # normal / NoStore
+      my $arg = $AcquDAQ->{$host}->[1] || ''; # actual argument
+      #print "$host $all $all_nostore\n";
+      # ssh connection failed?
+      $ssh_fail = exists $AcquDAQ->{$host} ? $ssh_fail : 1;
+      # no AcquDAQ processes at all
+      $none = @{$AcquDAQ->{$host}}==0 ? $none : 0;
+      # all?
+      $all = $arg eq $args->[0] ? $all : 0;
+      # all in nostore mode?
+      $all_nostore = $arg eq $args->[1] ? $all_nostore : 0;
+    }
+
+    # decode the flags into some status code
+    if($ssh_fail) {
+      # some hosts could be checked
+      $r->{Status} = 4;
+    }
+    elsif($all && !$none && !$all_nostore) {
+      # everything started in normal mode
+      $r->{Status} = 0;
+    }
+    elsif(!$all && $none && !$all_nostore) {
+      # nothing at all is started
+      $r->{Status} = 1;
+    }
+    elsif(!$all && !$none && $all_nostore) {
+      # started in NoStore mode
+      $r->{Status} = 2;
+    }
+    else {
+      # the rest is something inconsistent,
+      # since the runsets may overlap
+      $r->{Status} = 3;
+    }
+  };
+
+  if ($runset eq 'ALL') {
+    foreach my $runset (keys $runsets) {
+      $compare->($runset);
+      #print $runset," ",$runsets->{$runset}->{Status},"\n";
+    }
+  } else {
+    $compare->($runset);
+    return $runsets->{$runset}->{Status};
+  }
+
+}
+
+
+sub WaitForPIDs {
+  my $pid = shift;
+  # wait until all SSH commands have been executed
+  # and check exit code
+  my $failed = {};
+  foreach my $host (keys $pid) {
+    waitpid($pid->{$host},0);
+    # transform to original exit value, see perlvar $?
+    $failed->{$host} = $? >> 8 if $?;
+  }
+  if(wantarray()) {
+    return keys $failed;
+  }
+  else {
+    return $failed;
+  }
+}
+
+sub GenerateArgument {
+  my $h = shift;
+  my $tag = $h->[1];
+  my $arg = "AcquDAQ.$tag";
+  # in nostore mode, we append "_NoStore",
+  # to be used by the caller
+  return [$arg, $arg."_NoStore"];
+}
+
+sub GenerateAcquRootCmd {
+  my $runset = shift;
+  my $arg = "Online-$runset.dat";
+  return "xterm -hold -title 'AcquRoot $arg' -e AcquRoot $arg";
+}
+
+
+sub KillEventMerger {
+  my $runset = shift;
+  my $cmd = GenerateAcquRootCmd($runset);
+  # remove the single quotes again (needed for correct xterm call),
+  # otherwise pkill does not
+  # match the the process (pkill -x means exact!)
+  Logger("Killing eventmerger for $runset",3); 
+  $cmd =~ s/'//g;
+  system("pkill -xf '$cmd'") == 0
+    or Logger("Could not kill xterm of event merger for $runset", -1);
+}
+
+sub CheckEventMerger {
+  my $runset = shift;
+  Logger("Checking status of event merger",3);
+  # check if the eventmerger is started locally
+  # this is some weird process checking, but it
+  # should be robust
+  my $cmd = GenerateAcquRootCmd($runset);
+  $cmd =~ s/'//g;
+  my $xterm_pid = `pgrep -xf '$cmd'`;
+  chomp $xterm_pid;
+  $cmd =~ s/(.*?) -e (.*?)/$2/; # extract everything behing -e
+  my $acquroot_ok = system("pgrep -xf '$cmd' >/dev/null") == 0;
+  my $eventmerger_ok = $acquroot_ok && $xterm_pid ? 1 : 0;
+  my $from = "unknown";
+  if($eventmerger_ok) {
+    Logger("Checking from where event merger was started",3);
+    # try to find from where the eventmerger was started
+    my $xterm_tty = `ps -o tty --pid $xterm_pid --no-headers 2>/dev/null`;
+    chomp $xterm_tty;
+    my @cols = split(/\s+/,`w -hs | grep $xterm_tty 2>/dev/null`);
+    $from = $cols[2] || $from; # third column is FROM in w
+  }
+  return ($eventmerger_ok, $from);
+}
+
+
+sub TriggerDownloadRAM {
+  my $id = shift;
+  # cached result?
+  if(exists $RAMs->{$id}) {
+    return @{$RAMs->{$id}};
+  }
+  # else download it
+  Logger("Downloading Trigger L1 and L2 for ID 0d$id...(be patient)",1);
+  my $fmt = $trigger_baseurl.'/generateRAM.php?idTriggerSettings=%s&idTriggerLevels=%d';
+
+  my $L1_url = sprintf($fmt, $id, 1);
+  Logger("Downloading L1 from $L1_url...",2);
+  my $L1 = get($L1_url);
+  Logger("Could not download L1 trigger data for ID 0d$id") unless defined $L1;
+
+  my $L2_url = sprintf($fmt, $id, 2);
+  Logger("Downloading L2 from $L2_url...",2);
+  my $L2 = get($L2_url);
+  Logger("Could not download L2 trigger data for ID 0d$id") unless defined $L2;
+
+  $RAMs->{$id} = [$L1, $L2];
+  return ($L1, $L2);
+}
+
+sub TriggerInfo {
+  my $id = shift;
+  return ({},{}) unless defined $id;
+  Logger("Downloading Trigger Info for ID 0d$id...",2);
+  my $url = $trigger_baseurl.(sprintf('/generateTriggerSettings.php?idTriggerSettings=%s&long=-1',$id));
+  Logger("Downloading Info from $url...",3);
+  my $data = get($url);
+  Logger("Could not download Trigger Info for ID 0d$id") unless defined $data;
+  my $id_hex = sprintf('0x%x',$id);
+  my $info; # some general textual information
+  my $cfg = {
+             'Input-Prescale' => [],
+             'L1-Prescale' => [],
+             'L2-Prescale' => [],
+             'Input-Mask' => 0
+            }; # hashref with AcquDAQ appropiate config tags
+  # parse the received data
+  for(split(/\n/, $data)) {
+    my($tag,$val) = split(/:\s*/, $_,2);
+    # check the id
+    if($tag eq 'idTriggerSettings') {
+      Logger("Requested ID '$id_hex' does not match received one '$val'. ".
+             "Is it available on '$trigger_baseurl'?")
+        if $val ne $id_hex;
+    }
+    # convert the Input, L1, L2 prescalers for AcquDAQ
+    elsif($tag =~ /^PreScalerFactor(|L1|L2)(\d+)$/) {
+      my $type = $1 || 'Input'; # L1/L2 or nothing, then it's Input
+      my $idx = $2;
+      my $arr = $cfg->{"$type-Prescale"};
+      $arr->[$idx] = hex($val); # of course, AcquDAQ wants decimal here
+    }
+    # convert the input mask
+    elsif($tag =~ /^PreTriggerMask$/) {
+      $val =~ s/^0x//;      
+      $cfg->{"Input-Mask"} = $val;
+    }
+    else {
+      # populate the $info
+      $info->{$tag} = $val;
+    }
+  }
+  # prescalers must be joined to a single line of decimal numbers
+  for(keys $cfg) {
+    next unless /-Prescale$/; # only if it ends with "-Prescale"
+    $cfg->{$_} = join(' ',@{$cfg->{$_}});
+  }
+  return ($info, $cfg);
+}
+
+sub TriggerGuessId {
+  my $runset = shift;
+
+  my $r = $runsets->{$runset};
+  my $h = $r->{Hosts}->[0];
+  my $host_gui = $h->[0];
+  # Only vme-exptrigger as GUI host currently supported
+  # TAPS does not have RAMs with different IDs...
+  return if $host_gui ne 'vme-exptrigger';
+  InitSSH({'Hosts' => [[$host_gui]]}); # ensure SSH is initialized
+  my $ssh = $SSH->{$host_gui};
+  # the argument of AcquDAQ is actually
+  # the starting file for our smart guessing
+  my $datfile = GenerateArgument($h)->[$nostore]; # nostore is a flag which is used as an index here
+
+  # extract trigfile, e.g. vuprom.trig (typically a symlink!)
+  my @r = $ssh->capture("grep GSI_VUPROM $acqu_datadir/$datfile | grep -v '^#' | grep vup0");
+  $ssh->error and
+    Logger("Cannot determine trigger config file on $host_gui: ". $ssh->error);
+  Logger("Cannot determine trigger config file: Not a unique line received.")
+    if @r != 1;
+  @r = split(/\s+/,$r[0]);
+  Logger("Cannot determine trigger config file: Not 8 columns received.")
+    if @r != 8;
+  my $vupromfile = $r[3]; # result is in the fourth column of the grepped config line
+
+  # get the RAM-Download: line, this tells us the ID
+  @r = $ssh->capture("grep RAM-Download: $acqu_datadir/$vupromfile | grep -v '^#'");
+  $ssh->error and
+    Logger("Cannot determine trigger ID from 'RAM-Download:' line on $host_gui: ". $ssh->error);
+  Logger("Cannot determine trigger ID: Not a unique line received.")
+    if @r != 1;
+  @r = split(/\s+/,$r[0]);
+  Logger("Cannot determine trigger ID: Not 2 columns received.")
+    if @r != 2;
+  my $trigid = $r[1];
+
+  # check if the symlink makes sense
+  @r = $ssh->capture("readlink $acqu_datadir/$vupromfile");
+  $ssh->error and
+    Logger("Cannot get link target of $vupromfile on $host_gui: ". $ssh->error);
+  Logger("Cannot link target of $vupromfile: Not a unique line received.")
+    if @r != 1;
+  chomp(my $link_target = $r[0]);
+  Logger("Link target $link_target does not match ID $trigid")
+    unless $link_target =~/$trigid/;
+
+  return ($trigid,$vupromfile,$link_target);
+}
+
+sub TriggerStatus {
+  my $runset = shift;
+
+  my $printStatus = sub {
+    my $runset = shift;
+    my ($trigid, $vupromfile, undef) = TriggerGuessId($runset);
+    my($info, $cfg) = TriggerInfo($trigid);
+    my $r = $runsets->{$runset};
+    printf("%-10s\tTrigger ID:\t%s\n",$runset, $trigid || 'undefined');
+    printf("%-10s\tName:\t\t%s\n",'',$info->{Name} || 'undefined');
+    printf("%-10s\tCreated:\t%s\n",'',$info->{CreationDate} || 'undefined');
+    printf("%-10s\tLast Change:\t%s\n",'',$info->{LastChange} || 'undefined');
+    return unless defined $trigid;
+    if($trigid ne $r->{DefaultTriggerId}) {
+      Logger("Runset $runset is not set to default trigger ID of $r->{DefaultTriggerId}",-1);
+    }
+    # we use the vuprom file which should be properly linked to the
+    # actual config file
+    TriggerStatusConfig($runset, $vupromfile, $cfg);
+    # check RAMs if --force'd
+    TriggerStatusDeep($runset, $trigid) if $force;
+  };
+
+  Logger("Printing status of trigger for runset $runset",1);
+  Logger("Printing status in --nostore mode, could be different to normal.",-1) if $nostore;
+  if ($runset eq 'ALL') {
+    foreach my $runset (keys $runsets) {
+      $printStatus->($runset);
+    }
+  } else {
+    Logger("Specified runset '$runset' not found") unless $runsets->{$runset};
+    $printStatus->($runset);
+  }
+  return;
+}
+
+sub TriggerStatusConfig {
+  my $runset = shift;
+  my $vupromfile = shift;
+  my $cfg = shift;
+
+  my $r = $runsets->{$runset};
+  my $h = $r->{Hosts}->[0];
+  my $host_gui = $h->[0];
+  my $ssh = $SSH->{$host_gui};
+
+  my @lines = $ssh->capture("cat $acqu_datadir/$vupromfile");
+  $ssh->error and
+    Logger("Could not retrieve $acqu_datadir/$vupromfile: ".$ssh->error);
+  for (@lines) {
+    chomp;
+    my($tag,$val) = split(/:\s*/, $_, 2);
+    if(defined $tag && exists $cfg->{$tag}) {
+      # check the line with expected value
+      my $l = sprintf("%s: %s", $tag, $cfg->{$tag});
+      Logger("Trigger config line '$_' on $host_gui does not match website line '$l'",-1) if $_ ne $l;
+      delete $cfg->{$tag};
+    }
+  }
+  for my $tag (keys $cfg) {
+    Logger("Trigger config option '$tag:' is missing in $vupromfile on $host_gui.",-1);
+  }
+}
+
+sub TriggerStatusDeep {
+  my $runset = shift;
+  my $trigid = shift;
+  my $r = $runsets->{$runset};
+  my $h = $r->{Hosts}->[0];
+  my $host_gui = $h->[0];
+  my $ssh = $SSH->{$host_gui};
+
+  # what is currently there?
+  Logger("Retrieving RAMs from $host_gui...",3);
+  my $L1_file = "$acqu_datadir/TriggerRAML1_$trigid.dat";
+  my $L1_cur = $ssh->capture("cat $L1_file");
+  $ssh->error and
+    Logger("Could not retrieve L1 RAM $L1_file: ".$ssh->error);
+
+  my $L2_file = "$acqu_datadir/TriggerRAML2_$trigid.dat";
+  my $L2_cur = $ssh->capture("cat $L2_file");
+  $ssh->error and
+    Logger("Could not retrieve L2 RAM $L2_file: ".$ssh->error);
+
+  # what does the website say?
+  my ($L1,$L2) = TriggerDownloadRAM($trigid);
+
+  # issue warnings if mismatch
+  Logger("Trigger $trigid RAM L1 does not match website version.",-1) if $L1 ne $L1_cur;
+  Logger("Trigger $trigid RAM L2 does not match website version.",-1) if $L2 ne $L2_cur;
+
+  Logger(sprintf("Compared %d bytes of L1 and %d bytes of L2 RAM successfully.",
+                 length($L1), length($L2)),
+         1) if $L1 eq $L1_cur && $L2 eq $L2_cur;
+}
+
+
+sub InitSSH {
+  my $r = shift;
+  Logger("Initializing SSH connections in parallel...",3);
+  foreach my $h (@{$r->{Hosts}}) {
+    my $host = $h->[0];
+    # check if there is already a connection
+    next if exists $SSH->{$host} && defined $SSH->{$host};
+    Logger("Opening connection to $host",3);
+    # open the ssh connections for each host
+    $SSH->{$host} = Net::OpenSSH->new($host, async => 1);
+  }
+  return $r;
+}
+
+sub Logger {
+  my $msg = shift;
+  my $lvl = shift || 0; # 0=fatal, -1=warning, >0 verbose messages
+
+  if ($lvl==0) {
+    error($msg);
+    print STDERR "Error: $msg\n";
+    exit 1;
+  }
+  elsif($lvl==-1) {
+    warning($msg);
+    print STDERR "Warning: $msg\n" if $warnings;
+  }
+  else {
+    info($msg);
+    print "$msg\n" if $lvl<=$verbose;
+  }
+}
+
+__END__
+
+=head1 NAME
+
+AcquManager - Interface to the acqu data acquisition system
+
+=head1 SYNOPSIS
+
+AcquManager (re)start <runset>
+
+AcquManager status [runset]
+
+AcquManager stop <runset|ALL>
+
+AcquManager list
+
+AcquManager trigger [runset] [trigger-id]
+
+AcquManager init [runset]
+
+AcquManager do <runset|ALL> <command>
+
+
+ Options:
+   -h, --help       brief help message
+   -v, --verbose    be verbose to STDERR
+   -w, --warnings   print warnings to STDERR
+   -n, --nostore    enable NoStore mode
+   -f, --force      use force (don't use by default)
+   -r, --runsetfile load more runsets from this file
+   --retry          retry that often
+   -e, --exclude    skip hosts in do mode
+   --noeventmerger  do not start event merger (AcquRoot)
+
+=head1 MODES
+
+=over 8
+
+=item B<start>, B<restart>
+
+Start the specified runset. If it's already running, use restart. Be
+careful that you cannot start a runset which is "in use" by an
+overlapping runset (e.g. TAPS overlaps with CBTaggTAPS).
+
+It basically starts the necessary AcquDAQ processes via "AcquControl
+start" on the VME CPUs and if that is successful the corresponding
+data merger AcquRoot locally (i.e. on daq-master).
+
+The option --nostore does not start the event merger, but only the
+AcquDAQ instances without actual data output. This works by appending
+'_NoStore' to each AcquDAQ top-level configuration file.
+
+The option --noeventmerger tells AcquManager not to start the event
+merger at the end (after starting all needed AcquDAQ processes). This
+is helpful for debugging startup of AcquRoot with QtCreator (you can
+also attach to a running AcquRoot session via its process ID). Note
+that the AcquDAQ-GUI does not show up until AcquRoot has actually been
+started!
+
+=item B<status>
+
+Check the current status of the whole DAQ. It tries to guess a lot of
+things, but don't expect it to be perfect.
+
+=item B<stop>
+
+Stop the specified runset. Specify ALL to stop all runsets, but this
+is dangerous, so --force is needed.
+
+Stop basically tries to kill (SIGTERM, then SIGKILL) all processes
+previously started with mode start by calling "AcquControl stop"
+remotely.
+
+=item B<list>
+
+List the available runsets.
+
+=item B<trigger>
+
+If no trigger ID is given, the trigger setting of the specified runset
+is printed (runset ALL is allowed). With --force, the RAMs are
+downloaded from the website "http://wwwa2/intern/trigger/" and checked
+against the existing ones (nothing is modified!).
+
+If a trigger ID is given, it just activates the trigger (i.e. the
+symlink is modified). If some files are missing, they are generated
+from "http://wwwa2/intern/trigger/". If --force is given, all
+information (RAMs, Prescalers, InputMask) is downloaded again from the
+website and put at the right place. So, --force is necessary here if
+something was changed on the website and should be applied to the DAQ
+configuration.
+
+=item B<init>
+
+This mode initializes the whole DAQ system from the start, which takes
+usually several minutes and is not needed under normal circumstances.
+However, after a crate has been powercycled, this process is
+necessary. It basically does three things:
+
+B<1)> Run on the TCS host (usually vme-tagg-tdc-b) the fullinit
+procedure. Wait until it finishes.
+
+B<2)> On all other hosts of the runsset, run fullinit of AcquDAQ (this
+reprograms the FPGAs of the TDC and ADC crates).
+
+B<3)> Execute 'ConfigTCS:' via RSupervise on the TCS host.
+
+The fullinit of AcquDAQ is achieved by supplying the argument "2"
+after the config filename in NoStore mode.
+
+=item B<do>
+
+Execute the given command in a bash login shell on all VME CPUs of the
+given runset. For example, to reboot all VME CPUs of CBTagg, but
+without interfering with TAPS, use: "AcquManager do CBTagg 'reboot'"
+(better quote your command with single ticks to prevent the shell
+fiddling with it).
+
+Provide a comma-separated list to the option --exclude in order to
+skip some hosts of the runset. If runset is not ALL, you can use the
+special strings GUI or TCS to exclude the corresponding hosts of that
+function. GUI refers to the fact that usually the host controlling the
+trigger crate also starts the AcquDAQ-GUI to control the acquisition.
+
+=back
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Print a brief help message and exits.
+
+=item B<--verbose>
+
+Print some information what is going on. Default off.
+
+=item B<--warnings>
+
+Print warnings (or "not-so-fatal" problems). Default on.
+
+=item B<--nostore>
+
+Run the system in NoStore mode, i.e. no data is sent to the AcquRoot
+event merger on daq-master.
+
+=item B<--force>
+
+Use some force when starting or stopping the specified runset. This
+basically disables the sanity checks based on the status output. It
+also some deeper checking for mode trigger.
+
+=item B<--runsetfile>
+
+Load more runsets from the specified file. It must be valid PERL
+syntax which extends or modifies the hashref $runsets, see the
+beginning of the source code of AcquManager how the default runsets
+are defined.
+
+=item B<--retry>
+
+If starting failed only on some hosts (usually vme-tagg-tdc-a makes
+problems, or after a VME reboot the timeout is too short), then retry
+that often. Default is 10. Note: Only hanging AcquDAQ processes are
+retried!
+
+
+=item B<--exclude>
+
+See do mode, where it only has an effect.
+
+=back
+
+=head1 DESCRIPTION
+
+=cut

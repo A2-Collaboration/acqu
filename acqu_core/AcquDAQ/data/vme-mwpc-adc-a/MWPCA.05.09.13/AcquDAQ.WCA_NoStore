@@ -1,0 +1,25 @@
+####
+#Mk1-Format:
+#File-Name: scratch/AcquDAQ 32	5000000	32768 ENet  32768  3024
+File-Name: scratch/AcquDAQ 32	5000000	32768 No-Store  32768  3024
+#                      Freq
+Event-Counters:	       2000000000 2000000000
+Start-Run: 0
+#
+#Control:  Slave    0     0
+#Control:   ENet	 localhost 4024
+#Control:   ENetSlave	 localhost 4024
+Control:  Slave    0     0
+#
+#	module	   Name		configFile
+Module:	KPH_I686   kphi686_0	kphi686.dat	0	0
+Module: KPH_VITEC   vit0	vitec_0.dat	0000	0	0
+Module: GeSiCA    ges0 	GeSiCA.CB4 	dd0000  5000    192 	13
+#Module: GeSiCA    ges1 	GeSiCA.CB5 	dd1000  5192    160	13
+## Interrupt control module
+IRQ-Ctrl: vit0
+## Event Synchronisation info provider module and event ID index
+Synch-Ctrl: vit0 400
+#
+#
+########### End of File #######################

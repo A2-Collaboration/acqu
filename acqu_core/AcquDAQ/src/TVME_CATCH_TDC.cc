@@ -66,9 +66,13 @@ void TVME_CATCH_TDC::PostInit( )
 
   if( fInitLevel >= EExpInit1 ){   // level >=1 init. only
 
-    ProgFPGA(fFPGAfile, ECATCHport);
+	  if(ProgFPGA(fFPGAfile, ECATCHport) != 0) {
+		  PrintError("","Programming CATCH failed",EErrFatal);
+	  }
     sleep(1);
-    ProgFPGA(fTCSRecFile, ETCSport);
+    if(ProgFPGA(fTCSRecFile, ETCSport) != 0) {
+	    PrintError("","Programming TCS failed",EErrFatal);
+    }
     sleep(1);
     // 1st round of register programing
     fIWrt = WrtCatch( 0 );

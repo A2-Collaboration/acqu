@@ -5,7 +5,9 @@
 //--Rev 	JRM Annand   25th Jan 2012  GSI4800 scaler addition
 //--Rev 	JRM Annand    9th Jan 2013  CAEN V874 (TAPS) addition
 //--Rev 	K Livingston..7th Feb 2013  Support for handling EPICS buffers
-//--Update	JRM Annand  ..6th Jul 2013  CAEN V965 addition
+//--Rev 	JRM Annand  ..6th Jul 2013  CAEN V965 addition
+//--Update	JRM Annand  ..3rd Sep 2013  VITEC addition
+//--Update	JRM Annand  .22nd Sep 2013  VUPROMT (TAPS) addition
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -50,8 +52,13 @@
 #pragma link C++ class TVME_CATCH_Scaler+;
 #pragma link C++ class TVME_CATCH_TCS+;
 #pragma link C++ class TVME_GeSiCA+;
-#pragma link C++ class TVME_VUPROM;
-#pragma link C++ class TVME_SIS3820;
+#pragma link C++ class TVME_VUPROM+;
+#pragma link C++ class TVME_VUPROMT+;
+#pragma link C++ class TVME_VUPROM_Scaler+;
+#pragma link C++ class TVME_VUPROM_Moeller+;
+#pragma link C++ class TVME_VUPROM_Pattern+;
+#pragma link C++ class TVME_SIS3820+;
+#pragma link C++ class TVME_VITEC+;
 //
 #pragma link C++ class TCAMAC_4508+;
 #pragma link C++ class TCAMAC_2373+;

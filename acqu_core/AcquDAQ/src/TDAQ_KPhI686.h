@@ -53,6 +53,7 @@ class TDAQ_KPhI686 : public TDAQmodule {
 //-----------------------------------------------------------------------------
 inline void TDAQ_KPhI686::Read( void* addr, void* data, Int_t am, Int_t dw )
 {
+#ifdef VME_HOST
   // General purpose read
   switch(dw){
   case 2:
@@ -63,11 +64,13 @@ inline void TDAQ_KPhI686::Read( void* addr, void* data, Int_t am, Int_t dw )
     *((UInt_t*)data) = *((UInt_t*)addr);
     break;
   }    
+#endif
 }
 
 //-----------------------------------------------------------------------------
 inline void TDAQ_KPhI686::Write( void* addr, void* data, Int_t am, Int_t dw )
 {
+#ifdef VME_HOST
   // General purpose write
   switch(dw){
   case 2:
@@ -78,6 +81,7 @@ inline void TDAQ_KPhI686::Write( void* addr, void* data, Int_t am, Int_t dw )
     *((UInt_t*)addr) = *((UInt_t*)data);
     break;
   }    
+#endif
 }
 
 //-----------------------------------------------------------------------------

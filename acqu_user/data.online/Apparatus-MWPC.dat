@@ -1,0 +1,14 @@
+## Apparatus setup file for running the MWPC with TA2GenericApp
+########################################################################
+#
+## Specify list of detectors which constitute the MWPC apparatus
+##	  	  Name    		Class Name   			Setup file
+Detector: MWPC_Wires    TA2GenericDetector      Detector-MwpcWires.dat
+Detector: MWPC_Strips   TA2GenericDetector      Detector-MwpcStrips.dat
+##
+## Turn on apparatus reconstruction 
+#Reconstruct:
+##
+## Do some post-initialisation.
+Initialise:
+##

@@ -6,7 +6,8 @@
 //--Rev 	JRM Annand... 6th Jul 2011 gcc4.6-x86_64, Button ptrs.
 //--Rev 	JRM Annand...10th Jul 2011 acknowledge change of comment
 //--Rev 	JRM Annand...12th Jul 2012 extend for trigger control
-//--Update	JRM Annand...28th Sep 2012 new trigger control buttons
+//--Rev 	JRM Annand...28th Sep 2012 new trigger control buttons
+//--Update	JRM Annand...18th Sep 2013 path for gui logos
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -217,8 +218,8 @@ TDAQguiCtrl::TDAQguiCtrl( TDAQsupervise* s, const TGWindow* w )
 		     uGC->GetGC(),Helv24B->GetFontStruct(),darkBlue);
   fMGr->SetTitlePos(TGGroupFrame::kCenter);
   fMGr->SetLayoutBroken(kTRUE);
-  Char_t* logoG = s->BuildName(ENV_OR_CMAKE("acqu_sys",CMAKE_ACQU_SYSCORE),"/AcquDAQ/data/GlaLogo1.jpg");
-  Char_t* logoM = s->BuildName(ENV_OR_CMAKE("acqu_sys",CMAKE_ACQU_SYSCORE),"/AcquDAQ/data/MzLogo.jpg");
+  Char_t* logoG = s->BuildName("data/GlaLogo1.jpg");
+  Char_t* logoM = s->BuildName("data/MzLogo.jpg");
   TGIcon *gla = new TGIcon(fMGr, logoG);
   TGIcon *mz = new TGIcon(fMGr, logoM);
   delete[] logoG;

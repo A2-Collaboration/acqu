@@ -13,10 +13,11 @@
 
 #include "EnumConst.h"                    // general constants
 #include "DataFormats.h"                  // Acqu data formats
+#include <Rtypes.h>
 
 class MultiADC_t
 {
- protected:
+protected:
   Short_t* fStore;                        // -> stored ADC values for 1 event
   UInt_t fIadc;                           // adc  index
   UInt_t fChan;                           // # of channels
@@ -44,13 +45,18 @@ public:
     fNtry = 0;
     while( d->id == fIadc ){
       if( fNstore < fChan ) {
-	fStore[fNstore] = d->adc;
-	fNstore++;
+        fStore[fNstore] = d->adc;
+        fNstore++;
       }
       fNtry++;
       d++;
     }
   }
+
+  // by default, we don't have a reference hit
+  // so do nothing
+  virtual void ApplyRef() {}
+
   virtual void Flush(){
     // Flush the store array...if anything stored
     // called at the end of an event
@@ -58,7 +64,7 @@ public:
     for( UInt_t i=0; i<fNstore; i++ )fStore[i] = ENullStore;
     fNstore = 0;
   }
-    
+
   // Getters for read-only variables
   UInt_t GetChan(){ return fChan; }
   UInt_t GetNstore(){ return fNstore; }

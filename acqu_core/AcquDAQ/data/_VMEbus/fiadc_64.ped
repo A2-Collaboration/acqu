@@ -1,0 +1,75 @@
+#
+#       ACQU DAQ 3v5
+#
+#       Setup file for FIADC-64 QDC
+#
+# Max number of channels = 64....can specify if fewer connected
+# Threshold...minimum QDC contents (after pedestal subtraction) before store
+# No. Channels          Threshold
+        64             5 
+# Now pedestal values to be subtracted channels 0-63
+# NB must always have 64 non comment lines following otherwise error
+	 0
+        21
+        17
+        27
+        11
+         4
+         9
+        16
+        12
+        21
+        21
+        15
+        24
+        24
+        13
+        18
+        63
+        27
+        35
+        21
+        25
+        21
+        38
+        22
+         9
+	18
+        24
+        13
+        23
+        14
+        26
+        25
+        19
+         9
+        39
+        17
+        33
+        26
+        27
+        53
+        20
+        32
+        16
+        12
+        25
+        32
+        14
+        25
+        27
+        14
+        51
+        21
+         8
+        29
+        18
+        20
+        18
+        19
+        28
+        50
+        20
+        12
+        26
+        33

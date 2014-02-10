@@ -14,6 +14,10 @@
 #include "TMCHe4Phase.h"
 #include "TFile.h"
 
+static Double_t Mhe3;
+static Double_t Mhe4;
+static Double_t C;
+
 ClassImp(TMCHe4Phase)
 
 enum { EHe4Egamma };

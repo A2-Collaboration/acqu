@@ -146,6 +146,9 @@ class TDAQmodule : public TA2System {
   virtual Int_t GetRegType(Char_t*); // key for type of register
   virtual Int_t GetModType(Char_t*); // key for type of module
   virtual UInt_t GetEventID(){ return 0;} // Read event ID
+  virtual UInt_t GetReadoutPatternOffset(){ return 0;} // Read BitPattern ADC Index Offset
+  virtual UInt_t GetReadoutPatternStatus(){ return 0;} // Read VITEC status reg..
+  virtual UInt_t GetReadoutPattern(){ return 0;} // Read BitPattern
   virtual void SendEventID(UInt_t){ }     // Send event ID to remote system
   //
   void SetDAQexperiment( TDAQexperiment* fexp ){ fEXP = fexp; }

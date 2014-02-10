@@ -13,7 +13,9 @@
 //--Rev 	JRM Annand   25th Jan 2012  Read fNBits in constructor
 //--Rev 	JRM Annand   20th May 2012  Check AM reg initialised
 //                                          Implement "repeat" in reg init
-//--Update	JRM Annand   24th Aug 2012  'w' = 2 bytes (not 'm')
+//--Rev 	JRM Annand   24th Aug 2012  'w' = 2 bytes (not 'm')
+//--Rev 	JRM Annand    7th Sep 2013  Do NOT neglect A16
+//--Update	JRM Annand   23rd Sep 2013  Add WriteChk()
 
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -127,9 +129,12 @@ void TVMEmodule::InitReg( VMEreg_t* list)
 { 
   // Setup set of registers
 
-  if( !fReg ){
+  if(!fReg){
     VMEreg_t* l = list;
-    while( l->offset != 0xffffffff ) { fNreg++; l++; }
+    while( l->offset != 0xffffffff ) {
+      fNreg += l->repeat+1; // respect the repeat property
+      l++;
+    }
     fMaxReg = fNreg;
     fReg = new void*[fMaxReg];
     fDW = new Int_t[fMaxReg];
@@ -152,8 +157,9 @@ void TVMEmodule::InitReg( VMEreg_t* list)
   while( list->offset != 0xffffffff ){
     // Bug!!    addr = list->offset + (ULong_t)fBaseAddr;
     addr = list->offset;
-    if( fBaseAddr >= (void*)0x01000000 ) am = 0x09;
-    else am = 0x39;
+    if( fBaseAddr >= (void*)0x01000000 ) am = 0x09;     // 32 bit
+    else if( fBaseAddr >= (void*)0x010000 ) am = 0x39;  // 24 bit
+    else am = 0x29;                                     // 16 bit
     switch( list->type ){
     case 'l':
       width = 4;

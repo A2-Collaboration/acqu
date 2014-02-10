@@ -23,7 +23,9 @@
 //--Rev         JRM Annand   29th Sep 2012 GetVUPROMparm()
 //--Rev         JRM Annand    1st Oct 2012 Allow stop/go when storing
 //--Rev         JRM Annand    2nd Mar 2013 VADC/VScalers Mk2 header counting
-//--Update      JRM Annand   10th Jul 2013 V874 config
+//--Rev         JRM Annand   10th Jul 2013 V874 config
+//--Rev         JRM Annand    9th Sep 2013 mod to end-run...wait for expt
+//--Update      JRM Annand   24th Sep 2013 set fIRQMod from exp->PostInit()
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -88,7 +90,7 @@ class TDAQsupervise : public TA2System {
   virtual void SetInputMode( Char_t* );
   virtual void GetString();
   virtual void PutString( const Char_t* );
-  virtual void CommandLoop( TDAQmodule* = NULL );
+  virtual void CommandLoop( );
   virtual void ExecAutoStart( );
   virtual void ExecStart( );
   virtual void ExecGo( );
@@ -134,6 +136,7 @@ class TDAQsupervise : public TA2System {
   }
   virtual void SetAuto( Bool_t state ){ fIsAuto = state; }
   virtual void SetTrigMod( TDAQmodule* trigmod ){ fTrigMod = trigmod; }
+  virtual void SetIRQMod( TDAQmodule* irqmod ){ fIRQMod = irqmod; }
   virtual Bool_t IsDataReady(){ return kFALSE; }
   virtual Bool_t IsRunInit(){ return fIsRunInit; }
   Bool_t IsRunTerm(){ return fIsRunTerm; }

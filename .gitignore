@@ -1,5 +1,8 @@
 # No Backup files in git
 *~
+[#]*[#]
+.\#*
+*.swp
 
 # Compiled Object files
 *.slo

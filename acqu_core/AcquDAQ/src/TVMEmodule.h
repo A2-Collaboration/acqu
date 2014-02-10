@@ -13,7 +13,9 @@
 //--Rev 	JRM Annand   25th Jan 2012  Read fNBits in constructor
 //--Rev 	JRM Annand   20th May 2012  Check AM reg initialised
 //                                          Implement "repeat" in reg init
-//--Update	JRM Annand   24th Aug 2012  'w' = 2 bytes (not 'm')
+//--Rev 	JRM Annand   24th Aug 2012  'w' = 2 bytes (not 'm')
+//--Rev 	JRM Annand    7th Sep 2013  Do NOT neglect A16
+//--Update	JRM Annand   23rd Sep 2013  Add WriteChk()
 
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -57,6 +59,7 @@ class TVMEmodule : public TDAQmodule {
   virtual UInt_t Read(Int_t);
   virtual void Write(Int_t);
   virtual void Write(Int_t, UInt_t);
+  virtual void WriteChk(Int_t, UInt_t);
   virtual void Write(Int_t, void*);
   virtual void Read(void*, void*);
   virtual void Write(void*, void*);
@@ -126,4 +129,18 @@ inline void TVMEmodule::Write( void* addr, void* data )
   // Controller write
   fCtrlMod->Write( addr, data, *fAM, *fDW );
 }
+
+//-----------------------------------------------------------------------------
+inline void TVMEmodule::WriteChk( Int_t i, UInt_t datum )
+{
+  // Write a value to a register and read it back to check
+  // Will only work for a read/write register
+  fData[i] = datum;
+  fPCtrlMod->Write( fReg[i], fData+i, fAM[i], fDW[i] );
+  datum = Read(i);
+  if( datum != fData[i] )
+    PrintError("","<Write check failure>",EErrFatal);
+  return;
+}
+
 #endif

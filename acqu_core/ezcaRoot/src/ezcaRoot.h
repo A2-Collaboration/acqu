@@ -3,7 +3,7 @@
 
 
 #ifndef __CINT__
-#include <tsDefs.h>
+//#include <tsDefs.h> this is obsolete since R3.14!
 #include <cadef.h>
 #include <ezca.h>
 

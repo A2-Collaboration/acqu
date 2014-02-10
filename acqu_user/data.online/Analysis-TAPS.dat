@@ -1,0 +1,49 @@
+## PWO and veto inner ring
+MultiADC:       3       29193   29319     29192
+# speed TAPS readout bitpatterns
+MultiADC:       1       410    493
+MultiADC:       1       10000    10100
+##
+# TAPS bit pattern
+BitPattern: Pattern-TAPS.dat
+##
+Apparatus:          TAPS      TA2Calorimeter          Apparatus-TAPS.dat 
+##
+#Reconstruct-Analysis:
+##
+#Physics-Analysis:   TAPSAnalysis    TA2TAPSAnalysis         data/TAPSAnalysis.dat
+##
+Initialise:
+##
+#Period:             100000          $HOME/acqu/acqu_user/root/macros/PeriodMacro.C      PeriodMacro()
+##
+#Finish:             $HOME/TAPSdaq/macros/MyFinishMacro.C    MyFinishMacro()
+###
+#Display: All
+#Display: ADC 20000 20511
+#Display: ADC 21000 21511
+#Display: ADC 22000 22511
+#Display: ADC 23000 23511
+#Display: ADC 24000 24511
+#Display: ADC 25000 25511
+#Display: ADC 26000 26511
+#Display: ADC 27000 27511
+#Display: ADC 28000 28511
+#Display: ADC 29000 29191
+#Display: ADC 29192 29192
+###
+#Display: MultiHit 29193 29319 1000 -3500  3500 0
+##
+## Display VUPROM scalers
+#Display: Scaler 0 95
+#Display: SumScaler 0 95
+##
+# BaF2 CFD pattern
+Display: Pattern       0 384 0 384
+# BaF2 LED1 pattern
+Display: Pattern       1 384 0 384
+# BaF2 LED2 pattern
+Display: Pattern       2 384 0 384
+# Veto LED pattern
+Display: Pattern       3 384 0 384
+##

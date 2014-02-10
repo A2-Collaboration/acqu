@@ -14,14 +14,15 @@
 
 #include "TA2GenericApp.h"
 
-// Default list of detector classes that the TA2CrystalBall 
+// Default list of detector classes that the TA2GenericApp
 // apparatus may contain
-enum { EGenDet, EPlasticPID, ELongScint, EFPMicro };
+enum { EGenDet, EPlasticPID, ELongScint, EFPMicro, EPairSpec };
 static Map_t kValidDetectors[] = {
   {"TA2GenericDetector",EGenDet},
   {"TA2LongScint",      ELongScint},
   {"TA2PlasticPID",     EPlasticPID},
   {"TA2FPMicro",        EFPMicro},
+  {"TA2PairSpec",       EPairSpec},
   {NULL, 		-1}
 };
 
@@ -37,6 +38,7 @@ TA2GenericApp::TA2GenericApp( const char* name, TA2System* analysis  )
   fTrig = NULL;
   fFPMic = NULL;
   fGenDet = NULL;
+  fPairSpec = NULL;
 }
 
 
@@ -71,6 +73,9 @@ TA2DataManager*  TA2GenericApp::CreateChild(const char* name, Int_t dclass)
   case EFPMicro:
     fFPMic = new TA2FPMicro( name, this );
     return fFPMic;
+  case EPairSpec:
+    fPairSpec = new TA2PairSpec( name, this );
+    return fPairSpec;
   }
 }
 

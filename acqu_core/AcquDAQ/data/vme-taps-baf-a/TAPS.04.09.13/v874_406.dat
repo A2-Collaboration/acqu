@@ -1,0 +1,53 @@
+##--Rev 	JRM Annand... 9th Jan 2013  Specimen TAPS file
+##--Update	JRM Annand...
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+##              Hex Base	#Registers	Module type	MapSize
+BaseSetup:	0		0		ADC		4000
+Hardware-ID: 0406
+## Pedestal and overflow suppression enabled
+###
+#Suppress-Pedestal:
+#Suppress-Overflow:
+###
+## Set TDCs to common-stop mode
+Common-Stop:
+## Long-gate QDC pedestal thresholds
+Thr-LG:	     150	150	150	150
+## Long-gate-S QDC pedestal thresholds
+Thr-LGS:     150	150	150	150
+## Short-gate QDC pedestal thresholds
+Thr-SG:	     150	150	150	150
+## Short-gate-S QDC pedestal thresholds
+Thr-SGS:     150	150	150	150
+## Bit Pattern enable, by default they are turned off. Set to zero to turn on
+Thr-BP:       0x1ff	0x1ff
+## Fast Clear window n * 31.25ns, n=500 gives ~1.5 micro sec
+FC-Window:    500
+## Analogue section clear time....total clear time = 500 + n*31.25 ns, n=0 gives 500ns
+Clear-Time:   500
+## TDC conversion gain, 140=54ps/chan, 43=103ps/chan
+V-Set: 103
+## TDC time offset, 240=300ns, 165=400ns, 131=500ns
+V-Off: 131
+## Long gate QDC pedestal set
+Ped-LG:	     5000 5000 5000 5000
+## Long gate sensitive QDC pedestal set
+Ped-LGS:     5000 5000 5000 5000
+## Short gate QDC pedestal set
+Ped-SG:	     5000 5000 5000 5000
+## Short gate sensitive QDC pedestal set
+Ped-SGS:     5000 5000 5000 5000
+## CFD thresholds in mV
+Thr-CFD: 100 100 100 100
+## LED1 thresholds in mV
+Thr-LED1: 100 100 100 100
+## LED2 thresholds in mV
+Thr-LED2: 100 100 100 100
+#
+# Global data ready signal
+Data-Ready: 2
+##	End of File
+

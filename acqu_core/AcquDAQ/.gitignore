@@ -1,0 +1,6 @@
+# ignorings here some usually appearing files
+# which are actually not important for tracking
+# for example emacs backup files, or tarballs
+.\#*
+[#]*[#]
+*.tar.gz

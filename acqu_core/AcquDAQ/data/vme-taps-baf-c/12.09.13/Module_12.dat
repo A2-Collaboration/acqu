@@ -1,0 +1,49 @@
+##
+##              Hex Base    #Registers  Module type MapSize
+BaseSetup:  0       0       ADC     4000
+Hardware-ID: 0404
+###
+Enable-Thresholds:
+#Suppress-Overflow:
+###
+## Set TDCs to common-stop mode
+Common-Stop:
+## Long-gate QDC thresholds
+Thr-LG:       0x1  0x1  0x1  0x1
+## Long-gate-S QDC thresholds
+Thr-LGS:      0x1ff  0x1ff  0x1ff  0x1ff
+## Short-gate QDC thresholds
+Thr-SG:       0x1  0x1  0x1  0x1
+## Short-gate-S QDC thresholds
+Thr-SGS:      0x1ff  0x1ff  0x1ff  0x1ff
+## Bit Pattern enable, by default they are turned off. Set to zero to turn on
+#Thr-BP:       0x1ff    0x1ff
+Thr-BP:       0x0   0x0
+## Fast Clear window n * 31.25ns, n=500 gives ~1.5 micro sec
+FC-Window:    500
+## Analogue section clear time....total clear time = 500 + n*31.25 ns, n=0 gives 500ns
+Clear-Time:   500
+## TDC conversion gain, 140=54ps/chan, 43=103ps/chan
+V-Set: 43
+## TDC time offset, 240=300ns, 165=400ns, 131=500ns
+V-Off: 165
+## Long gate QDC pedestal set
+Ped-LG: 5197 5336 5190 5369
+## Long gate sensitive QDC pedestal set
+Ped-LGS: 5197 5615 5440 5613
+## Short gate QDC pedestal set
+Ped-SG: 4675 4824 4971 4673
+## Short gate sensitive QDC pedestal set
+Ped-SGS: 3119 4469 4850 4637
+## CFD thresholds in raw values for piggy back
+Thr-CFD-Raw: 8084 8121 8105 8150
+## LED1 thresholds in mV
+Thr-LED1: 89 92 69 70
+## LED2 thresholds in mV
+Thr-LED2: 90 92 70 70
+#
+# Global data ready signal
+Data-Ready: 2
+##  End of File
+
+
