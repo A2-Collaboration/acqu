@@ -1,0 +1,15 @@
+*	KELVIN LABORATORY, UNIVERSITY OF GLASGOW
+*
+*	********** lrs_4413.nimecl ***********
+*
+*	JRM Annand	3rd Jun 1992
+*	Parameter file for LeCroy 4413 Discriminator
+*	Use as a NIM->ECL convertor
+*
+*	thresholds to be entered in hexadecimal
+*	min thresh ~ 15mV = f ; max thresh ~ 1V = 3e8 ; steps ~ 1mV
+*
+*	1st line ; mask....no mask
+0
+*	2nd line ; threshold....set to 255mV (ff hex)
+ff

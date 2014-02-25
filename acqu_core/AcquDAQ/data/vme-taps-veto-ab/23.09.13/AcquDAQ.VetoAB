@@ -1,0 +1,38 @@
+###
+Description: Veto Sector AB readout
+File-Name: /scratch/TAPS  32   500000	32768   ENet	32768  5016
+#File-Name: scratch/TAPS 32   	500000	32768 No-Store  32768  5016
+#                      Freq
+Event-Counters:	       0     0
+Start-Run: 0
+#
+#Control:  Local    0     0
+#Control:   ENet  localhost 6020
+#Control:   ENetSlave  localhost 6020
+Control:    Slave      0 0
+#Control:   GUI-Local  0 0
+#
+#	module	   Name		configFile		BaseAdr		BaseIndex	Nchannel	NBits
+Module:	KPH_I686   kphi686_0	kphi686.veto		0		0
+Module: KPH_VITEC  vit_0	vitec_0.dat		0000		0		0
+Module: CAEN_V874  v874_0	Module_00.dat		50000000   	26000		18		12
+Module: CAEN_V874  v874_1	Module_01.dat		41000000   	26032		18		12
+Module: CAEN_V874  v874_2	Module_02.dat		42000000   	26064		18		12
+Module: CAEN_V874  v874_3	Module_03.dat		43000000   	26096		18		12
+Module: CAEN_V874  v874_4	Module_04.dat		44000000   	26128		18		12
+Module: CAEN_V874  v874_5	Module_05.dat		45000000   	26160		18		12
+Module: CAEN_V874  v874_6	Module_06.dat		46000000   	26192		18		12
+Module: CAEN_V874  v874_7	Module_07.dat		47000000   	26224		18		12
+Module: CAEN_V874  v874_8	Module_08.dat		48000000   	26256		18		12
+Module: CAEN_V874  v874_9	Module_09.dat		49000000   	26288		18		12
+Module: CAEN_V874  v874_a	Module_10.dat		4a000000   	26320		18		12
+Module: CAEN_V874  v874_b	Module_11.dat		4b000000   	26352		18		12
+Module: CAEN_V874  v874_c	Module_12.dat		4c000000   	26384		18		12
+Module: CAEN_V874  v874_d	Module_13.dat		4d000000   	26416		18		12
+Module: CAEN_V874  v874_e	Module_14.dat		4e000000   	26448		18		12
+Module: CAEN_V874  v874_f	Module_15.dat		4f000000   	26480		18		12
+# Switch this to VITEC card
+IRQ-Ctrl: vit_0
+#IRQ-Ctrl: v874_0
+Synch-Ctrl: vit_0 400
+########### End of File #######################

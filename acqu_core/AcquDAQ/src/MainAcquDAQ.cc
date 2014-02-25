@@ -42,5 +42,9 @@ if (initLevel != 2) //<<------------------------------- Baya
   }
   delete gEXP ;
 }   //<<------------------------------------------Baya
-
+else {
+   // in init mode, output some success message for
+   // AcquControl checking routines
+   printf("\n<Initialization completely done>\n");
+}
 }

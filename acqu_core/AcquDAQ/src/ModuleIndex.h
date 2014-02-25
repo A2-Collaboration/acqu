@@ -16,7 +16,9 @@
 //--Rev         JRM Annand    3rd Sep 2012  EDAQ_ADC_Scaler added
 //--Rev         JRM Annand    9th Jan 2013  ECAEN_V874 added
 //--Rev 	K Livingston..7th Feb 2013  Support for handling EPICS buffers
-//--Update	JRM Annand  ..6th Jul 2013  ECAEN_V965 added
+//--Rev 	JRM Annand  ..6th Jul 2013  ECAEN_V965 added
+//--Update	JRM Annand  ..3rd Sep 2013  VITEC added
+//--Update	JRM Annand  .22nd Sep 2013  VUPROMT added
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -56,12 +58,13 @@ enum { ECAEN_V2718 = 0xf000, EKPH_I686, ECAEN_SY1527 };
 enum { EVMEbus, ECBD_8210, EHSM_8170, EVIC_8250, ESLV_8250 };
 enum { ELRS_1131 = 0x0100 };
 enum { ESTR_8090 = 0x0200, ESTR_8080, ESIS_3820 };
-enum { EKPH_SMI = 0x0400 };
+enum { EKPH_SMI = 0x0400, EKPH_VITEC };
 enum { ECAEN_1465 = 0x0300, ECAEN_1488, ECAEN_V792, ECAEN_V775, ECAEN_V1190,
        ECAEN_V874, ECAEN_V965 };
 enum { EINFN_56001 = 0x0500 };
 enum { EFIADC_64 = 0x0600, ECATCH_TDC, ECATCH_SCA, EGeSiCA, ECATCH_TCS };
-enum { EGSI_VUPROM = 0x0700 };
+enum { EGSI_VUPROM = 0x0700, EGSI_VUPROMT, 
+       EGSI_VUPROM_Scaler, EGSI_VUPROM_Moeller, EGSI_VUPROM_Pattern };
 // VMEbus address modifier codes
 enum{ EVME_A32=0x9, EVME_A24=0x39, EVME_A16=0x29 };
 
@@ -117,6 +120,7 @@ const Map_t kExpModules[] = {
   {"SLV_8250",   ESLV_8250},
   {"LRS_1131",   ELRS_1131},
   {"KPH_SMI",    EKPH_SMI},
+  {"KPH_VITEC",  EKPH_VITEC},
   {"CAEN_1465",  ECAEN_1465},
   {"CAEN_1488",  ECAEN_1488},
   {"CAEN_V792",  ECAEN_V792},
@@ -133,6 +137,10 @@ const Map_t kExpModules[] = {
   {"GeSiCA",     EGeSiCA},
   {"CATCH_TCS",  ECATCH_TCS},
   {"GSI_VUPROM", EGSI_VUPROM},
+  {"GSI_VUPROMT",EGSI_VUPROMT},
+  {"GSI_VUPROM_Scaler", EGSI_VUPROM_Scaler},
+  {"GSI_VUPROM_Moeller", EGSI_VUPROM_Moeller},
+  {"GSI_VUPROM_Pattern", EGSI_VUPROM_Pattern},
   {"SIS_3820",   ESIS_3820},
   // CAMAC
   {"CAMAC",      ECAMAC},

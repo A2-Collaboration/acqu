@@ -32,6 +32,7 @@
 #pragma link C++ class TA2AccessSQL+;
 #pragma link C++ class TA2BasePhysics+;
 #pragma link C++ class TA2TriggerPhysics+;
+#pragma link C++ class TA2TAPSAnalysis+;
 // TA2My... extension classes
 //#pragma link C++ class TA2MyAnalysis+;
 #pragma link C++ class TA2MyCalibration+;
@@ -50,6 +51,7 @@
 #pragma link C++ class TA2CB+;
 #pragma link C++ class TA2Taps+;
 #pragma link C++ class TA2CentralApparatus+;
+#pragma link C++ class TA2BeamPolMon+;
 // Detector classes
 #pragma link C++ class TA2PlasticPID+;
 #pragma link C++ class TA2PlasticVETO+;
@@ -58,6 +60,8 @@
 #pragma link C++ class TA2TAPS_Veto+;
 #pragma link C++ class TA2CylMWPC+;
 #pragma link C++ class TA2FPMicro;
+#pragma link C++ class TA2PairSpec+;
+#pragma link C++ class TA2Moeller+;
 // Utility classes...components of detectors etc
 #pragma link C++ class TA2CylStripSven+;
 #pragma link C++ class TA2CylWireSven+;

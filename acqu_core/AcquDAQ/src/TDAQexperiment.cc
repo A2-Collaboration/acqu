@@ -41,8 +41,12 @@
 //--Rev         JRM Annand    9th Jan 2013  add CAEN V874 TAPS module
 //--Rev 	K Livingston..7th Feb 2013  Support for writing EPICS buffers
 //--Rev 	JRM Annand    2nd Mar 2013  EPICS read in conditional block
-//--Update  A Neiser...   6th June 2013  Make char_t* const
-//--Update	JRM Annand    6th Jul 2013  Add V965 QDC
+//--Rev 	JRM Annand    6th Jul 2013  Add V965 QDC
+//--Rev 	JRM Annand    3rd Sep 2013  Add VITEC interrupt/event-ID card
+//--Rev 	JRM Annand    9th Sep 2013  Add event-ID master functionality
+//--Rev 	JRM Annand   22nd Sep 2013  Add VUPROMT, remove SlowCtrl thread
+//--Update	JRM Annand   24nd Sep 2013  Don't start ctrl thread if slave
+//                                          End-run scaler read for slaves
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -84,9 +88,14 @@
 #include "TFB_STR200.h"
 #include "TVirtualModule.h"
 #include "TVME_VUPROM.h"
+#include "TVME_VUPROMT.h"
+#include "TVME_VUPROM_Scaler.h"
+#include "TVME_VUPROM_Moeller.h"
+#include "TVME_VUPROM_Pattern.h"
 #include "TVME_SIS3820.h"
 #include "TEPICSmodule.h"
 #include "TVME_V965.h"
+#include "TVME_VITEC.h"
 
 ClassImp(TDAQexperiment)
 
@@ -94,7 +103,7 @@ ClassImp(TDAQexperiment)
 enum { EExpModule, EExpControl, EExpIRQCtrl, EExpStartCtrl, EExpDescription,
        EExpDataOut, EExpEvCnt, EExpDesc, EExpFName, EExpRunStart,
        EExpLocalAR, EExpMk1DataFormat, EExpSynchCtrl, EExpResetCtrl,
-       EExpEventIDSend };
+       EExpEventIDSend, EExpEventIDMaster };
 static Map_t kExpKeys[] = {
   {"Control:",       EExpControl},         // mode of operator control
   {"Module:",        EExpModule},          // add electronic module
@@ -109,11 +118,12 @@ static Map_t kExpKeys[] = {
   {"Synch-Ctrl:",    EExpSynchCtrl},       // event-number synchronisation
   {"Reset-Ctrl:",    EExpResetCtrl},       // reset current control module
   {"EventID-Send:",  EExpEventIDSend},     // module to send event ID to remote
+  {"EventID-Master:",EExpEventIDMaster},   // has control of the event ID
   {NULL,              -1}
 };
 
 //-----------------------------------------------------------------------------
-TDAQexperiment::TDAQexperiment(const Char_t* name, Char_t* input, const Char_t* log,
+TDAQexperiment::TDAQexperiment( const Char_t* name, const Char_t* input, const Char_t* log,
 				TAcquRoot* ar, Int_t initLevel):
   TA2System( name, kExpKeys, input, log )
 {
@@ -146,7 +156,8 @@ TDAQexperiment::TDAQexperiment(const Char_t* name, Char_t* input, const Char_t* 
   fSlCtrlFreq = 0;
   fRingSize = fRecLen = fNRec = fNRecMax = 0;
   fDataHeader = EMk2DataBuff;
-  fIsSwap = fIsSlowCtrl = fIsCtrl = fIsStore = fIsLocalAR = kFALSE;
+  fIsSwap = fIsSlowCtrl = fIsCtrl = fIsStore = fIsLocalAR = 
+    fIsEvIDMaster = kFALSE;
   fInitLevel = initLevel;
   fNADCError = fNScalerError = 0;
   // fIsTrigCtrl = kFALSE;
@@ -234,6 +245,13 @@ void TDAQexperiment::SetConfig(Char_t* line, Int_t key )
     }
     fEventSendModName = BuildName( mode );
     break;
+  case EExpEventIDMaster:
+    // This class has control of the event ID, rather than extern hardware
+    if( sscanf( line,"%d",&fSynchIndex ) < 1 ){
+      PrintError( line,"<Parse Event Synch Index for Master>",EErrFatal);
+    }
+    fIsEvIDMaster = kTRUE;
+    break;
   case EExpEvCnt:
     // event counters
     if( sscanf( line,"%d%d", &fScReadFreq,&fSlCtrlFreq ) < 2 ){
@@ -304,28 +322,45 @@ if (fInitLevel != 2) //<<------------------------------- Baya
     if( !fStartMod )
       PrintError(fIRQModName,"<DAQ Start/Stop hardware not found>",EErrFatal);
   }
+  // Check if DAQ synch is by a number supplied by external hardware
   if( fSynchModName ){
     fSynchMod = (TDAQmodule*)( fModuleList->FindObject( fSynchModName ) );
     if( !fSynchMod )
       PrintError(fIRQModName,"<DAQ Event Synchronisation hardware not found>",
 		 EErrFatal);
-    // check if event ID has to be sent explicitly to a remote system
-    if( fEventSendModName ){
-      fEventSendMod =
-	(TDAQmodule*)( fModuleList->FindObject( fEventSendModName ) );
-      if( !fEventSendMod )
-	PrintError(fIRQModName,"<DAQ Event ID send hardware not found>",
-		 EErrFatal);
-      fSynchMod->SetEventSendMod( fEventSendMod );
-    }
   }
+  // check if event ID has to be sent explicitly to a remote system
+  if( fEventSendModName ){
+    fEventSendMod =
+      (TDAQmodule*)( fModuleList->FindObject( fEventSendModName ) );
+    if( !fEventSendMod )
+      PrintError(fIRQModName,"<DAQ Event ID send hardware not found>",
+		 EErrFatal);
+    if(fSynchMod) fSynchMod->SetEventSendMod( fEventSendMod );
+  }
+  // If this class determines the event ID number then there must be a
+  // module defined to send it to the rest of the DAQ system
+  // If fSynchMod has been defined then undefine it, as it will screw up
+  // what the mast sends
+  if( fIsEvIDMaster ){
+    if( !fEventSendMod ){
+      PrintError("TDAQexperiment","<EvID master: no Event ID send hardware>",
+		 EErrFatal);
+    }
+    if( fSynchMod ){
+      PrintError(fSynchModName,"<EVID master: fSynchMod set NULL>");
+      fSynchMod = NULL;
+    } 
+  }    
   // DAQ supervisor....it may already be created...
   // if so ensure that it has trigger control (if this exists)
+  // also ensure that it has the IRQ module
   if( !fSupervise ){
     fSupervise = new TDAQsupervise((Char_t*)"DAQ-superviser",this,
 				   (Char_t*)"Local 0 0");
   }
-  else if( fStartMod ) fSupervise->SetTrigMod( fStartMod );
+  if( fStartMod ) fSupervise->SetTrigMod( fStartMod );
+  if( fIRQMod ) fSupervise->SetIRQMod( fIRQMod );
 
   // Data storage
   if( fStore ) fStore->PostInit();
@@ -376,6 +411,10 @@ void TDAQexperiment::AddModule( Char_t* line )
     // VMEbus to Fastbus SMI register map
     mod = new TVME_KPhSMI( name, file, fLogStream, line );
     break;
+  case EKPH_VITEC: 
+    // Interrupt and event-ID handler
+    mod = new TVME_VITEC( name, file, fLogStream, line );
+    break;
   case ECAEN_V792:
     // VMEbus - CAEN 32 channel QDC
     mod = new TVME_V792( name, file, fLogStream, line );
@@ -420,6 +459,22 @@ void TDAQexperiment::AddModule( Char_t* line )
     // VMEbus/CATCH - Trigger Controller
     mod = new TVME_VUPROM( name, file, fLogStream, line );
     break;
+  case EGSI_VUPROMT:
+    // VMEbus/CATCH - Trigger Controller (TAPS version)
+    mod = new TVME_VUPROMT( name, file, fLogStream, line );
+    break;
+  case EGSI_VUPROM_Scaler:
+    // VUPROM Simple scaler module
+    mod = new TVME_VUPROM_Scaler( name, file, fLogStream, line );
+    break;
+  case EGSI_VUPROM_Moeller:
+    // VUPROM Moeller module
+    mod = new TVME_VUPROM_Moeller( name, file, fLogStream, line );
+    break;
+  case EGSI_VUPROM_Pattern:
+    // VUPROM Simple Pattern module
+    mod = new TVME_VUPROM_Pattern( name, file, fLogStream, line );
+    break;  
   case ESIS_3820:
     // SIS 3820 I/O register and scaler
     mod = new TVME_SIS3820( name, file, fLogStream, line );
@@ -569,7 +624,8 @@ void TDAQexperiment::StartExperiment()
       sleep(1);                     // Inserted by Baya....otherwise seg. fault problems
     }
     
-    // Slow-control procedures
+    // Slow-control procedures....removed 22/9/13...was doing nothing
+    /*
     if( fIsSlowCtrl ){
       if( fSlowCtrlThread ){
 	printf(" Warning...deleting old SlowCtrlThread and starting new one\n");
@@ -580,6 +636,7 @@ void TDAQexperiment::StartExperiment()
 				     (void*)this );
       fSlowCtrlThread->Run();
     }
+    */
     
     // Interrupt-driven readout
     if( fIRQMod ){
@@ -595,8 +652,8 @@ void TDAQexperiment::StartExperiment()
   }
   // DAQ control command loop
   if( fSupervise->GetExpCtrlMode() == EExpCtrlGUILocal )
-    fSupervise->CommandLoop(fIRQMod);
-  else{
+    fSupervise->CommandLoop();
+  else if(fSupervise->GetExpCtrlMode() != EExpCtrlSlave){
     if( fDAQCtrlThread ){
       printf(" Warning...deleting old IRQThread and starting new one\n");
       fDAQCtrlThread->Delete();
@@ -634,23 +691,52 @@ void TDAQexperiment::RunIRQ()
   Bool_t scEpicsFlag = kFALSE;    //for epics to know it was a scaler read. 
   Int_t* evLen;                   // place to put event length
   UShort_t* evID;                 // place to put event ID info
+  fIsRunTerm = kFALSE;            // ensure run terminated flag off
   // If in slave mode run the autostart procedure, bypass any local control
   if( (fSupervise->GetExpCtrlMode() == EExpCtrlSlave) ||
       (fSupervise->GetExpCtrlMode() == EExpCtrlNetSlave) )
     fSupervise->ExecAutoStart();
+  UInt_t nevID = 0;
+  UInt_t nevIDprev;
+  UInt_t readoutPatternOffset = fSynchMod ?
+              fSynchMod->GetReadoutPatternOffset() :
+              0;
   for( ; ; ){
     fIRQMod->WaitIRQ();
     out = fEventBuff;
-    fIRQMod->ScalerStore(&out, fNEvent);
+    BuffStore(&out, fNEvent);
     // Mk2 data format only
     if( IsMk2Format() ){
       evLen = (Int_t*)out;
       out = evLen + 1;
     }
-    // Space for synchronisation event ID (if this is defined)
-    if( fSynchMod ){
+    // If this class controls the event ID
+    // send it off before doing anything else
+    // If end-of-run detected set msb of event ID
+    if( fIsEvIDMaster ){
+      if( fSupervise->IsRunTerm() && fIsStore ){   // end of run detected?
+	fIsRunTerm = kTRUE;            // local end-of-run flag
+	nevID |= EExpEvIDEnd;          // set the msb
+	scCnt = fScReadFreq - 1;       // force a scaler read
+      }
+      fEventSendMod->SendEventID(nevID);
       evID = (UShort_t*)out;
-      out = evID + 2;
+      *evID = fSynchIndex; evID++;     // save event ID index
+      *evID = nevID; evID++;           // save event ID number
+      out = evID;
+      nevID++;
+      if(nevID > 0xffff) nevID = 0;    // reset the event ID
+    }
+    // Space for synchronisation event ID (if this is defined)
+    // and readout pattern
+    else if( fSynchMod ){
+      evID = (UShort_t*)out;
+      if(readoutPatternOffset>0) {
+        out = evID + 8; // four 16bit ADC indeces and values
+      }
+      else {
+         out = evID + 2; // three 16bit ADC index and value
+      }
     }
     scCnt++;
     slCtrlCnt++;
@@ -662,7 +748,7 @@ void TDAQexperiment::RunIRQ()
     // after the scaler read is performed
     // JRMA add check on fNScaler 9/2/12
     if( (scCnt == fScReadFreq) && (fNScaler) ){
-      fIRQMod->ScalerStore(&out, EScalerBuffer);  // scaler-buffer marker
+      BuffStore(&out, EScalerBuffer);  // scaler-buffer marker
       if( IsMk2Format() ){
 	scLen = (Int_t*)out;                      // scaler-buffer size Mk2 only
 	out = scLen + 1;                          // update buffer ptr
@@ -672,7 +758,7 @@ void TDAQexperiment::RunIRQ()
       // Scaler-block length & end of scaler block marker Mk2 data format only
       if( IsMk2Format() ){
 	*scLen = (Char_t*)out - (Char_t*)scLen;   // save buffer size
-	fIRQMod->ScalerStore(&out, EScalerBuffer);// scaler-end marker
+	BuffStore(&out, EScalerBuffer);// scaler-end marker
       }
       scCnt = 0;                                  // reset scaler counter
       scEpicsFlag=kTRUE;   // flag for epics that this was a scaler read event
@@ -698,7 +784,7 @@ void TDAQexperiment::RunIRQ()
       if(fNEvent==0){
 	nexte.Reset();
 	while( ( mod = (TDAQmodule*)nexte() ) ){    // loop all epics modules
-	  fIRQMod->ScalerStore(&out, EEPICSBuffer); // epics-buffer marker
+	  BuffStore(&out, EEPICSBuffer); // epics-buffer marker
 	  ((TEPICSmodule*)mod)->WriteEPICS(&out);   // write 
 	}
 	//start any EPICS timers / counters
@@ -715,7 +801,7 @@ void TDAQexperiment::RunIRQ()
       nextet.Reset();
       while( ( mod = (TDAQmodule*)nextet() ) ){    // loop timed epics modules
 	if(((TEPICSmodule*)mod)->IsTimedOut()){    // Check if read is due
-	  fIRQMod->ScalerStore(&out, EEPICSBuffer);// epics-buffer marker
+	  BuffStore(&out, EEPICSBuffer);// epics-buffer marker
 	  ((TEPICSmodule*)mod)->WriteEPICS(&out);  // write 
 	  ((TEPICSmodule*)mod)->Start();           // restart the timer 
 	}
@@ -727,7 +813,7 @@ void TDAQexperiment::RunIRQ()
 	while( ( mod = (TDAQmodule*)nextec() ) ){
 	  ((TEPICSmodule*)mod)->Count();             // increment EPICS counter
 	  if(((TEPICSmodule*)mod)->IsCountedOut()){  // if counted out
-	    fIRQMod->ScalerStore(&out, EEPICSBuffer);// epics-buffer marker
+	    BuffStore(&out, EEPICSBuffer);// epics-buffer marker
 	    ((TEPICSmodule*)mod)->WriteEPICS(&out);  // write
 	    ((TEPICSmodule*)mod)->Start();           // restart the counter
 	  }
@@ -738,11 +824,55 @@ void TDAQexperiment::RunIRQ()
     //-end of EPICS block
     //-----------------------------------------------------------------------
     if( IsMk2Format() ) *evLen = (Char_t*)out - (Char_t*)evLen;
+    // Event ID determined by external hardware...get the ID from that module
     if( fSynchMod ){
+      // event id
       *evID = fSynchIndex; evID++;
-      *evID = fSynchMod->GetEventID();
+      nevID = fSynchMod->GetEventID();
+      *evID = nevID; 
+      // readout bitpattern (for TAPS only)
+      if(readoutPatternOffset>0) {
+        // move to the next 16bit word
+        evID++;        
+        UInt_t status = fSynchMod->GetReadoutPatternStatus(); 
+        UInt_t readoutPattern = fSynchMod->GetReadoutPattern();
+        *evID = readoutPatternOffset+fSynchIndex+0; evID++;
+        *evID = status & 0xffff; evID++; // status reg
+        *evID = readoutPatternOffset+fSynchIndex+1; evID++;
+        *evID = readoutPattern & 0xffff; evID++; // lower 16bit
+        *evID = readoutPatternOffset+fSynchIndex+2; evID++;
+        *evID = (readoutPattern >> 16) & 0xffff; // upper 16 bit
+        // evID++ not needed here, it's the last 16bit word
+      }
+      
+      // Check if end-of-run marker supplied and data storage enabled
+      if((nevID & EExpEvIDEnd) && fIsStore ){
+	fIsRunTerm = kTRUE;
+	// if there are scaler on the system do a scaler read
+	/*
+	if(fNScaler){
+	  BuffStore(&out, EScalerBuffer);  // scaler-buffer marker
+	  if( IsMk2Format() ){
+	    scLen = (Int_t*)out;           // scaler-buffer size Mk2 only
+	    out = scLen + 1;               // update buffer ptr
+	  }
+	  nexts.Reset();
+	  while( ( mod = (TDAQmodule*)nexts() ) ) mod->ReadIRQScaler(&out);
+	  // Scaler-block length & end of scaler block marker Mk2 data format
+	  if( IsMk2Format() ){
+	    *scLen = (Char_t*)out - (Char_t*)scLen;   // save buffer size
+	    BuffStore(&out, EScalerBuffer);           // scaler-end marker
+	  }
+	  scCnt = 0;                                  // reset scaler counter
+	  scEpicsFlag=kTRUE;// flag for epics that this was a scaler read event
+	}
+	*/
+      }
     }
-    fIRQMod->ScalerStore(&out, EEndEvent);
+    if(nevID>0 && nevID != (nevIDprev+1) )
+      printf("nevID=%d  nevIDprev=%d\n",nevID,nevIDprev);
+    nevIDprev = nevID;
+    BuffStore(&out, EEndEvent);
     StoreEvent( (Char_t*)(out) );
     // Check file length
     // End run is greater than max number data buffers
@@ -760,8 +890,8 @@ void TDAQexperiment::RunIRQ()
 	if( fSupervise->IsAuto() ) fSupervise->ExecRun();
       }
     }
-    fIRQMod->ResetIRQ();
     fNEvent++;
+    fIRQMod->ResetIRQ();
   }
 }
 
@@ -823,7 +953,7 @@ void TDAQexperiment::RunDAQCtrl()
 {
   // Command loop
   //  fIsCtrl = kTRUE;
-  fSupervise->CommandLoop(fIRQMod);
+  fSupervise->CommandLoop();
 }
 
 //---------------------------------------------------------------------------

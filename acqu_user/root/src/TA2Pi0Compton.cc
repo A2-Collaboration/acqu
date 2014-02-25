@@ -257,7 +257,7 @@ void TA2Pi0Compton::PostInit()
 	fPhoton 		= new TA2Particle*[fMaxNParticle];	
 	fProton			= new TA2Particle*[fMaxNParticle];
 
-	Int_t squareMax		= fMaxNParticle*fMaxNParticle*2;
+	UInt_t squareMax		= fMaxNParticle*fMaxNParticle*2;
 	fPi0	 		= new TA2Particle*[squareMax];
 	TA2Particle* part	= new TA2Particle[squareMax];
 	for ( i = 0; i < squareMax; i++) fPi0[i] = part + i;

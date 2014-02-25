@@ -1,0 +1,37 @@
+************************************************************************
+*       ACQU Data Acquisition System for Nuclear Physics
+*
+*       ************** prescale.gdh ****************
+*
+*       Trigger input prescaler control
+*       KPh design prescaler has 6 channels A = 0--5
+*       Values 0-ffff(hex) accepted
+*
+*       Every value is entered in hexadecimal!!!
+*
+*       JRM Annand      25th Nov 1996   1st edition
+***********************************************************************
+*       A0 Trigger: M3+ (Nov. 2008)
+ffff
+*
+* ---------------------------------------------------------------------
+*       A1 Trigger  M4+ (Feb. 2009)
+ffff
+*
+* ---------------------------------------------------------------------
+*       A2 Trigger  M1+ (Feb. 2009)
+0
+*
+* ---------------------------------------------------------------------
+*       A3 Trigger (not used)
+ffff
+*
+* ---------------------------------------------------------------------
+*       A4 Trigger  broken - no connection - tested Feb. 2009
+ffff
+*
+* ---------------------------------------------------------------------
+*       A5 Trigger: M2+ (Feb. 2009)
+0
+*
+

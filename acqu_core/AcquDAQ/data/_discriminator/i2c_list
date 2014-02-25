@@ -1,0 +1,44 @@
+#######################################################################
+#--Author  E. Downie - 21 September 2003                              #
+#                                                                     #
+#                                                                     #
+#   ACQU-ROOT                                                         #
+#   Setup file containing all I2C electronics                         #
+#   To be read by i2c.cc using TDAQFile                               #
+#                                                                     #
+#######################################################################
+#
+# Each item of I2C hardware requires a branch no. and device address
+#
+#
+################PM98 Discriminators
+#
+#         Name   Branch   Device     Low        High      Mask
+#                Number   Address  Threshold  Threshold      
+#
+PM98Parm: d000   0          0       60         60         0x00
+PM98Parm: d001   0          1       60         60         0x00
+PM98Parm: d002   0          2       60         60         0x00
+PM98Parm: d003   0          3       60         60         0x00
+PM98Parm: d004   0          4       60         60         0x00
+PM98Parm: d005   0          5       60         60         0x00
+PM98Parm: d006   0          6       60         60         0x00
+PM98Parm: d007   0          7       60         60         0x00
+PM98Parm: d008   0          8       60         60         0x00
+PM98Parm: d009   0          9       60         60         0x00
+PM98Parm: d010   0         10       60         60         0x00
+PM98Parm: d011   1         11       60         60         0x00
+PM98Parm: d012   1         12       60         60         0x00
+PM98Parm: d013   1         13       60         60         0x00
+PM98Parm: d014   1         14       60         60         0x00
+PM98Parm: d015   1         15       60         60         0x00
+PM98Parm: d016   1         16       60         60         0x00
+PM98Parm: d017   1         17       60         60         0x00
+PM98Parm: d018   1         18       60         60         0x00
+PM98Parm: d019   1         19       60         60         0x00
+PM98Parm: d020   1         20       60         60         0x00
+PM98Parm: d021   1         21       60         60         0x00
+#
+#
+# End
+      

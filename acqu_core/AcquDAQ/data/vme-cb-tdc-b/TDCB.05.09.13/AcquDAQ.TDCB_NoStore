@@ -1,0 +1,34 @@
+####
+#Mk1-Format:
+#File-Name: scratch/CB 32	500000	32768	ENet  32768  3027
+File-Name: scratch/CB 32	500000	32768	No-Store  32768  3027
+# Frequency            Scaler	Slow-Control
+Event-Counters:	       20000000	2000000000			
+Start-Run: 0
+#
+##Control:  Local    0     0
+#Control:   ENet	    localhost 4027
+#Control:   GUI-Local	    0 0
+#Control:   ENetSlave	    localhost 4027
+Control:  Slave    0     0
+#
+#	module	   Name		configFile
+Module:	KPH_I686   kphi686_0	kphi686.dat	0	0
+Module: KPH_VITEC   vit0	vitec_0.dat	0000	0	0
+#
+# -----------------------------------------             fIndex  fNcha Notread
+Module: CATCH_TDC    cat0 catchTDC.d 	e0300000	2000    128 	14
+Module: CATCH_TDC    cat1 catchTDC.d 	e0310000	2128    128 	14
+Module: CATCH_TDC    cat2 catchTDC.d 	e0320000	2256    128 	14
+Module: CATCH_TDC    cat3 catchTDC.d 	e0330000	2384    128 	14
+Module: CATCH_TDC    cat4 catchTDC.d 	e0340000	2512    128 	14
+Module: CATCH_TDC    cat5 catchTDC.d 	e0350000	2640    128 	14
+#
+## Interrupt control module
+IRQ-Ctrl: vit0
+##
+## Event Synchronisation info provider module and event ID index
+Synch-Ctrl: vit0 400
+########### End of File #######################
+
+

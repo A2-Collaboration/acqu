@@ -23,11 +23,13 @@ DAQMemMap_t::DAQMemMap_t( void* addr, Int_t size, Int_t fMemFd, TA2System* sys )
   fPhysAddr = addr; 
   fSize = size;
   fSys = sys;
+#ifdef VME_HOST
   fVirtAddr = mmap( NULL, fSize, fPerm, fFlags, fMemFd, (off_t)fPhysAddr);
 
   if( fVirtAddr == (void*)-1 ){
     fSys->PrintError("","<Virtual-Physical Memory Map>", EErrFatal);
   }
+#endif
   return;  
 }
 

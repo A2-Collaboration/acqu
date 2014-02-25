@@ -1,0 +1,67 @@
+****************************************************************************
+*	KELVIN LABORATORY, UNIVERSITY OF GLASGOW
+*	*********** lrs_4508.CBreference *****************
+*	
+*	Sample parameter file for LeCroy 4508 PLU
+*	JRM Annand	10th Sep 1993
+*	Farooq Sadiq	17th Oct 1996
+*	JRM Annand	13th Nov 2003	CB reference trigger
+****************************************************************************
+*	1st section for pattern unit read
+*	mode = a for subaddr to be read out
+*	mode = x for no readout
+*	thresholds entered in hexadecimal please
+*
+*	mode		lower thresh		upper thresh
+	a		0			100
+	a		0			100
+*
+*	Now comes the bit to set up the 4508 RAM
+*	This 1st section specifies default values which are fed into
+*	RAM's 1 (specify -1 for default) and 2 (specify -2 for default)
+*	ram(default)	dummy	default data
+* Level 1 default (Immediate reset)
+	-1		0	c0
+* Level 2 default (Fast Clear)
+	-2		0	fe
+*
+*	ram: 1 or 2, corresponding to section 1 or 2 of module
+*	addr:0 - ff(hex) the memory location
+*	data:0 - ff(hex) the data loaded into location addr
+*
+*	Level 1 Trigger ( L1 )   **************
+*	Inputs			Outputs
+*	1  ???			1  
+*	2  ???			2  
+*	3  ???			3  
+*	4  ???			4  
+*	5  ???			5  
+*	6  ???			6  L2 Strobe
+*	7  ???			7  Dead Time
+*	8  Pulser		8  Imediate reset
+*
+*	ram	addr	data 
+* Single hits
+*	1	1	7f
+*	1	2	7f
+*	1	4	7f
+*	1	8	7f
+*	1	10	7f
+*	1	20	7f
+*	1	40	7f
+	1	80	7f
+*
+*	Level 2 Trigger (L2)
+* L2 Trigger Inputs		Outputs
+*	1  ???			1  Interrupt
+*	2  ???			2  Fast Clear (FC)
+*	3  ???			3  FC
+*	4  Tagger		4  FC
+*	5  ???			5  FC
+*	6  ???			6  FC
+*	7  ???			7  FC
+*	8  ???			8  FC
+*
+*	ram	addr	data
+	2	0f	01
+	2	07	01

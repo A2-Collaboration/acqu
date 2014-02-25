@@ -23,7 +23,9 @@
 //--Rev         JRM Annand   29th Sep 2012 GetVUPROMparm()
 //--Rev         JRM Annand    1st Oct 2012 Allow stop/go when storing
 //--Rev         JRM Annand    2nd Mar 2013 VADC/VScalers Mk2 header counting
-//--Update      JRM Annand   10th Jul 2013 V874 config
+//--Rev         JRM Annand   10th Jul 2013 V874 config
+//--Rev         JRM Annand    9th Sep 2013 mod to end-run...wait for expt
+//--Update      JRM Annand   24th Sep 2013 set fIRQMod from exp->PostInit()
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -305,14 +307,13 @@ void TDAQsupervise::PutString( const Char_t* line )
 }
 
 //-----------------------------------------------------------------------------
-void TDAQsupervise::CommandLoop(TDAQmodule* irqmod)
+void TDAQsupervise::CommandLoop()
 {
   // Continuous loop...await and execute DAQ control/supervise command
   // Save pointer to IRQ/Trigger control hardware
   // Create data buffer space if not already done
   // Communication socket moved here from SetInputMode()
   //
-  fIRQMod = irqmod;
   usleep(10000);               // short pause 10000 micro-sec
   if( !fOutBuff ){
     if( fEXP->GetOutBuff() )
@@ -527,16 +528,18 @@ void TDAQsupervise::ExecEnd(  )
     PutString("ExecRun: <Run not started...need to Run XXX first>\n");
     return;
   }
+  fIsRunTerm = kTRUE;              // flag run finished
+  while( !fEXP->IsRunTerm() ) usleep(1);  // wait for experiment
   if( fTrigMod ) fTrigMod->EndTrigCtrl(); // stop & disable triggers
   DAQDisable();                           // disable DAQ controller
-
+  sleep(1);                               // pause allow expt flush buffer
   //
-  GetSysTime();                    // Current time
-  CreateHeader(fOutBuff, EEndBuff);// Create header buffer
-  sleep(1);                        // pause
-  fEXP->StoreBuffer(fOutBuff);     // and store it
-  //  sleep(1);                        // short pause
-  fIsRunTerm = kTRUE;              // not run finished
+  GetSysTime();                           // Current time
+  CreateHeader(fOutBuff, EEndBuff);       // Create end buffer
+  //sleep(1);                             // pause
+  fEXP->StoreBuffer(fOutBuff);            // and store it
+  //  sleep(1);                           // short pause
+  //fIsRunTerm = kTRUE;              // not run finished
   fIsRunInit = kFALSE;             // run is initialised
   sprintf(fCommandLine, "Closing file %s at %s\n",
 	  fFileName, fTime);

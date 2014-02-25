@@ -1,0 +1,110 @@
+*	KELVIN LABORATORY, UNIVERSITY OF GLASGOW
+*
+*	********** phil_10c6.tagg ***************
+*
+*	Module thresholds for Tagger 10c6 TDC's
+*
+*	JRM Annand	10th Aug 1993
+*
+*	Register Subaddr	Data
+	0x1			ff
+*	The following entries are grouped in threes for each of the 32 TDC
+*	channels. All values in hex.
+*	Offset for subtraction, lower readout threshold, upper readout threshold
+	0xc0000000		0
+	0xc0000001		20
+	0xc0000002		fe
+	0xc0000003		0
+	0xc0000004		20
+	0xc0000005		fe
+	0xc0000006		0
+	0xc0000007		20
+	0xc0000008		fe
+	0xc0000009		0
+	0xc000000a		20
+	0xc000000b		fe
+	0xc000000c		0
+	0xc000000d		20
+	0xc000000e		fe
+	0xc000000f		0
+	0xc0000010		20
+	0xc0000011		fe
+	0xc0000012		0
+	0xc0000013		20
+	0xc0000014		fe
+	0xc0000015		0
+	0xc0000016		20
+	0xc0000017		fe
+	0xc0000018		0
+	0xc0000019		20
+	0xc000001a		fe
+	0xc000001b		0
+	0xc000001c		20
+	0xc000001d		fe
+	0xc000001e		0
+	0xc000001f		20
+	0xc0000020		fe
+	0xc0000021		0
+	0xc0000022		20
+	0xc0000023		fe
+	0xc0000024		0
+	0xc0000025		20
+	0xc0000026		fe
+	0xc0000027		0
+	0xc0000028		20
+	0xc0000029		fe
+	0xc000002a		0
+	0xc000002b		20
+	0xc000002c		fe
+	0xc000002d		0
+	0xc000002e		20
+	0xc000002f		fe
+	0xc0000030		0
+	0xc0000031		20
+	0xc0000032		fe
+	0xc0000033		0
+	0xc0000034		20
+	0xc0000035		fe
+	0xc0000036		0
+	0xc0000037		20
+	0xc0000038		fe
+	0xc0000039		0
+	0xc000003a		20
+	0xc000003b		fe
+	0xc000003c		0
+	0xc000003d		20
+	0xc000003e		fe
+	0xc000003f		0
+	0xc0000040		20
+	0xc0000041		fe
+	0xc0000042		0
+	0xc0000043		20
+	0xc0000044		fe
+	0xc0000045		0
+	0xc0000046		20
+	0xc0000047		fe
+	0xc0000048		0
+	0xc0000049		20
+	0xc000004a		fe
+	0xc000004b		0
+	0xc000004c		20
+	0xc000004d		fe
+	0xc000004e		0
+	0xc000004f		20
+	0xc0000050		fe
+	0xc0000051		0
+	0xc0000052		20
+	0xc0000053		fe
+	0xc0000054		0
+	0xc0000055		20
+	0xc0000056		fe
+	0xc0000057		0
+	0xc0000058		20
+	0xc0000059		fe
+	0xc000005a		0
+	0xc000005b		20
+	0xc000005c		fe
+	0xc000005d		0
+	0xc000005e		20
+	0xc000005f		fe
+****End of file****

@@ -1,0 +1,11 @@
+
+##         HexBase #Registers ModuleType MapSize
+BaseSetup: 0       0          NULL       4000
+# firmware id of the VUPROM
+Hardware-ID: 02000021
+
+# what offsets for the "left" channel
+# and the pairs of the "right" channel?
+#          left    right
+#          IJ      OP 
+CfgMode:   1       16

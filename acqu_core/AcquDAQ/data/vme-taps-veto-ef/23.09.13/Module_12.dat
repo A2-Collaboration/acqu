@@ -1,0 +1,38 @@
+##--Rev 	JRM Annand... 9th Jan 2013  Specimen TAPS file
+##--Update	JRM Annand...
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+##              Hex Base	#Registers	Module type	MapSize
+BaseSetup:	0		0		ADC		4000
+Hardware-ID: 0406
+###
+Enable-Thresholds:
+#Suppress-Overflow:
+###
+## Set TDCs to common-stop mode
+Common-Stop:
+## Veto QDC thresholds
+Thr-VG:	   0x3  0x3  0x3  0x3  0x3  0x3  0x3  0x3
+## Bit Pattern enable, by default they are turned off. Set to zero to turn on
+#Thr-BP:       0x1ff    0x1ff
+Thr-BP:       0x0   0x0
+## Fast Clear window n * 31.25ns, n=500 gives ~1.5 micro sec
+FC-Window:    500
+## Analogue section clear time....total clear time = 500 + n*31.25 ns, n=0 gives 500ns
+Clear-Time:   500
+## TDC conversion gain, 140=54ps/chan, 43=103ps/chan
+V-Set: 43
+## TDC time offset, 240=300ns, 165=400ns, 131=500ns
+V-Off: 190
+## Veto QDC pedestal set
+Ped-VG: 2267 1994 3069 3571 3693 2052 2111 1932
+## Veto LED thresholds in mV
+Thr-VLED: 150 150 200 170 120 125 120 125
+#
+# Global data ready signal
+Data-Ready: 2
+##  End of File
+
+

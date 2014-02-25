@@ -4,7 +4,8 @@
 //--Rev 	JRM Annand...3rd Jun 2008..const Char_t*...gcc 4.3
 //--Rev 	JRM Annand..28th Apr 2009..remove TDAQmemmap.h
 //--Rev 	JRM Annand..24th Aug 2012..Start debugging
-//--Update	JRM Annand..25th Sep 2012.."Working version"
+//--Rev 	JRM Annand..25th Sep 2012.."Working version"
+//--Update	JRM Annand..25th Sep 2013..Edge detection control
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -129,7 +130,7 @@ enum {
 class TVME_V1190 : public TVMEmodule {
  protected:
   Bool_t* fIsIRQEnabled;
-  Int_t fSetDetection;
+  Int_t fEdgeDet;
   Int_t fWindow;
   Int_t fWindowOffset;
   Bool_t fIsContStore;

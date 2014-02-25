@@ -106,7 +106,7 @@ class TA2Pi0Compton : public TA2Physics {
 	Int_t 		fPi0InvMassCut1;	//
 	Int_t		fPi0InvMassCut2;
 
-	Int_t		fNTagg;
+	UInt_t		fNTagg;
 	Int_t*		fTaggerChannel;
 	Double_t*	fTaggerTime;
 	Double_t*	fTaggerPhotonTime;

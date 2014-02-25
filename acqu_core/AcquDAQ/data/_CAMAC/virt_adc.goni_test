@@ -1,0 +1,4 @@
+# dummy line for generic CAMAC setup
+a	1	ffff
+#only need the max no of virtual adc channels
+12

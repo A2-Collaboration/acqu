@@ -1,0 +1,130 @@
+##-----------------------------------------------------------------------
+##--Author	JRM Annand   29th Apr 2003
+##--Update	JRM Annand... 1st Dec 2004
+##--Description
+##                *** Acqu++ <-> Root ***
+## Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
+##
+## Parameter File: CBphysics.dat
+## Last stage in event-by-event analysis
+##
+##-----------------------------------------------------------------------
+##
+## Target parameters (LH2)
+##	x,y,z		Mass(MeV)
+Target:	0. 0. 0.	938.271
+##
+## Wild-card stuff for fitting combinations of particles to a reaction
+## Not fully implemented
+Permutations: 1
+##
+## Particle data group database,	max # particles
+ParticleID:				16
+##
+## Limits for meson -> N photons invariant-mass identification
+##		pi0 (MeV)	eta (MeV)
+Mass-Limits:	20.		40.
+##
+## General Kinematic Low and High Limits
+## Incident photon energy (MeV), Missing Energy (MeV), Opening Angle (deg)
+##		Egam-Low Egam-High Emiss-Low Emiss-High	Angle-Low Angle-High
+#Kinematic-Limits:  350	   450       880       940         0.0      10.0
+##
+## Do some post-initialisation.
+## Should usually be done before display is setup
+Initialise:
+#
+# Cut specification...see apparatus setup, same syntax applies
+#         1/2D Name      Link   Scope          Low/High Limits
+#Data-Cut: 1D   Pcm	 AND    compound-hist
+#Data-Cut: 1D   PcmPi0gpP AND    element        0.0 25.0
+#
+# Histograms of physics-level variables
+# histogram name should be preceeded by 1D or 2D (for dimension of spectrum)
+#           Name        	chan/low/high   min/max condition(opt)
+Display:  1D CBTAPS2PhotonMinv	200 0 1200
+#Display: 1D Pmiss   		500 0 500 	0 7
+#Display: 1D Ptheta   		500 0 500 	0 7
+#Display: 1D Pphi   		500 0 500 	0 7
+#
+#         X-Name  X-ch/low/high/id  	Y-Name   Y-ch/low/high/id  Cond(opt)
+#
+Display: 1D Nphoton	16 0 16
+Display: 1D Nproton	16 0 16
+Display: 1D Npiplus	16 0 16
+Display: 1D Nneutron	16 0 16
+Display: 1D Npi0	16 0 16
+Display: 1D Ngprime	16 0 16
+Display: 1D Neta	16 0 16
+Display: 1D Nrootino	16 0 16
+Display: 1D M2g 	400 0 1200
+Display: 1D M6g 	400 0 1200
+Display: 1D M2gCBTAPS 	400 0 1200
+Display: 1D EmP		400 -400 400
+Display: 1D EmR         400 -400 400
+Display: 1D EmPi0P      750 0 1500
+Display: 1D EmPi0R	750 0 1500
+Display: 1D EmPi0pP	400 -400 400
+Display: 1D EmPi0pR     400 -400 400
+Display: 1D EmPi0gP     750 0 1500
+Display: 1D EmPi0gR	750 0 1500
+Display: 1D EmPi0gpP	400 -400 400
+Display: 1D EmPi0gpR    400 -400 400
+#Display: 1D PmPi0pP	200 0 400
+#Display: 1D PmPi0pR     200 0 400
+#Display: 1D PcmPi0pP	200 0 400
+#Display: 1D PcmPi0pR    200 0 400
+#Display: 1D PmPi0gpP	200 0 400
+#Display: 1D PmPi0gpR    200 0 400
+#Display: 1D PcmPi0gpP	200 0 400
+#Display: 1D PcmPi0gpR   200 0 400
+#Display: 1D EgPi0gpP	100 0 200
+#Display: 1D EgPi0gpP	100 0 200 -1 -1 null WEgPi0gp
+#Display: 1D EgPi0gpP	100 0 200 -1 -1 Pcm WEgPi0gp
+#Display: 1D EgPi0gpR    100 0 200
+#Display: 1D EgPi0gpR    100 0 200 -1 -1 null WEgPi0gp
+#Display: 1D EgPi0gpR    100 0 200 -1 -1 Pcm WEgPi0gp
+#Display: 2D EgPi0gpP     50 0 200 -1 EmPi0gpP 50 -200 200 -1
+#Display: 2D EgPi0gpR     50 0 200 -1 EmPi0gpR 50 -200 200 -1
+Display: 1D EmEtaP	250 0 1500
+Display: 1D EmEtaR	250 0 1500
+Display: 1D EmEtapP     100 -400 400
+Display: 1D EmEtapR     100 -400 400
+Display: 1D EmComptonP	250 0 1500
+Display: 1D EmComptonR	250 0 1500
+Display: 1D EmComptonpP     100 -400 400
+Display: 1D EmComptonpR     100 -400 400
+Display: 1D PcmEtapP	100 0 1200
+#Display: 1D PcmEtapR    100 0 1200
+Display: 1D EmPiplusP	250 0 1500
+Display: 1D EmPiplusR	250 0 1500
+Display: 1D AopenP	180 0 180
+Display: 1D AopenR	180 0 180
+Display: 1D ThetaP	20 0 180
+Display: 1D ThetaR	20 0 180
+#Display: 1D PhiParaP	20 -180 180
+#Display: 1D PhiParaR	20 -180 180
+#Display: 1D PhiPerpP	20 -180 180
+#Display: 1D PhiPerpR	20 -180 180
+#Display: 1D Angle1P	360 -180 180
+#Display: 1D Angle1R	360 -180 180
+#Display: 1D Angle2P	360 -180 180
+#Display: 1D Angle2R	360 -180 180
+Display: 2D AopenP 90 0 180 -1 EmPiplusP 100 500 1500 -1
+Display: 2D AopenR 90 0 180 -1 EmPiplusR 100 500 1500 -1
+##Display: 2D Angle1P 90 0 180 -1 Angle2P 90 0 180 -1
+##Display: 2D Angle1R 90 0 180 -1 Angle2R 90 0 180 -1
+# Any wild-card stuff here
+#Misc: Not yet implemented
+Display: 2D TAGG_FPD_Hits       288 0 288 -1 CB_NaI_Etot 100 0 1200 -1
+Display: 2D TAGG_FPD_HitsPrompt 288 0 288 -1 M2g 100 0 1200 -1
+Display: 2D TAGG_FPD_HitsRand   288 0 288 -1 M2g 100 0 1200 -1
+Display: 2D CB_NaI_ClNhitsOR   	16  0 16  -1 M2g 100 0 1200 -1
+#Display: 2D MeanTime   		200 0 200  0 M2g 100 0 1200 -1
+#Display: 2D MeanTime   		200 0 200  1 M2g 100 0 1200 -1
+#Display: 2D MeanTime   		200 0 200  2 M2g 100 0 1200 -1
+#Display: 2D CB_NaI_ClNhitsOR   	16 0 16 -1 M6g 100 0 1200 -1
+Display: 2D TAGG_FPD_HitsPrompt 288 0 288 -1 M6g 100 0 1200 -1
+Display: 2D TAGG_FPD_HitsRand   288 0 288 -1 M6g 100 0 1200 -1
+Display: 2D TAGG_FPD_HitsPrompt 288 0 288 -1 M2gCBTAPS 100 0 1200 -1
+Display: 2D TAGG_FPD_HitsRand   288 0 288 -1 M2gCBTAPS 100 0 1200 -1

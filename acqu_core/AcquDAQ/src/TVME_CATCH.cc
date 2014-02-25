@@ -278,6 +278,7 @@ Int_t TVME_CATCH::ProgFPGA(Char_t* filename, Int_t port)
     return -4;
   }
   do {
+	  err=0; // reset error
     if (port == ETCSport) 
       fprintf(stderr, " TCS receiver."); 
     else if (port == ESLINKport) fprintf(stderr, "SLINK multiplexer.");
@@ -332,8 +333,8 @@ Int_t TVME_CATCH::ProgFPGA(Char_t* filename, Int_t port)
     }
     if (err == 5) /* retry programming if init was low */ 
       {
-	retry-- ;
-	err=0;
+	      fprintf(stderr, "Retry programming...\n");
+	      retry-- ;
       }
     else
       retry=0;
@@ -453,8 +454,8 @@ Int_t TVME_CATCH::Fileout(FILE *ipf, Int_t slow, Int_t port, Int_t c)
 	  bits = bits >> 1 ;
 	};
 	if (InitFlag(port, c)==0) {
-	  fprintf(stderr, "Init is low! Programming stopped\n");
-	  err = 5;
+		fprintf(stderr, "Init is low! Programming stopped\n");
+		err = 5;
 	  return err;
 	}
       }

@@ -4,7 +4,8 @@
 //--Rev 	JRM Annand...3rd Jun 2008..const Char_t*...gcc 4.3
 //--Rev 	JRM Annand..28th Apr 2009..remove TDAQmemmap.h
 //--Rev 	JRM Annand..24th Aug 2012..Start debugging
-//--Update	JRM Annand..25th Sep 2012.."Working version"
+//--Rev 	JRM Annand..25th Sep 2012.."Working version"
+//--Update	JRM Annand..25th Sep 2013..Edge detection control
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -57,9 +58,11 @@ VMEreg_t V1190reg[] = {
 
 ClassImp(TVME_V1190)
 
-enum { ECAEN_Threshold=200 };
-static Map_t kCAENKeys[] = {
-  {"Threshold:",          ECAEN_Threshold},
+enum { EV1190_Threshold=200, EV1190_EdgeDet, EV1190_Window};
+static Map_t k1190Keys[] = {
+  {"Threshold:",          EV1190_Threshold},
+  {"Edge-Detect:",        EV1190_EdgeDet},
+  {"Window:",             EV1190_Window},
   {NULL,                  -1}
 };
 
@@ -73,11 +76,11 @@ TVME_V1190::TVME_V1190( Char_t* name, Char_t* file, FILE* log,
   // Basic initialisation 
   fCtrl = NULL;                            // no control functions
   fType = EDAQ_ADC;                        // analogue to digital converter
-  fNreg = fMaxReg = EV1190_OutBuff + 1026; // Last "hard-wired" register
+  fNreg = EV1190_OutBuff + 1026; // Last "hard-wired" register
   fHardID = 0xa60400;                      // ID read from hardware
-  fNBits = 12;                             // 12-bit ADC
-  AddCmdList( kCAENKeys );                 // CAEN-specific setup commands
-  fSetDetection = 0x3;                     // pair
+  fNBits = 15;                             // 16-bit ADC
+  AddCmdList( k1190Keys );                 // CAEN-specific setup commands
+  fEdgeDet = 0x2;                          // leading edge
   fWindow = 0x28;
   fWindowOffset = 0xffec;
   fIsContStore = kFALSE;                   // continuous storage
@@ -94,6 +97,17 @@ void TVME_V1190::SetConfig( Char_t* line, Int_t key )
 {
   // Configuration from file 
   switch( key ){
+  case EV1190_EdgeDet:
+    // login input edge detection mode
+    // 0 = pair, 1 trailing edge, 2 leading edge, 3 trailing and leading
+    if( sscanf(line,"%i",&fEdgeDet) != 1 )
+      { PrintError(line,"<Parse edge detection mode read>"); }
+    break;
+  case EV1190_Window:
+    // Time window, ofset and width
+    if( sscanf(line,"%i%i",&fWindowOffset,&fWindow) != 2 )
+      { PrintError(line,"<Parse window offset and width read>"); }
+    break;
   default:
     // default try commands of TDAQmodule
     TVMEmodule::SetConfig(line, key);
@@ -130,7 +144,7 @@ void TVME_V1190::ReadIRQ( void** outBuffer )
     adcVal = datum & 0x7ffff;               // ADC value
     adcIndex = (datum & 0x3f80000) >> 19;   // ADC subaddress
     adcIndex += fBaseIndex;                 // index offset
-    if( fSetDetection == 0 ){               // pair mode
+    if( fEdgeDet == 0 ){               // pair mode
       UShort_t val1 = adcVal & 0xfff;
       UShort_t val2 = adcVal>>12;
       ADCStore(outBuffer,val1,adcIndex);
@@ -157,7 +171,7 @@ void TVME_V1190::PostInit( )
   TVMEmodule::PostInit();
   // Specific stuff
   // Hit detect mode...pair leading/trailing edge
-  WrtMicro(EM1190_SetDetection, 0, &fSetDetection);
+  WrtMicro(EM1190_SetDetection, 0, &fEdgeDet);
   WrtMicro(EM1190_SetWinWidth, 0, &fWindow);
   WrtMicro(EM1190_SetWinOff, 0, &fWindowOffset);
   // Acquisition mode
@@ -174,9 +188,11 @@ Bool_t TVME_V1190::CheckHardID( )
   Int_t id = Read(EV1190_ID0) & 0xff;
   id |= (Read(EV1190_ID1) & 0xff) << 8;
   id |= (Read(EV1190_ID2) & 0xff) << 16;
+  fprintf(fLogStream,"CAEN V1190 hardware ID Read: %x  Expected: %x\n",
+	  id,fHardID);
   if( id == fHardID ) return kTRUE;
   else
-    PrintError("","<CAEN V1190 TDC hardware ID read error>",EErrFatal);
+    PrintError("","<CAEN V1190 hardware ID read error>",EErrFatal);
   return kFALSE;
 }
 

@@ -132,9 +132,13 @@ void TDAQmodule::SetConfig( Char_t* line, Int_t key )
     if( fNreg > maxreg ) maxreg = fNreg;
     if( !fMaxReg ) fMaxReg = maxreg;
     else fMaxReg += maxreg;
-    fReg = new void*[fMaxReg];
-    fDW = new Int_t[fMaxReg];
-    fData = new UInt_t[fMaxReg];
+    // prevent allocating "zero" memory (fMaxReg==0), 
+    // this ensures that if(!fReg)
+    if(fMaxReg>0) {
+      fReg = new void*[fMaxReg];
+      fDW = new Int_t[fMaxReg];
+      fData = new UInt_t[fMaxReg];
+    }
     for( Int_t i=0; i<fMaxReg; i++ ) fData[i] = 0;
     // Update type....input "NULL" if no change from default set in constructor
     type = Map2Key( modtype, kModTypes );

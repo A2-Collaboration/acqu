@@ -1,0 +1,46 @@
+************************************************************************
+*       ACQU Data Acquisition System for Nuclear Physics
+*
+*       ************** prescale.gdh ****************
+*
+*       Trigger input prescaler control
+*	KPh design prescaler has 10 channels A = 0--9
+*	Values 0-ffff(hex) accepted
+*
+*       Every value is entered in hexadecimal!!!
+*
+*       JRM Annand	25th Nov 1996	1st edition
+***********************************************************************
+*       A0 not in use!
+FFFF
+*
+* ---------------------------------------------------------------------
+*	A1 pulser (general test purposes)
+FFFF
+*
+* ---------------------------------------------------------------------
+*	A2 dur (lead glass tagging efficiency)
+FFFF
+*
+* ---------------------------------------------------------------------
+*       A3 broken DO NOT USE!
+FFFF
+*
+* ---------------------------------------------------------------------
+*	A4 pair (photon beam monitor)
+* Use the following value for flux normaliszation (tagging efficiency)
+*8
+*
+* Use the following value for normal GDH-triggers
+*
+*400
+* - for full target 
+96
+* 50 - new value
+* - for empty target
+*3AA
+* 
+* ---------------------------------------------------------------------
+*	A5 dur (lead glass tagging efficiency)
+FFFF
+*

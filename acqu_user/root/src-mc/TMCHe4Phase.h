@@ -27,9 +27,7 @@ static const Double_t Mn = 0.9395535;
 static const Double_t Md = 1.87561282;
 static const Double_t Mamu = 0.931494043;
 static const Double_t Me = 0.000510998;
-static Double_t Mhe3;
-static Double_t Mhe4;
-static Double_t C;
+
 
 class TMCHe4Phase : public TA2System {
  protected:

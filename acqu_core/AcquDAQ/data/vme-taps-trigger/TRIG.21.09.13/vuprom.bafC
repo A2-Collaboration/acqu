@@ -1,0 +1,13 @@
+##--Rev 	JRM Annand... 1st Oct 2005  New DAQ software
+##--Update	JRM Annand...
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+##              Hex Base	#Registers	Module type	MapSize  <-- Baya Added MapSize
+BaseSetup:	0		0		ADC		4000
+Hardware-ID: 0500000d
+TAPS-FrontEnd:
+##		C CFD	   C CFD      C LED1     C LED1     C LED2     C LED2
+Set-Front-BaF2:	0xfffffff8 0xffffffff 0xfffffff8 0xffffffff 0xfffffff8 0xffffffff 
+##	End of File

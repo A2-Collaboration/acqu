@@ -25,6 +25,7 @@ class TimeWalk_t {
   Double_t fRiseTime;                       // pulse rise time (ns)
   Double_t fThreshold;                      // discriminator threshold (MeV)
  public:
+  virtual ~TimeWalk_t() {}
   virtual void SetWalk( Double_t* par ){
     fRiseTime = par[0];
     fThreshold = par[1];
@@ -43,6 +44,7 @@ class TimeWalkSergey_t : public TimeWalk_t {
   Double_t fShift;     
   Double_t fPower;     
  public:
+  virtual ~TimeWalkSergey_t() {}
   virtual void SetWalk( Double_t* par ){
     fRiseTime = par[0];
     fThreshold = par[1];
@@ -63,6 +65,7 @@ class TimeWalkSven_t : public TimeWalk_t
  private:
   Double_t fPar[6];
  public:
+  virtual ~TimeWalkSven_t() {}
   virtual void SetWalk( Double_t* par ){
     for( Int_t i=0; i<6; i++ ) fPar[i] = par[i];
   }

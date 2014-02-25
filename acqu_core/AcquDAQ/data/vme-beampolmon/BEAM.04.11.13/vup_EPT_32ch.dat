@@ -1,0 +1,20 @@
+# Note that the order of BaseSetup:, 
+# Hardware-ID: and Scaler: lines is important!
+
+##         HexBase #Registers ModuleType MapSize
+BaseSetup: 0       0          Scaler     14000
+# firmware id of the VUPROM
+Hardware-ID: 02000021
+
+# we define what is the first and the last module
+# (by name) in the chain of readout Vuproms 
+# (controls the global NIM DAQ enable signal) 
+ModuleChain: vup1 vup6
+
+# EPT
+
+#       offset    clear    load   number of scalers
+#       hex       hex      hex    dec
+
+# open scalers EPT
+Scaler: 0x11000   0x800    0x804  32  

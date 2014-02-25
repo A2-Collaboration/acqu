@@ -22,15 +22,21 @@ endif()
 
 # really no optimization in debug mode
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall")
 endif()
 
 string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
 set(DEFAULT_COMPILE_FLAGS ${CMAKE_CXX_FLAGS_${BUILD_TYPE}})
 
 # disable the DAQ build mode by default
+# unless the site_name aka hostname begins with "vme-"
 if(NOT DEFINED ACQU_DAQ)
-	set(ACQU_DAQ 0)
+  site_name(MY_HOSTNAME)
+  if(MY_HOSTNAME MATCHES "^vme-")
+    set(ACQU_DAQ 1)
+  else()
+    set(ACQU_DAQ 0)
+  endif()
 else()
   string(TOUPPER "${ACQU_DAQ}" ACQU_DAQ)
   if(NOT "${ACQU_DAQ}" STREQUAL "ON")

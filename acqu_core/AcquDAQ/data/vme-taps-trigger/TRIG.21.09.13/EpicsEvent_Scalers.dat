@@ -1,0 +1,115 @@
+#--Rev	Ken Livingston...21st Sept 2012
+##--Update  
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+## Setup Epics channels all to be read together
+#              		EventID     EventName(no spaces) 
+EPICSBaseSetup:      	7           CbremEPICScalers
+#
+#
+## Define the channels
+#			PVName				Nelem   Type (epicsBYTE,epicsSHORT,epicsLONG,epicsFLOAT,epicsDOUBLE)
+EPICSchannel:		TAPSBusy                      	1	epicsDOUBLE
+EPICSchannel:		RateL2Input0                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionA            	1	epicsDOUBLE
+EPICSchannel:		CBInterrupt                   	1	epicsDOUBLE
+EPICSchannel:		RateL2Input1                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionB            	1	epicsDOUBLE
+EPICSchannel:		CFD_TAPSOR                    	1	epicsDOUBLE
+EPICSchannel:		RateL2Input2                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionC            	1	epicsDOUBLE
+EPICSchannel:		LED1_TAPSOR                   	1	epicsDOUBLE
+EPICSchannel:		RateL2Input3                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionD            	1	epicsDOUBLE
+EPICSchannel:		LED2_TAPSOR                   	1	epicsDOUBLE
+EPICSchannel:		RateL2Input4                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionE            	1	epicsDOUBLE
+EPICSchannel:		CFD_TAPSM2Plus                	1	epicsDOUBLE
+EPICSchannel:		RateL2Input5                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionF            	1	epicsDOUBLE
+EPICSchannel:		LED1_TAPSM2Plus               	1	epicsDOUBLE
+EPICSchannel:		RateL2Input6                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionG            	1	epicsDOUBLE
+EPICSchannel:		LED2_TAPSM2Plus               	1	epicsDOUBLE
+EPICSchannel:		RateL2Input7                  	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionH            	1	epicsDOUBLE
+EPICSchannel:		PulserOutput                  	1	epicsDOUBLE
+EPICSchannel:		RawL1Triggers0                	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionI            	1	epicsDOUBLE
+EPICSchannel:		CFD_TAPSOR_PreScaled          	1	epicsDOUBLE
+EPICSchannel:		RawL1Triggers0                	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionJ            	1	epicsDOUBLE
+EPICSchannel:		LED1_TAPSOR_PreScaled         	1	epicsDOUBLE
+EPICSchannel:		L1Trigger                     	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionK            	1	epicsDOUBLE
+EPICSchannel:		LED2_TAPSOR_PreScaled         	1	epicsDOUBLE
+EPICSchannel:		ExperimentTrigger             	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionL            	1	epicsDOUBLE
+EPICSchannel:		CFD_TAPSM2Plus_PreScaled      	1	epicsDOUBLE
+EPICSchannel:		MasterReset                   	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionM            	1	epicsDOUBLE
+EPICSchannel:		LED1_TAPSM2Plus_PreScaled     	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionN            	1	epicsDOUBLE
+EPICSchannel:		LED2_TAPSM2Plus_PreScaled     	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionO            	1	epicsDOUBLE
+EPICSchannel:		PulserOutput_PreScaled        	1	epicsDOUBLE
+EPICSchannel:		ImmediateReset                	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionP            	1	epicsDOUBLE
+EPICSchannel:		TAPS_L1_Trigger               	1	epicsDOUBLE
+EPICSchannel:		FastClear                     	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionQ            	1	epicsDOUBLE
+EPICSchannel:		TAPS_L1_Interrupt             	1	epicsDOUBLE
+EPICSchannel:		LivetimeL1                    	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionR            	1	epicsDOUBLE
+EPICSchannel:		TAPSInterrupt                 	1	epicsDOUBLE
+EPICSchannel:		LivetimeL2                    	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionS            	1	epicsDOUBLE
+EPICSchannel:		TAPSActualMode                	1	epicsDOUBLE
+EPICSchannel:		Livetimea2WCdaq1CPU0          	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionT            	1	epicsDOUBLE
+EPICSchannel:		PWO_Veto_TAPSM2Plus_PreScaled 	1	epicsDOUBLE
+EPICSchannel:		Livetimea2SADCdaq1CPU1        	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionU            	1	epicsDOUBLE
+EPICSchannel:		Veto_TAPSOR                   	1	epicsDOUBLE
+EPICSchannel:		Livetimea2SADCdaq2CPU2        	1	epicsDOUBLE
+EPICSchannel:		16ORTaggerSectionV            	1	epicsDOUBLE
+EPICSchannel:		Veto_TAPSM2Plus               	1	epicsDOUBLE
+EPICSchannel:		Livetimea2tdcdaq1CPU3         	1	epicsDOUBLE
+EPICSchannel:		LiveTimeprescmamiresponse256  	1	epicsDOUBLE
+EPICSchannel:		Veto_TAPSOR_PreScaled         	1	epicsDOUBLE
+EPICSchannel:		Livetimea2taggerdaq1CPU4      	1	epicsDOUBLE
+EPICSchannel:		LiveTimeprescoutputfromgenerat	1	epicsDOUBLE
+EPICSchannel:		Veto_TAPSM2Plus_PreScaled     	1	epicsDOUBLE
+EPICSchannel:		LivetimeUNUSEDCPU5            	1	epicsDOUBLE
+EPICSchannel:		LiveTimeprescinvertedoutputfro	1	epicsDOUBLE
+EPICSchannel:		PWO_TAPSOR                    	1	epicsDOUBLE
+EPICSchannel:		LivetimeTAPSCPU6              	1	epicsDOUBLE
+EPICSchannel:		LiveTimeprescsourceindetermine	1	epicsDOUBLE
+EPICSchannel:		PWO_Veto_TAPSOR               	1	epicsDOUBLE
+EPICSchannel:		Livetimea2cbtriggerCPU7       	1	epicsDOUBLE
+EPICSchannel:		PairSpectrometer              	1	epicsDOUBLE
+EPICSchannel:		PWO_TAPSM2Plus                	1	epicsDOUBLE
+EPICSchannel:		TotalLivetime                 	1	epicsDOUBLE
+EPICSchannel:		PairSpectrometerdelayedstreche	1	epicsDOUBLE
+EPICSchannel:		PWO_Veto_TAPSM2Plus           	1	epicsDOUBLE
+EPICSchannel:		Debug0                        	1	epicsDOUBLE
+EPICSchannel:		FaradayCuppA                  	1	epicsDOUBLE
+EPICSchannel:		PWO_TAPSOR_PreScaled          	1	epicsDOUBLE
+EPICSchannel:		Debug1                        	1	epicsDOUBLE
+EPICSchannel:		P2IonChamberau                	1	epicsDOUBLE
+EPICSchannel:		PWO_Veto_TAPSOR_PreScaled     	1	epicsDOUBLE
+EPICSchannel:		Debug2                        	1	epicsDOUBLE
+EPICSchannel:		PWO_TAPSM2Plus_PreScaled      	1	epicsDOUBLE
+EPICSchannel:		Debug3                        	1	epicsDOUBLE
+EPICSchannel:		TaggerORP/P2ratio             	1	epicsDOUBLE
+EPICSchannel:		CBPressure6                   	1	epicsDOUBLE
+EPICSchannel:		CBAccelerationTopg            	1	epicsDOUBLE
+EPICSchannel:		CBPressure7                   	1	epicsDOUBLE
+EPICSchannel:		CBPressureToptorr             	1	epicsDOUBLE
+EPICSchannel:		CBAccelerationbotg            	1	epicsDOUBLE
+EPICSchannel:		CBPressurebottomtorr          	1	epicsDOUBLE
+EPICSchannel:		CBTemperaturebotC             	1	epicsDOUBLE
+EPICSchannel:		CBTemperaturetopC             	1	epicsDOUBLE
+##

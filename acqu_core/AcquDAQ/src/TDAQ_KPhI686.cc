@@ -70,6 +70,7 @@ void TDAQ_KPhI686::SetConfig( Char_t* line, Int_t key )
       PrintError(line,"<Parse error address range>", EErrFatal);
     break;
   case EKPhI686Board:  // board ID <<--------------   Added by Baya
+#ifdef VME_HOST
     void *BaseReg;
     Long_t *VirtMemReg;
     DAQMemMap_t *MemReg;
@@ -80,6 +81,7 @@ void TDAQ_KPhI686::SetConfig( Char_t* line, Int_t key )
     VirtMemReg= (Long_t *)MemReg->GetVirtAddr();
 
     *VirtMemReg= 0xe0000000 & fRange; //save 3 first bits of FBaseAddr
+#endif
     break;
 
   default:
@@ -93,11 +95,13 @@ void TDAQ_KPhI686::SetConfig( Char_t* line, Int_t key )
 //-----------------------------------------------------------------------------
 void TDAQ_KPhI686::Init()
 {
+#ifdef VME_HOST
   // Store VMEbus start addresses
   // and open descriptor for mapping virtual to physical memory
   // Failure to open the descriptor is a fatal error
   if( (fMemFd = open("/dev/mem", O_RDWR)) == -1 )
     PrintError("","<Virtual memory descriptor open>", EErrFatal);
+#endif
 }
 
 //-----------------------------------------------------------------------------

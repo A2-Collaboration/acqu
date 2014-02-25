@@ -18,6 +18,7 @@ ClassImp(TDAQ_SY1527)
 
 enum { Esy1527_Crate=100, Esy1527_P1932, Esy1527_S1932, Esy1527_SaveHV,
        Esy1527_TurnOn, Esy1527_TurnOff };
+#ifdef AD_CAENHV
 static Map_t kSY1527Keys[] = {
   {"Crate:",       Esy1527_Crate},
   {"P1932:",       Esy1527_P1932},
@@ -27,7 +28,7 @@ static Map_t kSY1527Keys[] = {
   {"TurnOff:",     Esy1527_TurnOff},
   {NULL,           -1}
 };
-
+#endif
 
 //-----------------------------------------------------------------------------
 TDAQ_SY1527::TDAQ_SY1527(const Char_t* name, const Char_t* file, FILE* log ):

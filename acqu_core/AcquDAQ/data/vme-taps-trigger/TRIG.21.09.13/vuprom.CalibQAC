@@ -1,0 +1,44 @@
+##--Rev 	JRM Annand... 1st Oct 2005  New DAQ software
+##--Update	JRM Annand...
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+##              Hex Base	#Registers	Module type	MapSize  <-- Baya Added MapSize
+BaseSetup:	0		0		Scaler		4000
+Hardware-ID: 1311120b
+Enable-CPU: 0
+Int-Delay:  0 1200
+Int-Delay:  1 1200
+Int-Delay:  2 1200
+Int-Delay:  3 1200
+Int-Delay:  4 1200
+Int-Delay:  5 1200
+Int-Delay:  6 1200
+Int-Delay:  7 1200
+Int-Delay:  8 1200
+Int-Delay:  9 1200
+Int-Delay:  10 1200
+Int-Delay:  11 1200
+Int-Delay:  12 1200
+Int-Delay:  13 1
+##
+Set-Debug-Out: 0 218
+Set-Debug-Out: 1 157
+Set-Debug-Out: 2 164
+Set-Debug-Out: 3 165
+## stand-alone (master) mode 0
+## coupled (slave) mode 1
+TAPS-Mode: 0
+## setup trigger inputs
+## 	 	 Mask		Pre-Scale	M2-Pre-Scale
+Set-CFD:	 0x00		0x0		0xf
+Set-LED1:	 0x00		0x0		0xf
+Set-LED2:	 0x00		0x0		0xf
+Set-Veto:	 0x00		0x0		0xf
+Set-PbWO4:	 0x00		0x0		0xf
+Set-PbWO4-Veto:	 0x00		0x0		0xf
+## Pulser prescale
+Set-Pulser:	0x1
+#	End of File
+#

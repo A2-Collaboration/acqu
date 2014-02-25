@@ -1,0 +1,21 @@
+## Apparatus setup file for the Tagger with 883 MeV
+########################################################################
+#
+#		NMR field   Beam Energy
+Magnet:	1.05696		883.0
+#
+## Specify list of detectors which constitute the Tagger apparatus
+##	  	  Name    		Class Name   	Setup file
+Detector: FPD        	TA2Ladder   	Detector-FPD883.dat
+#
+## Do some post-initialisation.
+Initialise:
+#
+########################################################################
+## Display histograms of apparatus-level variables
+########################################################################
+#
+Display: 1D Nhit  	   20 0  20  -1
+Display: 1D PhotonEnergy  352 v2u_plot/883.ghist
+Display: 2D FPD_Hits   352 0 352  -1 FPD_Time 100 0 200 -1
+

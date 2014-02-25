@@ -1,0 +1,59 @@
+# F1 configuration file. DO NOT EDIT. Use the f1conf tool instead.
+#
+# Configuration time: Die Sep 23 16:32:16 CEST 2003
+#
+#INPUT:
+# ch./ lead-edge / trail-edge / delay adjust
+# 0      1            0          0
+# 1      1            0          0
+# 2      1            0          0
+# 3      1            0          0
+# 4      1            0          0
+# 5      1            0          0
+# 6      1            0          0
+# 7      1            0          0
+#TRIGGER: 
+# Start/Stop      = 0, trigger window = 16010, trigger latency = 16020
+# Auto time reset = 1,        Counter = 282
+# Adjust ref ch0  = 0, adjust ref ch1 = 0, Strobe time (latch) = 0
+#CLOCK:  
+# Ref.clk.divider   = 4, High speed div = 23
+# Resolution adjust = 1, Ring Oscillator = 1
+#MODE: 
+# High res = 0, Latch = 0, LSB show lead/trail = 0
+#OUTPUT: 
+# header  (channel 0-7): 1 0 0 0 0 0 0 0
+# trailer (channel 0-7): 0 0 0 0 0 0 0 1
+# Busclk delay = 0, bus width = 24
+#DACS:
+# DAC1 = 0   DAC2 = 0
+# DAC3 = 0   DAC4 = 0
+# DAC5 = 0   DAC6 = 0
+# DAC7 = 0   DAC8 = 0
+#SPECIAL:
+#Register  1: Bits  1-12 = 0 0 0 0 0 0 0 0 0 1 0 0
+#Register 10: Bits 12-15 = 1 0 0 0
+#Register 15: Bits  4-15 = 0 0 0 0 0 0 0 0 0 0 0 0
+set reg0 0x0180
+set reg1 0x0400
+set reg2 0x4040
+set reg3 0x4040
+set reg4 0x4040
+set reg5 0x4040
+set reg6 0x0000
+set reg7 0xC680
+set reg8 0x1F40
+set reg9 0x1F4A
+set reg10 0x1C17
+set reg11 0x0000
+set reg12 0x0000
+set reg13 0x0000
+set reg14 0x0000
+set reg15 0x000C
+set board 7
+set tdcid 0
+set tdcall 1
+set vmeshow 1
+set vmeaccess 0
+set reffreq 38.88
+set catchx 1

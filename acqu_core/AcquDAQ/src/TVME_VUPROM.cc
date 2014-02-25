@@ -12,7 +12,8 @@
 //--Rev 	JRM Annand   29th Nov 2012 Timeout 100 us Event ID read
 //--Rev  	JRM Annand    1st Dec 2012 Scaler read only, Ref TDC width ctrl
 //--Rev 	JRM Annand    2nd Dec 2012 Mod RAM download (buff size & <=) 
-//--Update 	JRM Annand   28th Feb 2013 Modified L1,L2 prescale setup 
+//--Rev 	JRM Annand   28th Feb 2013 Modified L1,L2 prescale setup 
+//--Update 	JRM Annand   10th Sep 2013 Reg. map changes for expanded DAQ 
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -23,7 +24,7 @@
 // Has a multitude of functions, depending on the programing of the FPGA
 // Trigger condition processor
 // DAQ control master, up to 7 slave VME systems
-// 192 channel scaler
+// 196 channel scaler
 // Hit pattern register
 //
 
@@ -35,8 +36,8 @@ ClassImp(TVME_VUPROM)
 enum { EVUP_EnCPU=200, EVUP_IntDelay, EVUP_FCDelay, EVUP_RAMDownload,
        EVUP_InputMask, EVUP_InputPrescale, EVUP_L1Prescale, EVUP_L2Prescale,
        EVUP_EnPattRead, EVUP_EnScalerRead, EVUP_SetDebug, EVUP_L1Width,
-       EVUP_SetDelay, EVUP_EnableTAPS, EVUP_SetMThresh, EVUP_GUIpermit,
-       EVUP_RefTDCWidth };
+       EVUP_SetDelay, EVUP_EnableTAPS, EVUP_HelicityInhibit, EVUP_SetMThresh, 
+       EVUP_GUIpermit, EVUP_RefTDCWidth };
 static Map_t kVUPROMKeys[] = {
   {"Enable-CPU:",         EVUP_EnCPU},
   {"Int-Delay:",          EVUP_IntDelay},
@@ -52,6 +53,7 @@ static Map_t kVUPROMKeys[] = {
   {"L1-Width:" ,          EVUP_L1Width},
   {"Strobe-Delay:" ,      EVUP_SetDelay},
   {"Enable-TAPS:" ,       EVUP_EnableTAPS},
+  {"Helicity-Inhibit:" ,  EVUP_HelicityInhibit},
   {"Set-M-Threshold:" ,   EVUP_SetMThresh},
   {"GUI-permit:" ,        EVUP_GUIpermit},
   {"RefTDC-Width:" ,      EVUP_RefTDCWidth},
@@ -90,6 +92,7 @@ VMEreg_t VUPROMreg[] = {
   {0x2360,      0x0,  'l', 0},       // L2 prescale-2
   {0x2370,      0x0,  'l', 0},       // L2 prescale-3
   {0x22a0,      0x0,  'l', 0},       // Input pattern read
+  {0x22b0,      0x0,  'l', 0},       // Read Trigger fired pattern
   {0x22c0,      0x0,  'w', 0},       // Width of shaped L1 output
   {0x22d0,      0x0,  'w', 0},       // L1 strobe internal delay
   {0x22e0,      0x0,  'w', 0},       // L2 strobe internal delay
@@ -102,6 +105,8 @@ VMEreg_t VUPROMreg[] = {
   {0x2450,      0x0,  'l', 0},       // End of readout acknowledge
   {0x2460,      0x0,  'l', 0},       // IRQ reg.
   {0x2470,      0x0,  'l', 0},       // TCS Control
+  {0x2480,      0x0,  'l', 0},       // MAMI Beam Helicity Inhibit  
+  {0x2490,      0x0,  'l', 0},       // MAMI Beam Helicity Pattern 
   {0x2500,      0x0,  'l', 0},       // Interrupt delay CPU-0
   {0x2510,      0x0,  'l', 0},       // Interrupt delay CPU-1
   {0x2520,      0x0,  'l', 0},       // Interrupt delay CPU-2
@@ -110,9 +115,16 @@ VMEreg_t VUPROMreg[] = {
   {0x2550,      0x0,  'l', 0},       // Interrupt delay CPU-5
   {0x2560,      0x0,  'l', 0},       // Interrupt delay CPU-6
   {0x2570,      0x0,  'l', 0},       // Interrupt delay CPU-7
-  {0x25a0,      0x0,  'l', 0},       // Fast clear delay (all)
+  {0x2580,      0x0,  'l', 0},       // Interrupt delay CPU-8
+  {0x2590,      0x0,  'l', 0},       // Interrupt delay CPU-9
+  {0x25a0,      0x0,  'l', 0},       // Interrupt delay CPU-10
+  {0x25b0,      0x0,  'l', 0},       // Interrupt delay CPU-11
+  {0x25c0,      0x0,  'l', 0},       // Interrupt delay CPU-12
+  {0x25d0,      0x0,  'l', 0},       // Interrupt delay CPU-13
+  {0x25f0,      0x0,  'l', 0},       // Fast clear delay (all)
   {0x2a00,      0x0,  'l', 0},       // Event ID (send) register
   {0x2a10,      0x0,  'l', 0},       // Event ID (send) trigger
+  {0x2a20,      0x0,  'l', 0},       // Event ID status
   {0x2e00,      0x0,  'l', 0},       // Read back debug switch
   {0x2e10,      0x0,  'l', 0},       // Set debug output 0
   {0x2e20,      0x0,  'l', 0},       // Set debug output 1
@@ -120,7 +132,7 @@ VMEreg_t VUPROMreg[] = {
   {0x2e40,      0x0,  'l', 0},       // Set debug output 3
   {0x1800,      0x0,  'l', 0},       // Clear scalers
   {0x1804,      0x0,  'l', 0},       // Load scalers
-  {0x1000,      0x0,  'l', 191},     // Scaler registers 0-191
+  {0x1000,      0x0,  'l', 195},     // Scaler registers 0-195
   {0xffffffff,  0x0,  'l', 0},       // end of list
 };
 
@@ -138,7 +150,7 @@ TVME_VUPROM::TVME_VUPROM( Char_t* name, Char_t* file, FILE* log,
   fL1Width = 1;                            // default width output 1
   fL1Delay = fL2Delay = 2;                 // default internal delays
   fRefTDCWidth = 5;
-  for(Int_t i=0; i<16; i++) fIntDelay[i] = 0;
+  for(Int_t i=0; i<EVU_MaxCPU; i++) fIntDelay[i] = 0;
   for(Int_t i=0; i<16; i++) fInputPrescale[i] = 0;
   for(Int_t i=0; i<16; i++) fL1Prescale[i] = 0;
   for(Int_t i=0; i<16; i++) fL2Prescale[i] = 0;
@@ -146,11 +158,12 @@ TVME_VUPROM::TVME_VUPROM( Char_t* name, Char_t* file, FILE* log,
   for(Int_t i=0; i<16; i++) fMThresh[i] = 0;
   fRAMid = 0;
   fInputMask = 0;
-  fNScalerChan = 192;                      // number scaler channels
+  fNScalerChan = 196;                      // number scaler channels
   fNreg = EVU_Scaler + fNScalerChan + 2;   // control and scaler registers
   fIsPattRead = kFALSE;                    // default no pattern read
   fIsScalerRead = kFALSE;                  // default not only a scaler
   fTAPSEnable = 0;                         // default TAPS not in busy circuit
+  fHelicityInhibit = 0;                    // default Helicity not in busy circuit
   fIsGUIpermit = kFALSE;                   // default no change from GUI
   fIsTCSStarted = kTRUE;                   // VUPROM will stop it by default
 }
@@ -168,12 +181,12 @@ void TVME_VUPROM::SetConfig( Char_t* line, Int_t key )
   Int_t i,j;
   switch( key ){
   case EVUP_EnCPU:
-    // Input an 8-bit number to specify which CPUs are enabled. Bit set to 1 = enabled 
+    // Input number to specify which CPUs are enabled. Bit set to 1 = enabled 
     if(sscanf(line,"%x",&fEnableCPU) != 1)
       PrintError(line,"<CPU enable switch>",EErrFatal);
     break;
   case EVUP_IntDelay:
-    // Set the interrupt delays of up to 8 coupled CPUs
+    // Set the interrupt delays of up to 14 coupled CPUs
     if(sscanf(line,"%d%d",&i,&j) != 2)
       PrintError(line,"<Interrupt Delay Spec. Format>",EErrFatal);
     if(i >= EVU_MaxCPU)
@@ -222,7 +235,7 @@ void TVME_VUPROM::SetConfig( Char_t* line, Int_t key )
     // Enable readout of L1, L2 and multiplicity input patterns
     // In this case no trigger control is performed
     fIsPattRead = kTRUE;
-    fNChannel = 7;
+    fNChannel = 6+1+1+1; // patterns + multiplicity + helicity + trigger fired
     fType = EDAQ_ADC;
     break;
   case EVUP_EnScalerRead:
@@ -257,11 +270,16 @@ void TVME_VUPROM::SetConfig( Char_t* line, Int_t key )
     break;
   case EVUP_EnableTAPS:
     // Switch TAPS busy signal into the total dead time circuit
-    // Width of L1 output 1
     if(sscanf(line,"%i",&i) != 1)
       PrintError(line,"<TAPS enable input Format>",EErrFatal);
     fTAPSEnable = i;
     break;
+  case EVUP_HelicityInhibit:
+	  // Helicity bit setting into the total dead time circuit
+	  if(sscanf(line,"%i",&i) != 1)
+		  PrintError(line,"<Helicity Inhibit input Format>",EErrFatal);
+	  fHelicityInhibit = i;
+	  break;
   case EVUP_SetMThresh:
     // Set threshold values on M signals
     if(sscanf(line,"%i%i%i%i",fMThresh,fMThresh+1,fMThresh+2,fMThresh+3) != 4)
@@ -295,7 +313,7 @@ void TVME_VUPROM::PostInit( )
   Write(EVU_L2Delay,fL2Delay);             // Set L2 strobe delay
   Write(EVU_RefTDCWidth,fRefTDCWidth);     // Set Ref TDC output width
   // Interrupt delays cpu's 0-7
-  for( Int_t i=0; i<8; i++ )
+  for( Int_t i=0; i<EVU_MaxCPU; i++ )
     SetIntDelay(i, fIntDelay[i]);
   // Switch internal signals to debug outputs, if this is enabled
   if( fDebugOut[0] >= 0 ) SetDebugOut(0, fDebugOut[0]);
@@ -311,6 +329,7 @@ void TVME_VUPROM::PostInit( )
   for(Int_t i=0; i<4; i++)
     SetPrescale(i);
   Write(EVU_EnableTAPS,fTAPSEnable); // enable TAPS busy if desired
+  Write(EVU_HelicityInhibit,fHelicityInhibit); // Helicity inhibit if desired
   SetMThresh(0);                     // set the M thresholds
   EndTrigCtrl();                     // ensure triggers disabled & TCS stopped
   return;
@@ -445,7 +464,7 @@ void TVME_VUPROM::ReadIRQScaler( void** outBuffer )
   Int_t i,j;
   UInt_t datum;
   Write(EVU_ScalerLoad, 1);          // load scalers into buffer
-  for(i=0; i<fNScalerChan; i++){     // read 192 scaler channels
+  for(i=0; i<fNScalerChan; i++){     // read 196 scaler channels
     j = i + EVU_Scaler;
     datum = Read(j);
     ScalerStore( outBuffer, datum, fBaseIndex+i );
@@ -464,7 +483,7 @@ void TVME_VUPROM::ReadIRQ( void** outBuffer )
   datum[0] = Read(EVU_InPattRead);         // L1 and L2 Patterns
   datum[1] = Read(EVU_RdMPattern1);        // 1st set multiplicity
   datum[2] = Read(EVU_RdMPattern2);        // 2nd set multiplicity
-  Int_t j = fBaseIndex;
+  Int_t j = fBaseIndex; // ADC numbering starts at the fBaseIndex
   for( Int_t i=0; i<3; i++ ){
     datumlow = datum[i] & 0xffff;
     datumhigh = datum[i] >> 16;
@@ -474,7 +493,20 @@ void TVME_VUPROM::ReadIRQ( void** outBuffer )
     j++;
   }
   datumlow = Read(EVU_RdMValue);          // read calculated multiplicity
-  ADCStore( outBuffer, datumlow, fBaseIndex + j++ );
+  ADCStore( outBuffer, datumlow, j );
+  j++;
+  
+  // also read the beam helicity bit register,
+  // only bit3-bit0 are actually of interest
+  datumlow = Read(EVU_HelicityPattern) & 0xffff;
+  ADCStore( outBuffer, datumlow, j );
+  j++;
+  
+  // read the pattern which trigger has fired
+  // only lowest 8 bits (7-0) are relevant
+  datumlow = Read(EVU_TriggerFiredPatt) & 0xffff;
+  ADCStore( outBuffer, datumlow, j );
+  j++;
 }
 
 //-------------------------------------------------------------------------
@@ -575,12 +607,12 @@ void TVME_VUPROM::SetPrescale(Int_t section, Int_t chan, Int_t prescale)
       if( i == chan ) start[i] = prescale; 
     }
     for( Int_t i=0; i<nchan; i+=2){
-      Int_t lsb = 0xffff - (start[i] & 0xffff);
-      Int_t msb = 0xffff - (start[i+1] & 0xffff);
+      Int_t lsb = (start[i] & 0xffff);
+      Int_t msb = (start[i+1] & 0xffff);
       datum = lsb | (msb << 16) ;
       Int_t j = i/2;
       printf("Section %d, Chan:%d Prescale:%d; Chan:%d Prescale:%d\n",
-	     section,i,start[i],i+1,start[i+1]);
+	     section,i,lsb,i+1,msb);
       Write(port+j,datum);
     }
   }
@@ -591,37 +623,12 @@ void TVME_VUPROM::SetPrescale(Int_t section, Int_t chan, Int_t prescale)
 void TVME_VUPROM::SetIntDelay(Int_t cpu, Int_t delay)
 {
   // write interrupt delay value (ns*10) for particular CPU
-  // 
-  Int_t creg;
-  // choose the register for CPU 0-7
-  switch(cpu){
-  case 0:
-    creg = EVU_IntDelay0;
-    break;
-  case 1:
-    creg = EVU_IntDelay1;
-    break;
-  case 2:
-    creg = EVU_IntDelay2;
-    break;
-  case 3:
-    creg = EVU_IntDelay3;
-    break;
-  case 4:
-    creg = EVU_IntDelay4;
-    break;
-  case 5:
-    creg = EVU_IntDelay5;
-    break;
-  case 6:
-    creg = EVU_IntDelay6;
-    break;
-  case 7:
-    creg = EVU_IntDelay7;
-    break;
-  default:
+  //
+  if( cpu >= EVU_MaxCPU ){
+    printf(" VUPROM Invalid CPU number: %d\n",cpu);
     return;
   }
+  Int_t creg = EVU_IntDelay0 + cpu;
   Write(creg, delay);
   return;
 }
@@ -681,7 +688,7 @@ void TVME_VUPROM::CmdExe(Char_t* input)
       sprintf(fCommandReply,"%s <Interrupt delay input Format>\n", parm);
       break;
     }
-    if( (i<0) || (i>7)){
+    if( (i<0) || (i>=EVU_MaxCPU)){
       sprintf(fCommandReply,"Interrupt delay: channel %d outside valid range\n", i);
       break;
     }      
@@ -739,7 +746,7 @@ void TVME_VUPROM::CmdExe(Char_t* input)
     fInputPrescale[i] = j;
     break;
   case EVUP_L1Prescale:
-    // Prescale values for L1 output signals (4-bit)
+    // Prescale values for L1 output signals (16-bit)
     if(sscanf(parm,"%i%i",&i,&j) != 2){
       sprintf(fCommandReply,"%s <L1 prescale input Format>\n", parm);
       break;
@@ -747,13 +754,14 @@ void TVME_VUPROM::CmdExe(Char_t* input)
     if( (i<0) || (i>7)){
       sprintf(fCommandReply,"L1 prescale: channel %d outside valid range\n", i);
       break;
-    }      
+    }
+    j = (j & 0xffff);
     SetPrescale(2, i, j);
     fL1Prescale[i] = j;
-    sprintf(fCommandReply,"L1 %d prescale factor set to %d\n",i,(j+1));
+    sprintf(fCommandReply,"L1 %d prescale factor set to %d\n",i,j);
     break;
   case EVUP_L2Prescale:
-    // Prescale values for L2 output signals (4-bit)
+    // Prescale values for L2 output signals (16-bit)
     if(sscanf(parm,"%i%i",&i,&j) != 2){
       sprintf(fCommandReply,"%s <L2 prescale input Format>\n", parm);
       break;
@@ -761,10 +769,11 @@ void TVME_VUPROM::CmdExe(Char_t* input)
     if( (i<0) || (i>7)){
       sprintf(fCommandReply,"L2 prescale: channel %d outside valid range\n", i);
       break;
-    }      
+    }
+    j = (j & 0xffff);
     SetPrescale(3, i, j);
     fL2Prescale[i] = j;
-    sprintf(fCommandReply,"L2 %d prescale factor set to %d\n",i,(j+1));
+    sprintf(fCommandReply,"L2 %d prescale factor set to %d\n",i,j);
     break;
   case EVUP_EnPattRead:
     // Enable pattern register read

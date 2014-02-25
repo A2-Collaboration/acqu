@@ -4,6 +4,7 @@
 //--Rev 	JRM Annand..28th Apr 2009..remove TDAQmemmap.h
 //--Rev 	JRM Annand.. 2nd May 2011..no pedestal suppress option
 //--Update	JRM Annand..13th Apr 2013..tidy up coding...fix pedestals
+//--Update	D. Werthmueller..27th Jan 2014..added support for high threshold range
 //--Description
 //                *** AcquDAQ++ <-> Root ***
 // DAQ for Sub-Atomic Physics Experiments.
@@ -46,6 +47,7 @@ enum {
 class TVME_V792 : public TVMEmodule {
  protected:
   Bool_t fIsThreshold;
+  Bool_t fIsHighThrRange;
   Int_t fThresh[EV7XX_NThresh];
  public:
   TVME_V792( Char_t*, Char_t*, FILE*, Char_t* );

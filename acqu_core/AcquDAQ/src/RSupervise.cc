@@ -74,13 +74,13 @@ int main(int argc, char **argv)
   ARSocket_t* remote = new ARSocket_t("Remote-DAQ",ClientIP,port,ESkRemote,
 				      0,0,exp);
   remote->Initialise();
-  Int_t length;
-  Int_t id = remote->GetID();
+  
+  // unused Int_t id = remote->GetID();
 
 
   Int_t i;
-  Int_t cmp;
-  Int_t cmp2;
+  // unused Int_t cmp;
+  // unused Int_t cmp2;
   
   //  timeval t;
   //  t.tv_sec = 5; // 5 sec timeout
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
   for(;;){
     printf("\nAcquDAQ> ");
     fgets(line, ELineSize, stdin);
-    length = strlen(line);
+    // unused Int_t length = strlen(line);
     printf("\n %s", line);
     sscanf(line,"%s",command);
     i = 0;

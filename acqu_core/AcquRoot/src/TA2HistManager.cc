@@ -66,7 +66,7 @@ TA2HistManager::~TA2HistManager()
 }
 
 //-----------------------------------------------------------------------------
-void TA2HistManager::ParseDisplay( Char_t* line )
+void TA2HistManager::ParseDisplay( const Char_t* line )
 {
   // General-purpose histogram display setup
   // Pull out histogram information from "Display:" command line

@@ -1,0 +1,45 @@
+####
+Description: Feb 2013 RUN TEST
+#Mk1-Format:
+File-Name: scratch/CB 32	500000	32768	ENet  32768  3026
+#File-Name: scratch/CB 32	500000	32768	No-Store  32768  3026
+# Frequency            Scaler	Slow-Control
+Event-Counters:	       20000000	2000000000			
+Start-Run: 0
+#
+##Control:  Local    0     0
+#Control:   ENet	    localhost 4026
+#Control:   GUI-Local	    0 0
+#Control:   ENetSlave	    localhost 4026
+Control:  Slave    0     0
+#
+#	module	   Name		configFile
+Module:	KPH_I686   kphi686_0	kphi686.dat	0	0
+#Module: GSI_VUPROM vup2         vuprom_evID.d  eb000000 0 0 32 
+Module: CBD_8210   cbd0		cbd8210_0.dat	800000	0	0
+Module: KPH_VITEC   vit0	vitec_0.dat	0000	0	0
+#
+#----------------------------------------	crate	station
+Module: CAMAC	      a2_1	a2ctrl_0.dat	  2	30
+Module: CAMAC	      a2_2	a2ctrl_0.dat	  3	30
+Module: CAMAC	      pid0	lrs_4413.pid	  3	22
+Module: CAMAC	      pid1	lrs_4413.pid	  3	23
+#
+Reset-Ctrl: kphi686_0
+#
+Module: CATCH_TDC    cat6 catchTDC.d 	e0360000	4000    128 	14
+Module: CATCH_TDC    cat7 catchTDC.d 	e0370000	4128    128 	14
+Module: CATCH_TDC    cat8 catchTDC.d 	e0380000	4256    128 	14
+Module: CATCH_TDC    cat9 catchTDC.d 	e0390000	4384    128 	14
+Module: CATCH_TDC    cat10 catchTDC.d 	e03a0000	4512    128 	14
+#
+## Interrupt control module
+IRQ-Ctrl: vit0
+##
+#EventID-Send: vup2
+##
+## Event Synchronisation info provider module and event ID index
+Synch-Ctrl: vit0 400
+########### End of File #######################
+
+

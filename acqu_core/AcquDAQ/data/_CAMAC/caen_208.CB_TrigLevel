@@ -1,0 +1,32 @@
+##--Author	Baya Oussena	 6 Jul  2010
+##--Update	Baya Oussena     13 Jul 2010
+##--Description
+##                *** AcquDAQ++ <-> Root ***
+## DAQ for Sub-Atomic Physics Experiments.
+##
+## TCAMAC_CAEN 208 CFD
+## Trigger input prescaler control 
+## KpH design prescaler has 10 channels A=0--9
+## Values 0-ffff(hex) accepted
+##
+##              Dummy Base	#Registers	Module type
+BaseSetup:	0		22		SlowCtrl
+##
+## Enter CNAFS
+##		Datum	F	A0	A1	Register Type
+CAMAC-CNAF:	0	9	0	0	Init	
+CAMAC-CNAF:	b	16	0	0	Init
+CAMAC-CNAF:	8	16	1	1	Init
+CAMAC-CNAF:	7	16	2	2	Init
+CAMAC-CNAF:	b	16	3	3	Init
+CAMAC-CNAF:	10	16	4	4	Init
+CAMAC-CNAF:	10	16	5	5	Init
+CAMAC-CNAF:	5	16	6	6	Init
+CAMAC-CNAF:	10	16	7	15	Init
+CAMAC-CNAF:	0000	17	0	0	Init	
+CAMAC-CNAF:	00	17	1	1	Init	
+CAMAC-CNAF:	00	17	2	2	Init	
+CAMAC-CNAF:	0	17	3	3	Init	
+##
+#	End of File
+#
