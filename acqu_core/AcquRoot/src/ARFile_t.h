@@ -26,6 +26,7 @@
 #ifndef _ARFile_t_h_
 #define _ARFile_t_h_
 
+#define _FILE_OFFSET_BITS 64
 #include "TA2System.h"                  // AcquRoot base class
 #include "EnumConst.h"			// integer constant defs
 

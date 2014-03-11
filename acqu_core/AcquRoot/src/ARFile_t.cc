@@ -67,7 +67,6 @@ ARFile_t::ARFile_t( const Char_t* name, Int_t flags, mode_t mode,
   else fName = sys->BuildName( (Char_t*)name );
   switch(i){
   default:
-    flags = O_LARGEFILE;
     fPath = open(fName, flags, mode);
     if(fPath == -1)
       PrintError("<ERROR ARFile_t: file open by open() failed>", EErrFatal);
