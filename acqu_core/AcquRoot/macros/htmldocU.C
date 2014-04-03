@@ -10,12 +10,13 @@
   gSystem->Load( "libPhysics.so" );    	          // Vectors etc.
   gSystem->Load( "libFoam.so" );    	          // Foam MC stuff
   gSystem->Load( "libGui.so" );    	          // GUI stuff
-  gSystem->Load( "$acqu_sys/lib/$ACQU_OS_NAME/libAcquRoot.so" );// AR lib
-  gSystem->Load( "$acqu/lib/$ACQU_OS_NAME/libUserRoot.so" );    // User lib
-  gSystem->Load( "$acqu_sys/lib/$ACQU_OS_NAME/libAcquMC.so" );  // MC lib
-  gSystem->Load( "$acqu/lib/$ACQU_OS_NAME/libMCUserRoot.so" );  // User MC
-  gSystem->Load( "$acqu_sys/lib/$ACQU_OS_NAME/libAcquDAQ.so" ); // DAQ library
+  gSystem->Load( "lib/libAcquRoot.so" );// AR lib
+  gSystem->Load( "lib/libUserRoot.so" );    // User lib
+  gSystem->Load( "lib/libAcquMC.so" );  // MC lib
+  gSystem->Load( "lib/libMCUserRoot.so" );  // User MC
+  gSystem->Load( "lib/libAcquDAQ.so" ); // DAQ library
   THtml h;
+  h.SetProductName("AcquRoot");
   h.MakeAll();
   return;
 }
