@@ -18,23 +18,31 @@
 void AddBeamtime()
 {
     // load CaLib
-   // gSystem->Load("lib/libCaLib.so");
+    gSystem->Load("../build/lib/libCaLib.so");
  
     // macro configuration: just change here for your beamtime and leave
     // the other parts of the code unchanged
-    const Char_t rawfilePath[]      = "/data/RAID0_a2datastore1_a2cb/2013_04_UnpolPi0";
-    const Bool_t fileSystemMk2      = kTRUE;
+    const Char_t rawfilePath[]      = "/home/dpaudyal/nobackup/research/data/december_data_para/";
+    const Bool_t fileSystemMk2      = kFALSE;
     const Char_t target[]           = "LH";
-    const Int_t firstRun            = 1445;
-    const Int_t lastRun             = 1455;
-    const Char_t calibName[]        = "UnPol_Pi0";
-    const Char_t calibDesc[]        = "Standard calibration for unpolarized Pi0 May 2013 beamtime";
+    const Int_t firstRun            = 152;
+    const Int_t lastRun             = 801;
+    const Char_t calibName[]        = "Junk_Calib";
+    const Char_t calibDesc[]        = "Standard calibration for Compton Dec 2012 beamtime";
 
-    const Char_t calibFileTagger[]  = "/home/peter/acqu/acqu_user/data/Tagger/FP.dat";
-    const Char_t calibFileCB[]      = "/home/peter/acqu/acqu_user/data/CB/NaI.dat";
-    const Char_t calibFileTAPS[]    = "/home/peter/acqu/acqu_user/data/TAPS/BaF2_PWO.dat";
-    const Char_t calibFilePID[]     = "/home/peter/acqu/acqu_user/data/PID/PID.dat";
-    const Char_t calibFileVeto[]    = "/home/peter/acqu/acqu_user/data/TAPS/Veto.dat";
+    //const Char_t calibFileTagger[]  = "/home/peter/acqu/acqu_user/data/Tagger/FP.dat";
+    //const Char_t calibFileCB[]      = "/home/peter/acqu/acqu_user/data/CB/NaI.dat";
+    //const Char_t calibFileTAPS[]    = "/home/peter/acqu/acqu_user/data/TAPS/BaF2_PWO.dat";
+    //const Char_t calibFilePID[]     = "/home/peter/acqu/acqu_user/data/PID/PID.dat";
+    //const Char_t calibFileVeto[]    = "/home/peter/acqu/acqu_user/data/TAPS/Veto.dat";
+    const Char_t calibFileTagger[]  = "/home/dpaudyal/acqu/acqu_user/data/AR-Analysis-Tagger-FP883.dat";
+    const Char_t calibFileCB[]      = "/home/dpaudyal/acqu/acqu_user/data/AR-Analysis-CB-NaI.dat";
+    const Char_t calibFileTAPS[]    = "/home/dpaudyal/acqu/acqu_user/data/AR-Analysis-TAPS-BaF2.dat";
+    const Char_t calibFilePID[]     = "/home/dpaudyal/acqu/acqu_user/data/AR-Analysis-CB-PID.dat";
+    const Char_t calibFileVeto[]    = "/home/dpaudyal/acqu/acqu_user/data/AR-Analysis-TAPS-Veto.dat";
+
+
+
 
 
 	// Set file System

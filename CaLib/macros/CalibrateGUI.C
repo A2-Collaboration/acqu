@@ -463,7 +463,8 @@ void CalibrateGUI()
     // Main method.
 
     // load CaLib
-    gSystem->Load("libCaLib.so");
+    gSystem->Load("../build/lib/libCaLib.so");
+    //gSystem->Load("libCaLib.so");
     
     // find CaLib modules
     CreateModuleList();
