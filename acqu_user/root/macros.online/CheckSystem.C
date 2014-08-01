@@ -85,7 +85,7 @@ void InitToolbar(){
 void InitPackages(){
   // load some macro packages
   // at the moment it is not checked it they really exist.
-  char macro_path[] = "/home/a2cb/acqu/macros/"; 
+  char macro_path[] = "/home/wagners/acqu/acqu_user/root/macros.online/";
   char *macro_names[] =   {"CheckCB.C",
 			   "CheckTAPSBaF2.C", 
 			   "CheckTAPSPbWO4.C",

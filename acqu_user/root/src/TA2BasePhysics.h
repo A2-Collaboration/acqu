@@ -40,6 +40,7 @@ class TA2BasePhysics : public TA2AccessSQL
     //Trigger stuff
     Bool_t DoTrigger;         //Flag whether trigger information should be used
     Bool_t SimulateTrigger;
+    Bool_t trigger;  // flag which indicates whether the event was triggered or not
     Bool_t UseSumModel;
     Int_t UseM[5];
     Double_t ESumThres;       //Threshold for energy sum in CB

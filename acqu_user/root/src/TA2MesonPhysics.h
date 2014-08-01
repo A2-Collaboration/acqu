@@ -5,14 +5,14 @@
 #include "TA2KFParticle.h"
 #include "TA2CBKinematicFitter.h"
 
-#define MASS_PIZERO    134.9766
-#define MASS_ETA       547.7500
-
 class TA2Apparatus;
 
 class TA2MesonPhysics : public TA2BasePhysics
 {
   protected:
+	static const double MASS_PIZERO = 134.9766;
+	static const double MASS_ETA = 547.862;
+
     TA2CBKinematicFitter* KinFitter;
     TA2KFParticle KFPhoton[2];
     TA2KFParticle KFMeson;

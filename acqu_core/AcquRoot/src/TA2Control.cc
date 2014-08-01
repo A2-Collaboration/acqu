@@ -124,7 +124,7 @@ TA2Control::TA2Control( const char* appClassName, int* argc, char** argv,
   // Look for ADC info as a branch of the Tree
   else if( gAR->GetProcessType() == EMCProcess ){
     if( !gAR->GetADC() ){
-      Error("TA2Control","Manual ADC setup required for MC running>");
+      Error("TA2Control","<Manual ADC setup required for MC running>");
       exit(-1);
     }
   }
@@ -195,7 +195,7 @@ void TA2Control::CreateAnalyser()
   Int_t analysis = GetAnalyser(kKnownAnalysis);
   switch(analysis){
   default:
-    printf(" FATAL ARROR: Unknown analysis class" );
+    printf(" FATAL ERROR: Unknown analysis class" );
     gAN = NULL;
     break;
   case EA2Analysis:

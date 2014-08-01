@@ -1,0 +1,67 @@
+#------------------------------------------------------------------------------
+#                 Configuration file for TA2SaschaPhysics
+#------------------------------------------------------------------------------
+#
+Reconstruct:
+#
+# CaLib configuration
+#
+# General:      dbhost                  dbname   dbuser      dbpass        calibration
+#Use-CaLib:      a2calib.online.a2.kph   CaLib_calib    calib       basel10       ETAP_Aug_12
+#Use-CaLib:      a2calib.online.a2.kph   2004_01-2012_08    calib       basel10       2012_08_EtaP_Ott
+#
+# miscellaneous calibrations    # target position  (0=off/1=on)
+#Use-CaLib-Misc:                 0
+# tagger calib:     time  (0=off/1=on)
+#Use-CaLib-TAGG:     1
+# CB calib:         energy  time    timewalk    quadr. energy  (0=off/1=on)
+#Use-CaLib-CB:       1       1       0           1
+# TAPS calib:       energy  time    quadr. energy   LED thr.  (0=off/1=on)
+#Use-CaLib-TAPS:     0       1       0               0
+# PID calib:        phi     droop   energy  time  (0=off/1=on)
+#Use-CaLib-PID:      1       0       0       1
+# Veto calib:       energy  time  (0=off/1=on)
+#Use-CaLib-Veto:     0       1
+#
+#Use-CaLib-CBEnergyPerRun:       data/CBEnergyCorrectionPerRun.txt
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Target information: position (x,y,z) and mass in MeV
+Target: 0. 0. 0. 938.272
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Maximum number of detected particles to be accepted from different apparati.
+#This defines sizes of internal arrays; so don't select these numbers too
+#small...
+#             Tagger  Ball  TAPS
+Permutations: 128     32    16
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Standard AcquRoot option
+ParticleID: 176
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Standard AcquRoot option
+# Place keyword AFTER all the config and misc stuff to execute SetConfig after
+# all other config data was processed
+#
+Initialise:
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+Display: 1D invMass2g 600 0 1200
+Display: 1D invMass2g1p 600 0 1200
+Display: 1D invMass3g 600 0 1200
+Display: 1D invMass3g1p 600 0 1200
+Display: 1D invMass6g 600 0 1200
+Display: 1D invMass6g1p 600 0 1200
+Display: 1D invMass2CB 600 0 1200
+Display: 1D invMass2CB1TAPS 600 0 1200
+Display: 1D invMass3CB 600 0 1200
+Display: 1D invMass3CB1TAPS 600 0 1200
+Display: 1D invMass6CB 600 0 1200
+Display: 1D invMass6CB1TAPS 600 0 1200

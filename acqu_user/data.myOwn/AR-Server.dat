@@ -1,0 +1,52 @@
+##-----------------------------------------------------------------------
+##                *** Acqu++ <-> Root ***
+## Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
+##
+## Parameter File: AR-Server.dat
+## Configuration file for DataServer (data input for analysis)
+##
+##-----------------------------------------------------------------------
+## Number of Input streams (sources of data), Record length to write data
+## and switch 0/1 = no/yes to control data write
+##              Number streams  Record Len      Save Data
+Input-Streams:  1               32768           0
+##
+## Optional directory spec. If not specified File-Names must contain the full
+## directory path
+File-Directory: /data/data/august12/
+#File-Directory: scratch/
+##
+## Specify each input stream
+## From disk file, ACQU (Mk1) format, save any output to file (save=1)
+## Input data record length, Output data record length
+##
+##              Source  Format  Save?   RecLen  Buffers Swap    MarkID
+Stream-Spec:    File    Mk1     0       32768   32      0       400
+#Stream-Spec:	File	Mk2	    0       32768   32      0       400
+##
+## Now the list of data files to analyse
+##              File Name       1st rec Last rec
+##
+File-Name:      CB_42000.dat    0       0
+File-Name:      CB_42001.dat    0       0
+File-Name:      CB_42002.dat    0       0
+File-Name:      CB_42003.dat    0       0
+File-Name:      CB_42004.dat    0       0
+File-Name:      CB_42005.dat    0       0
+File-Name:      CB_42006.dat    0       0
+File-Name:      CB_42007.dat    0       0
+File-Name:      CB_42008.dat    0       0
+File-Name:      CB_42009.dat    0       0
+#
+File-Name:      CB_42010.dat    0       0
+File-Name:      CB_42011.dat    0       0
+File-Name:      CB_42012.dat    0       0
+File-Name:      CB_42013.dat    0       0
+File-Name:      CB_42014.dat    0       0
+File-Name:      CB_42015.dat    0       0
+File-Name:      CB_42016.dat    0       0
+File-Name:      CB_42017.dat    0       0
+File-Name:      CB_42018.dat    0       0
+File-Name:      CB_42019.dat    0       0
+## END
+

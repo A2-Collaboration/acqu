@@ -118,10 +118,9 @@ int main(int argc, char **argv)
       strcpy(Config, argv[i]);
     else
     {
-      if(!strcmp("--offline", argv[i])) Offline = true;
-      if(!strcmp("-o", argv[i])) Offline = true;
-      if(!strcmp("--threads", argv[i])) sscanf(argv[i+1], "%d", &nThreads);
-      if(!strcmp("-t", argv[i])) sscanf(argv[i+1], "%d", &nThreads);
+      if(!strcmp("--offline", argv[i]) || !strcmp("-o", argv[i])) Offline = true;
+      if(!strcmp("--threads", argv[i]) || !strcmp("-t", argv[i])) sscanf(argv[i+1], "%d", &nThreads);
+      if(!strcmp("-c", argv[i])) sscanf(argv[i+1], "%d", &nThreads);  // added -c flag for backward compatibility
     }
 
   //check if nThreads is low enough, otherwise set it to the maximum CORES
@@ -218,8 +217,7 @@ int main(int argc, char **argv)
     Proc[Number] = new TProcessor(Buffer[0]);
     Proc[Number]->SetNumber(Number);
     Proc[Number]->SetRunning(false);
-    Work[Number] = new TThread("ProcessorThread", (void(*)(void*))&(StartThread), 
-                               (void*)(intptr_t)(Number), TThread::kNormalPriority);
+    Work[Number] = new TThread("ProcessorThread", (void(*)(void*))&(StartThread), (void*)(Number), TThread::kNormalPriority);
     //Delete old log files
     sprintf(Buffer[0], "Thread%XLog.txt", Number);
     unlink(Buffer[0]);

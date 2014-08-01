@@ -155,9 +155,6 @@ void TA2MesonPhysics::LoadVariable()
 
 void TA2MesonPhysics::PostInit()
 {
-  //Call default PostInit()
-  TA2BasePhysics::PostInit();
-
   EventTime = new Double_t[nBeam]; //Timing spectrum
 
   //These spectra are created for each defined time window (prompt/random)
@@ -186,6 +183,9 @@ void TA2MesonPhysics::PostInit()
   }
 
   KinFitter = new TA2CBKinematicFitter(2, 1, 0);
+
+  //Call default PostInit() after array initialisation
+  TA2BasePhysics::PostInit();
 }
 
 //-----------------------------------------------------------------------------

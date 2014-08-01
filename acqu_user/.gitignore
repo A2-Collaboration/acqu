@@ -6,6 +6,7 @@
 /scratch
 /output
 /batch
+/out
 /Thread*.txt
 *.log
 /result
@@ -14,3 +15,4 @@
 
 # AcquRoot histogram files
 /histograms
+*.root

@@ -21,7 +21,7 @@ print_usage()
     echo ">AcquHierarchy  vme_setup.d                          # print tree of setup files"
     echo ">AcquHierarchy  -vv vme_setup.d                      # print all lines from tree of setup files"
     echo 
-    echo "Warning: only picks up setupfiles with a ""data/"" or a "".dat"" in the name"
+    echo "Warning: only picks up setupfiles with a data/ or a .dat or a .MC in the name"
     exit
 }
 verbose="none"
@@ -85,7 +85,7 @@ fi
 #if the file exists
 if [ -f $file ]; then
 #loop though every non-comment line, and call this script recursively for fields with a "/data/"
-#or .dat"
+#or ".dat" or ".MC"
 gawk -v exe=$exe -v verb=$verbose -v level=$level '
 BEGIN{                                  #comment
 level++;                                #increment the depth  
@@ -109,7 +109,7 @@ if(($1 !~ "*")&&($1 !~ "#")){           #check for comment lines
     }
 
     for(n=1;n<=NF;n++){                   #check all fields in the line
-	if(($n~".dat")||($n~"data/")){    
+	if(($n~".dat")||($n~".MC")||($n~"data/")){
 	    for(l=0;l<level;l++){     #indent according to depth
 		printf"    ";
 	    }

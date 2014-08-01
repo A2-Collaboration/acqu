@@ -30,6 +30,8 @@
 #include "TA2BasePhysics.h"
 #include "TA2TriggerPhysics.h"
 #include "TA2Pi0Compton.h"
+#include "TA2SaschaPhysics.h"
+#include "TA2OnlinePhysics.h"
 #include "TA2MyCrystalBall.h"
 #include "TA2MyTAPS.h"
 #include "TA2GenericApp.h"
@@ -60,6 +62,8 @@ enum {
   EA2BasePhysics,
   EA2TriggerPhysics,
   EA2Pi0Compton,
+  EA2SaschaPhysics,
+  EA2OnlinePhysics,
   EA2MyCrystalBall, 
   EA2MyTAPS,
   EA2MyAnalysis, 
@@ -85,6 +89,8 @@ static const Map_t kKnownChild[] =
   {"TA2MyTAPS",           EA2MyTAPS},
   //Physics
   {"TA2Pi0Compton",       EA2Pi0Compton},
+  {"TA2SaschaPhysics",    EA2SaschaPhysics},
+  {"TA2OnlinePhysics",    EA2OnlinePhysics},
   {"TA2Physics",          EA2Physics},
   {"TA2UserPhysics",      EA2UserPhysics},
   {"TA2MesonPhysics",     EA2MesonPhysics},
@@ -163,6 +169,12 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2Pi0Compton:
     // Dave's Physics class
     return new TA2Pi0Compton( name, this );
+   case EA2SaschaPhysics:
+    // My physics class
+    return new TA2SaschaPhysics(name, this);
+   case EA2OnlinePhysics:
+    // Physics class for online analysis
+    return new TA2OnlinePhysics(name, this);
    case EA2Physics:
     //Default (dummy physics)
     return new TA2Physics(name, this);
