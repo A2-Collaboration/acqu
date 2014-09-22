@@ -59,6 +59,8 @@ TA2AccessSQL::TA2AccessSQL(const char* name, TA2Analysis* analysis)	: TA2Physics
     fTAPS		= 0;       					// pointer to TAPS
     fBaF2PWO	= 0;	       				// pointer to the BaF2 (or the BaF2/PWO) array
     fVeto		= 0;           				// pointer to the TAPS Vetos
+    fLinPol		= 0;           				// pointer to the linear Polarization class (if available)
+    
 
 }
 

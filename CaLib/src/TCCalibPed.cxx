@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCCalibPed.cxx 1082 2012-03-28 11:50:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller
@@ -109,8 +109,7 @@ void TCCalibPed::Fit(Int_t elem)
         fFitFunc->SetLineColor(2);
         
         // estimate peak position
-	//Double_t fTotMaxPos = fFitHisto->GetBinCenter(fFitHisto->GetMaximumBin());
-	Double_t fTotMaxPos = TCUtils::PedFinder((TH1D*)fFitHisto);
+	Double_t fTotMaxPos = fFitHisto->GetBinCenter(fFitHisto->GetMaximumBin());
 
 	// find first big jump
 	for(int i=10; i<200; i++)
@@ -123,7 +122,7 @@ void TCCalibPed::Fit(Int_t elem)
 	        fMean = fFitHisto->GetBinCenter( fTotMaxPos );
 	        break;
 	    }
-    }
+        }
 
         // configure fitting function
         fFitFunc->SetRange(fMean - 2, fMean + 2);
@@ -164,7 +163,7 @@ void TCCalibPed::Fit(Int_t elem)
     fFitHisto->SetFillColor(35);
     fCanvasFit->cd(2);
     //fFitHisto->GetXaxis()->SetRangeUser(fMean-10, fMean+10);
-    fFitHisto->GetXaxis()->SetRangeUser(0, 150);
+    fFitHisto->GetXaxis()->SetRangeUser(70, 140);
     fFitHisto->Draw("hist");
     
     // draw fitting function
@@ -245,7 +244,6 @@ void TCCalibPed::ReadADC()
         return;
     }
     else filename = TCReadConfig::GetReader()->GetConfig(tmp)->Data();
-    printf("%s %s\n", GetName(), TCReadConfig::GetReader()->GetConfig(tmp)->Data());
     
     // read the calibration file with the correct element identifier
     if (this->InheritsFrom("TCCalibTAPSPedSG")) strcpy(tmp, "TAPSSG:");

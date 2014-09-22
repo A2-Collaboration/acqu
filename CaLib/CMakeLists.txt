@@ -13,7 +13,7 @@ set(MOD "CaLib")
 ROOT_PREPARE_LIB("src" "include" "include" "src/G__${MOD}.cxx" SRCS EXESRCS)
 add_library("lib${MOD}" SHARED ${SRCS})
 target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${CURSES_LIBRARIES} ${ZLIB_LIBRARIES} Spectrum)
-set_target_properties("lib${MOD}" PROPERTIES LIBRARY_OUTPUT_NAME ${MOD})
+set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 # we add many additional files marked as "headers"
 # so they appear automatically in QtCreator

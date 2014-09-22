@@ -49,7 +49,7 @@ print_usage()
 init_values()
 {
 #set the defaults
-    sleeptime=5;
+    sleeptime=1;
     default_maxq="500";
     rev="";
     maxq="${default_maxq}";

@@ -29,7 +29,7 @@ macro(CompileCoreLib MOD)
   add_library("lib${MOD}" SHARED ${SRCS} ${ACQU_CONFIG_FILE})
 
   set_target_properties("lib${MOD}"
-    PROPERTIES COMPILE_FLAGS "${ARGN}" LIBRARY_OUTPUT_NAME ${MOD})
+    PROPERTIES COMPILE_FLAGS "${ARGN}" OUTPUT_NAME ${MOD})
   target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${EXTRA_LIBS})
   # track this library for the following exe's
   list(APPEND CORE_LIBS "lib${MOD}")

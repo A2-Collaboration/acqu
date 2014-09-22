@@ -15,7 +15,7 @@ ROOT_PREPARE_LIB("${SRCDIRS}" "${INCDIRS}" "main/include"
   "main/src/G__${MOD}.cxx" SRCS EXESRCS)
 add_library("lib${MOD}" SHARED ${SRCS})
 target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} EG)
-set_target_properties("lib${MOD}" PROPERTIES LIBRARY_OUTPUT_NAME ${MOD})
+set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 # and we create the oscar-config, for completeness (but not in "all" target)
 add_executable("oscar-config" EXCLUDE_FROM_ALL "main/src/Main${MOD}Config.cxx" )

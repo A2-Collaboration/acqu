@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCCalibVetoEnergy.cxx 912 2011-05-18 22:09:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller

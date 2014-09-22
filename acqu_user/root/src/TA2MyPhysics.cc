@@ -1511,14 +1511,13 @@ void TA2MyPhysics::ClearCBTimeWalk()
 {
     // Set the time walk parameters of all CB elements to zero.
     
-    Char_t zeroWalk[10];
-    strcpy(zeroWalk, "0 0 0 0 0");
+    Double_t zeroWalk[4] = { 0, 0, 0, 0 };
 
     // check if NaI cluster detector is here
     if (fNaI)
     {
         Int_t nelem = fNaI->GetNelement();
-        for (Int_t i = 0; i < nelem; i++) fNaI->GetElement(i)->SetWalk(zeroWalk);
+        for (Int_t i = 0; i < nelem; i++) fNaI->GetElement(i)->GetTimeWalk()->SetWalk(zeroWalk);
     }
     else Error("ClearCBTimeWalk", "Could not (yet) find the NaI cluster detector"
                " to clear the time walk values!");

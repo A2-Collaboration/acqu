@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCMySQLManager.cxx 1076 2012-03-13 13:19:04Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller, Irakli Keshelashvili
@@ -15,7 +15,7 @@
 
 #include "TCMySQLManager.h"
 
-ClassImp(TCMySQLManager);
+ClassImp(TCMySQLManager)
 
 
 // init static class members
@@ -33,7 +33,6 @@ TCMySQLManager::TCMySQLManager()
     fData->SetOwner(kTRUE);
     fTypes = new THashList();
     fTypes->SetOwner(kTRUE);
-    isMk2	= kFALSE;
 
     // read CaLib data
     if (!ReadCaLibData())
@@ -963,7 +962,7 @@ void TCMySQLManager::AddRunFiles(const Char_t* path, const Char_t* target)
     // using the target specifier 'target'.
 
     // read the raw files
-    TCReadACQU r(path, isMk2);
+    TCReadACQU r(path);
     Int_t nRun = r.GetNFiles();
     
     // ask for user confirmation
@@ -985,17 +984,6 @@ void TCMySQLManager::AddRunFiles(const Char_t* path, const Char_t* target)
     {
         TCACQUFile* f = r.GetFile(i);
         
-        /*printf("INSERT INTO %s SET, run = %d, path = %s, filename = %s, description = %s, run_note = %s, size = %lld, target = %s",
-											TCConfig::kCalibMainTableName, 
-                                            f->GetRun(),
-                                            path,
-                                            f->GetFileName(),
-                                            f->GetTime(),
-                                            f->GetDescription(),
-                                            f->GetRunNote(),
-                                            f->GetSize(),
-                                            target);*/
-        
         // prepare the insert query
         TString ins_query = TString::Format("INSERT INTO %s SET "
                                             "run = %d, "
@@ -1006,7 +994,7 @@ void TCMySQLManager::AddRunFiles(const Char_t* path, const Char_t* target)
                                             "run_note = \"%s\", "
                                             "size = %lld,"
                                             "target = \"%s\"",
-                                            TCConfig::kCalibMainTableName, 
+                                            TCConfig::kCalibMainTableName,
                                             f->GetRun(),
                                             path,
                                             f->GetFileName(),
@@ -1017,8 +1005,6 @@ void TCMySQLManager::AddRunFiles(const Char_t* path, const Char_t* target)
                                             target);
 
         // try to write data to database
-	//printf( "\n %s \n", ins_query.Data());
-		//printf(ins_query.Data());
         TSQLResult* res = SendQuery(ins_query.Data());
         if (res == 0)
         {

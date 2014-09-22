@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCMySQLManager.h 1038 2011-11-14 13:01:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller, Irakli Keshelashvili
@@ -44,7 +44,6 @@ private:
     THashList* fData;                           // calibration data
     THashList* fTypes;                          // calibration types
     static TCMySQLManager* fgMySQLManager;      // pointer to static instance of this class
-    Bool_t	isMk2;								// if true Mk2 filesystem is used
     
     Bool_t ReadCaLibData();
     Bool_t ReadCaLibTypes();
@@ -153,9 +152,6 @@ public:
                 const Char_t* calibration);
     void Import(const Char_t* filename, Bool_t runs, Bool_t calibrations,
                 const Char_t* newCalibName = 0);
-              
-    void SetMk1()	{isMk2 = kFALSE;}	//default one
-    void SetMk2()	{isMk2 = kTRUE;}
 
     static TCMySQLManager* GetManager()
     {

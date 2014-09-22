@@ -19,8 +19,8 @@
 *.a
 
 # CMake
-# only build dirs are ignored
-/build*/
+# only build dirs/symlinks are ignored
+/build*
 
 # QtCreator
 CMakeLists.txt.user

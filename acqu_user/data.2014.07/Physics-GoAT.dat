@@ -10,12 +10,12 @@ Reconstruct:
 # CaLib configuration
 #
 
-# General:      dbhost       		dbname   dbuser      dbpass        calibration
-Use-CaLib:      a2calib.online.a2.kph   calib    calib       basel10       Compton_2012_12
+# General:      dbhost     dbname                  dbuser      dbpass        calibration
+Use-CaLib:      blaster    CaLib_2013_10-Present   calib       basel10       2014-07_EPT_Prod_Neiser      
 #
 #
 # miscellaneous calibrations    # target position  (0=off/1=on)
-Use-CaLib-Misc:                 1
+#Use-CaLib-Misc:                 1
 # tagger calib:     time  (0=off/1=on)
 Use-CaLib-TAGG:     1
 # CB calib:         energy  time    timewalk    quadr. energy  (0=off/1=on)

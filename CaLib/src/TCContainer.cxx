@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCContainer.cxx 860 2011-03-18 20:15:57Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller

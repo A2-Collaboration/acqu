@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCCalibDiscrThr.cxx 976 2011-08-31 17:16:34Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller

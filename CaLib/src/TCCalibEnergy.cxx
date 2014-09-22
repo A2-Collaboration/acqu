@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCCalibEnergy.cxx 1038 2011-11-14 13:01:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Irakli Keshelashvili, Dominik Werthmueller

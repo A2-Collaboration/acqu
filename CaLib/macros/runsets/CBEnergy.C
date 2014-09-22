@@ -1,4 +1,4 @@
-// SVN Info: $Id: CBEnergy.C 912 2011-05-18 22:09:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller
@@ -17,7 +17,7 @@ TCanvas* gCFit;
 TH1* gHOverview;
 TH1* gH;
 TH2* gH2;
-TFile* gFileCBEnergy;
+TFile* gFile;
 TF1* gFitFunc;
 TLine* gLine;
 
@@ -112,8 +112,8 @@ void CBEnergy()
     Double_t yMax = 160;
 
     // configuration (December 2007)
-    const Char_t calibration[] = "ETAP_Aug_12";
-    const Char_t* fLoc = "/daten/out/Step2";
+    const Char_t calibration[] = "LD2_Dec_07";
+    const Char_t* fLoc = "/Users/fulgur/Desktop/calib/Dec_07";
 
     // configuration (February 2009)
     //const Char_t calibration[] = "LD2_Feb_09";
@@ -155,7 +155,7 @@ void CBEnergy()
         // get runs of set
         Int_t nRuns;
         Int_t* runs = TCMySQLManager::GetManager()->GetRunsOfSet(data, calibration, i, &nRuns);
-		
+    
         // loop over runs
         for (Int_t j = 0; j < nRuns; j++)
         {
@@ -166,22 +166,21 @@ void CBEnergy()
             // clean-up
             if (gH) delete gH;
             if (gH2) delete gH2;
-            if (gFileCBEnergy) delete gFileCBEnergy;
+            if (gFile) delete gFile;
             gH = 0;
             gH2 = 0;
-            gFileCBEnergy = 0;
+            gFile = 0;
 
             // load ROOT file
             sprintf(tmp, "%s/ARHistograms_CB_%d.root", fLoc, runs[j]);
-            printf("%d\t%d\t%s\n", i, j, tmp );
-            gFileCBEnergy = new TFile(tmp);
+            gFile = new TFile(tmp);
 
             // check file
-            if (!gFileCBEnergy) continue;
-            if (gFileCBEnergy->IsZombie()) continue;
+            if (!gFile) continue;
+            if (gFile->IsZombie()) continue;
 
             // load histogram
-            gH2 = (TH2*) gFileCBEnergy->Get(hName);
+            gH2 = (TH2*) gFile->Get(hName);
             if (!gH2) continue;
             if (!gH2->GetEntries()) continue;
 

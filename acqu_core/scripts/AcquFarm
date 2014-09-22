@@ -144,9 +144,12 @@ do
     fi
         
     # Strip off the input suffix, and any directory paths
-    BaseName=`basename $File | sed 's/.root//' | sed 's/.dat//'`
+    BaseName=`basename $File | sed 's/.root//' | sed 's/.dat//' | sed 's/.xz//'`
     JobFile="${JobDir}/jobfiles/$BaseName.sub"
     NodeDir="/scratch/${USER}/${BaseName}"
+
+    # Check for running compressed files
+    CompFile=`echo $File | grep -c ".xz"`
 
     #now make the job file
     echo "#!/bin/sh" > $JobFile;
@@ -154,10 +157,16 @@ do
     echo "#PBS -m abe" >> $JobFile;
     echo "#PBS -M $MailAddress"  >> $JobFile;
     echo "#PBS -V"  >> $JobFile;
-    echo "#PBS -lwalltime=${WALLTIME}" >> $JobFile;
+    echo "#PBS -l walltime=${WALLTIME}" >> $JobFile;
+    if [ $CompFile -gt 0 ]
+    then
+	echo "#PBS -l ncpus=2" >> $JobFile;
+	echo "#PBS -q batch" >> $JobFile;
+    else
+	echo "#PBS -q batch_x86_64" >> $JobFile;
+    fi
     echo "#PBS -e ${JobDir}/jobfiles"  >> $JobFile;
     echo "#PBS -o ${JobDir}/jobfiles"  >> $JobFile;
-    echo "#PBS -q batch_x86_64" >> $JobFile;
     echo "#"  >> $JobFile;
     echo "#InputDir: $FileDir" >> $JobFile;
     echo "#RemoteDir: $RemoteDir" >> $JobFile;
