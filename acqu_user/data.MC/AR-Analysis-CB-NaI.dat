@@ -8,6 +8,17 @@ Size:	720	1	1	1
 #
 ## 		Max # clusters   	Clust-Thresh(MeV)
 Max-Cluster:	8			15.0
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#Energy  and Time resolutions for MC smearing (enable/disable by last
+#parameter). Energy resolutiuon is given by c1 * (E/GeV)^c2, time resolution is
+#according to Gaussioan with given sigma in ns.
+# Old Sven
+Energy-Resolution: 0.05  0.750  1
+# Sergey
+#Energy-Resolution: 0.0145  0.660  1
+# New Sven
+Energy-Resolution: 0.020412  0.600  1
+>>>>>>> 07364dd... personal stash
 #
 #
 ##	        ADC#    low high(MeV)	ped(ch) MeV/ch	TDC stuff       		Pos
@@ -1471,67 +1482,6 @@ Initialise:
 # change the scope string to compound-hist and append the string CBCross to
 # the end of the theta-phi 2D plot setup line below
 #
-#         1/2D Name     Link   Scope          Low/High Limits
-#Data-Cut:  1D   CBCross	OR     compound-data
-#Data-Cut:  1D   ClTheta	NAND    element        50 65
-#Data-Cut:  1D   ClPhi	NAND    element        50 65
-#Data-Cut:  1D   CBBox	 OR     compound-data
-#Data-Cut:  1D   ClTheta NOR     element        120 140
-#Data-Cut:  1D   ClPhi	NOR     element        -150 -120
-#Data-Cut:  1D   ClNhits	NOR     data           6 8
-##	Histograming of basic detector stuff
-##
-## NaI Crystal hit multiplicity, 32 channels, range 0--32
-##              Name            ch/low/high     imin/imax
-Display: 1D	Nhits  		128 0 128
-##
-## NaI hit frequency distribution, 720 elements, range 0 -- 720
-##              Name            ch/low/high     imin/imax
-Display: 1D	Hits		720 0 720
-Display: 1D	ADCHits		720 0 720
-Display: 1D	TDCHits		720 0 720
-##
-## Total Energy deposited in the array, 1000 channels, range 0 -- 200 MeV
-##              Name            ch/low/high     imin/imax
-Display: 1D	Etot	  	400 0 800
-##
-## Energy deposited in individual crystals, 200 channels, range 0 -- 400 MeV
-## Make histogram for each element (0-719) of the CB
-##              Name            ch/low/high     imin/imax(opt)
-#Display: 1D	Energy		200 0 400	0 719
-#Display: 1D	Time		200 0 200	0 719
-Display: 1D	EnergyOR	200 0 400
-Display: 1D	TimeOR		400 -200 200
-Display: 1D	ClTheta		90 0 180
-##
-##       Cluster Histograms
-##
-##	1/2D	Name		Chan	Low	High	Imin	Imax
-## Energy in each Cluster
-## Make histogram for each element (0-719) of the CB
-##              Name            ch/low/high     imin/imax(opt)
-Display: 1D	ClEnergyOR  	200 0 800
-##
-## Hit pattern within each cluster
-##              Name            ch/low/high     imin/imax(opt)
-#Display: 1D	ClHits		32 0 32	        0 31
-##	
-## # hits in each cluster
-##              Name            ch/low/high     imin/imax(opt)
-#Display: 1D	ClMulti		64 0 64	        0 31
-##	
-## # clusters detected per event
-##              Name            ch/low/high     imin/imax(opt)
-Display: 1D	ClNhits		16 0 16
-Display: 1D	ClNhitsOR	16 0 16
-Display: 1D	ClNSplit	16 0 16
-Display: 1D	ClNSplitMerged	16 0 16
-##
-## Cluster center distribution
-##              Name            ch/low/high     imin/imax(opt)
-Display: 1D	ClTotHits	720 0 720
-##
-#         X-Name  X-ch/low/high/id  Y-Name  Y ch/low/high/id  Condition(opt)
-#Display: 2D ClTheta  180 0 180 -1    ClPhi   180 -180 180 -1
-#Display: 2D EnergyOR 100 0 400 -1    Hits   720 0 720 -1
-#Display: 2D TimeOR   180 0 180 -1    Hits   720 0 720 -1
+Display:  2D    ClTheta  180  0  180  -1   ClPhi    180  0  180  -1
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#

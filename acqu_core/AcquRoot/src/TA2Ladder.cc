@@ -278,6 +278,7 @@ void TA2Ladder::SetConfig( char* line, int key )
 //---------------------------------------------------------------------------
 void TA2Ladder::PostInit()
 {
+	printf("PostInit\n");
   // Some further initialisation after all setup parameters read in
   // Start with alignment offsets
   // Create space for various output arrays
@@ -461,21 +462,77 @@ void TA2Ladder::ReadDecoded( )
   fNDoubles = 0; 
   Float_t* energy = (Float_t*)(fEvent[EI_beam]);
   Double_t Ee = ((TA2Tagger*)fParent)->GetBeamEnergy() - 1000.0*energy[3];
-  UInt_t iHit = TMath::BinarySearch( fNelem, fECalibration, Ee );
-  if( iHit >= fNelem ) iHit = 0;
+  //printf("\n");
+  //printf("energy: %f\n", energy[3]);
+  //printf("GetBeamEnergy: %f\n", ((TA2Tagger*)fParent)->GetBeamEnergy());
+  //printf("GetBeamEnergy: %f\n", 1000.0*energy[3]);
+  //printf("Ee: %lf\t", Ee);
+  //printf("fNelem: %d\n", fNelem);
+  //printf("fECalibration[0]: %lf\n", fECalibration[0]);
+  //printf("fECalibration[1]: %lf\n", fECalibration[1]);
+  //printf("fECalibration[2]: %lf\n", fECalibration[2]);
+  //printf("fECalibration[3]: %lf\n", fECalibration[3]);
+  //printf("fECalibration[4]: %lf\n", fECalibration[4]);
+  //printf("fECalibration[5]: %lf\n", fECalibration[5]);
+  //printf("fECalibration[47]: %lf\n", fECalibration[47]);
+  UInt_t iHit;// = TMath::BinarySearch( fNelem, fECalibration, Ee );
+  bool found = false;
+  for(int i=1; i<fNelem-2; i++)
+  {
+	if(Ee > (fECalibration[i]-((fECalibration[i]-fECalibration[i-1])/2)) && Ee <= (fECalibration[i]+((fECalibration[i+1]-fECalibration[i])/2)))
+	{
+		iHit	= i;
+		found	= true;
+		break;
+	}
+  }
+  if(!found)
+  {
+	if(Ee > (fECalibration[0]-((fECalibration[1]-fECalibration[0])/2)) && Ee <= (fECalibration[0]+((fECalibration[1]-fECalibration[0])/2)))
+	{
+		iHit	= 0;
+		found = true;
+	}
+	else if(Ee > (fECalibration[46]-((fECalibration[46]-fECalibration[45])/2)) && Ee <= (fECalibration[46]+((fECalibration[46]-fECalibration[45])/2)))
+	{
+		iHit	= 0;
+		found = true;
+	}
+  }
+  if(found)
+  {
+	//printf("iHit: %d\n", iHit);
+	fHits[fNhits] = iHit;
+	fNhits++;
+	fEelecOR[0] = fECalibration[iHit];
+	fEelecOR[1] = EBufferEnd;
+	fTimeOR[0] = 0.0; 
+	fTimeOR[1] = EBufferEnd;
+	fHits[fNhits] = EBufferEnd;
+	return;
+  }
+  //printf("no Hit\n");
+  fEelecOR[0] = EBufferEnd;
+  fTimeOR[1] = EBufferEnd;
+  fHits[fNhits] = EBufferEnd;
+  return;
   //
   //  Double_t El0,Em0,Eh0,dE0, El1,Em1,Eh1,dE1, El2,Em2,Eh2,dE2;
-  Double_t El0,Eh0,dE0,Eh1,dE1,El2,dE2;
-  dE0 = fEOverlap[iHit];
-  Eh0 = fECalibration[iHit] + 0.5*dE0;
-  if( Eh0 < Ee ){
+  //Double_t El0,Eh0,dE0,Eh1,dE1,El2,dE2;
+  //dE0 = fEOverlap[iHit];
+  //Eh0 = fECalibration[iHit] + 0.5*dE0;
+  
+  //Eh0 = fECalibration[iHit];
+  /*if( Eh0 < Ee ){
     iHit++;
-    dE0 = fEOverlap[iHit];
-    Eh0 = fECalibration[iHit] + 0.5*dE0;
-  }
-  fHits[fNhits] = fHitsPrompt[fNhits] = fHitsAll[fNhits] = iHit;
-  fNhits++;
-  El0 = Eh0;
+    //dE0 = fEOverlap[iHit];
+    //Eh0 = fECalibration[iHit] + 0.5*dE0;
+    Eh0 = fEOverlap[iHit];
+  }*/
+  //fHits[fNhits] = iHit;
+  //fNhits++;
+  //fEelecOR[0] = Eh0;
+  /*El0 = Eh0 - dE0;
   if( iHit < (fNelem-1) ){
     dE2 = fEOverlap[iHit+1];
     El2 = fECalibration[iHit+1] - 0.5*dE2;
@@ -494,18 +551,18 @@ void TA2Ladder::ReadDecoded( )
     fNDoubles++;
     fEelecOR[0] = fRandom->Uniform(El2, Eh0);
   }
-  else fEelecOR[0] = fRandom->Uniform(Eh1, El2);
+  else fEelecOR[0] = fRandom->Uniform(Eh1, El2);*/
 
   // Ensure some arrays properly terminated
   // Single prompt hit
-  fEelecOR[1] = EBufferEnd;
-  fTimeOR[0] = 0.0; 
-  fTimeOR[1] = EBufferEnd;
-  fHits[fNhits] = EBufferEnd;
-  fDoubles[fNDoubles] = EBufferEnd;
+  //fEelecOR[1] = EBufferEnd;
+  //fTimeOR[0] = 0.0; 
+  //fTimeOR[1] = EBufferEnd;
+  //fHits[fNhits] = EBufferEnd;
+  /*fDoubles[fNDoubles] = EBufferEnd;
   fHitsPrompt[fNhits] = EBufferEnd;
   fWindows[0] = ELaddPrompt;
   fHitsAll[fNhits] = EBufferEnd;
-  fHitsRand[0] = EBufferEnd;
-  return;
+  fHitsRand[0] = EBufferEnd;*/
+  //return;
 }

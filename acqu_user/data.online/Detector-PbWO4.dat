@@ -3,7 +3,7 @@
 # PbWO4 configuration file                                              #
 #                                                                       #
 #                                                                       #
-##--Update      Tigran Armand Rostomyan  31.Jul.2014                    #
+##--Update      Tigran Armand Rostomyan  09.Aug.2014                    #
 #                                                                       #
 #########################################################################
 #
@@ -149,10 +149,10 @@ Display: 1D     Nhits       72 0 72
 Display: 1D	ADCHits	    72 0 72 
 Display: 1D	TDCHits	    72 0 72 
 Display: 1D     Hits        72 0 72 
-Display: 1D     EnergyOR    400  0 400
+Display: 1D     EnergyOR    500  0 500
 Display: 1D     TimeOR      200 -1000 1000
-Display: 2D     TimeOR      200 -1000 1000 -1 EnergyOR        400  0 400 -1
-Display: 2D     EnergyOR    200 0 400 -1    Hits   72  0 72 -1
+Display: 2D     TimeOR      200 -1000 1000 -1 EnergyOR        500  0 500 -1
+Display: 2D     EnergyOR    250 0 500 -1    Hits   72  0 72 -1
 Display: 2D     TimeOR      200 -1000 1000 -1    Hits   72  0 72 -1
 Display:  2D	 ClTheta     100 0 25 -1    ClPhi  180 -180 180 -1
 #Display: 1D	 Etot        400 0 800
