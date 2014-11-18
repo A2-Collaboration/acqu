@@ -89,6 +89,7 @@ TA2Taps::TA2Taps(const char* name, TA2System* analysis)
   fTAPS_dEvE_Proton   = kFALSE;     // default -> will be changed/set via ConfigFile
   fTAPS_dEvE_ChPion   = kFALSE;     // default -> will be changed/set via ConfigFile
   fTAPS_dEvE_Electron = kFALSE;     // default -> will be changed/set via ConfigFile
+  fTAPS_TOF_Nucleon   = kFALSE;
   fTimeShift          = 0.0;        // maybe will later use SvensTimeShift
   fTapsFudge          = 1.0;        // not in use
   fTapsTargetDistance = 146.0;      // normal TAPS-Target Distance
