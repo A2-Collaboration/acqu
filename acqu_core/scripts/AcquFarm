@@ -187,8 +187,6 @@ do
     echo "#"  >> $JobFile;
     echo "#This is the executable that gets run on the node"  >> $JobFile;
     echo "AcquNode"  >> $JobFile;
-    echo "#"  >> $JobFile;
-    echo "exit 0"  >> $JobFile;
     echo "##end of job script"  >> $JobFile;
 
     chmod +x $JobFile;
