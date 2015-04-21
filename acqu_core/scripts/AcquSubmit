@@ -143,8 +143,14 @@ do
 	done
 
 	#OK to go
-	echo "qsub $subfile >&  ${subfile}.done"
-	qsub $subfile >&  ${subfile}.done
+	qsub $subfile >& ${subfile}.done
+	if [ $? -ne 0 ]; then
+		echo "Error submitting job:"
+		cat  ${subfile}.done
+		echo "Aborting..."
+		rm ${subfile}.done
+		exit 1
+	fi
 	sleep $sleeptime
     else
 	echo "$subfile was submitted previously."
