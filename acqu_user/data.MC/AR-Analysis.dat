@@ -55,8 +55,8 @@ Period:  10000         root/macros/PeriodMacro.C   PeriodMacro()
 #
 #        Macro file name  		Macro funcion
 #Finish:	 root/macros/FinishMacro.C	FinishMacro("ARHistograms_MC.root")
-Finish:	 root/macros/FinishBatch.C	FinishBatch()
-#Finish:	 root/macros/FinishBatch.C	FinishBatch("A2G4")
+#Finish:	 root/macros/FinishBatch.C	FinishBatch()
+Finish:	 root/macros/FinishBatch.C	FinishBatch("A2G4")
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

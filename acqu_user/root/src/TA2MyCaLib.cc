@@ -13,8 +13,7 @@
 
 #include "TA2MyCaLib.h"
 
-ClassImp(TA2MyCaLib)
-
+#include <limits>
 
 //______________________________________________________________________________
 TA2MyCaLib::TA2MyCaLib(const char* name, TA2Analysis* analysis) 
@@ -66,6 +65,13 @@ TA2MyCaLib::TA2MyCaLib(const char* name, TA2Analysis* analysis)
     fCalib_CB_Walk_BG2_Max    = 0;
     fCalib_CB_Walk_MM_Min     = 0;
     fCalib_CB_Walk_MM_Max     = 0;
+
+    // CB time walk calibration for EPT
+    fCalib_CB_Walk_EPT            = 0;
+    fCalib_CB_Walk_EPT_Pi0_Min    = 0;
+    fCalib_CB_Walk_EPT_Pi0_Max    = 0;
+    fCalib_CB_Walk_EPT_Phi_Min    = 0;
+    fCalib_CB_Walk_EPT_Phi_Max    = 0;
 
     // CB proton energy correction
     fCalib_CB_Proton_ECorr = 0;
@@ -190,6 +196,10 @@ TA2MyCaLib::TA2MyCaLib(const char* name, TA2Analysis* analysis)
     // PWO pedestal
     fCalib_PWO_Ped = 0;
     fCalib_PWO_MaxRing = 0;
+
+    taps_time_cut_min = -std::numeric_limits<double>::infinity();
+    taps_time_cut_max =  std::numeric_limits<double>::infinity();
+    taps_time_cut_max_ring = 1000;
 }
 
 //______________________________________________________________________________
@@ -198,6 +208,20 @@ TA2MyCaLib::~TA2MyCaLib()
     // Destructor.
     
 }
+
+bool TA2MyCaLib::TAPSTimeCutOK(const TOA2DetParticle* particle) const {
+    return (particle->GetTime() >= taps_time_cut_min && particle->GetTime() <= taps_time_cut_max);
+}
+
+bool TA2MyCaLib::isInnerTAPSArea(const TOA2DetParticle* particle) const
+{
+    return TOA2Detector::GetTAPSRing(particle->GetCentralElement(), fTAPSType) <= taps_time_cut_max_ring;
+}
+
+UInt_t TA2MyCaLib::GetTAPSSectorElement(const UInt_t elem) {
+    return elem % 72;
+}
+
 
 //______________________________________________________________________________
 void TA2MyCaLib::SetConfig(Char_t* line, Int_t key)
@@ -247,6 +271,16 @@ void TA2MyCaLib::SetConfig(Char_t* line, Int_t key)
                        &fCalib_CB_Walk_MM_Min,     &fCalib_CB_Walk_MM_Max) != 11) error = kTRUE;
             if (fCalib_CB_Walk) fNCalib++;
             break;
+        case ECALIB_CB_WALK_EPT:
+            // Enable CB time walk calibration for EPT
+            if (sscanf(line, "%d%lf%lf%lf%lf%lf%lf",
+                       &fCalib_CB_Walk_EPT,
+                       &fCalib_CB_Walk_EPT_Pi0_Min, &fCalib_CB_Walk_EPT_Pi0_Max,
+                       &fCalib_CB_Walk_EPT_Phi_Min, &fCalib_CB_Walk_EPT_Phi_Max,
+                       &fCalib_CB_Walk_EPT_ProtonE_Min, &fCalib_CB_Walk_EPT_ProtonE_Max) != 7) error = kTRUE;
+            if (fCalib_CB_Walk_EPT) fNCalib++;
+            break;
+
         case ECALIB_CB_PROTON_ECORR:
             // Enable CB proton energy correction
             if (sscanf(line, "%d", &fCalib_CB_Proton_ECorr) != 1) error = kTRUE;
@@ -435,6 +469,12 @@ void TA2MyCaLib::SetConfig(Char_t* line, Int_t key)
             }
             break;
         case ECALIB_BADSCR:
+            // disable bad scaler read skipping for the calibration
+            if (fUseBadScalerReads)
+            {
+                fUseBadScalerReads = kFALSE;
+                Info("SetConfig", "Bad scaler reads were automatically disabled.");
+            }
             // Enable bad scaler read
             if (sscanf(line, "%d", &fCalib_BadScR) != 1) error = kTRUE;
             if (fCalib_BadScR) fNCalib++;
@@ -449,6 +489,15 @@ void TA2MyCaLib::SetConfig(Char_t* line, Int_t key)
             if (sscanf(line, "%d", &fCalib_PWO_Ped) != 1) error = kTRUE;
             if (fCalib_PWO_Ped) fNCalib++;
             break;
+
+        case ECALIB_TAPS_TIME_CUT:
+            if( sscanf(line, "%lf %lf", &taps_time_cut_min, &taps_time_cut_max) != 2) error = kTRUE;
+            break;
+
+        case ECALIB_TAPS_TIME_CUT_MAXRING:
+            if( sscanf(line, "%d", &taps_time_cut_max_ring) != 1) error = kTRUE;
+            break;
+
         default:
             // default parent class SetConfig()
             TA2MyPhysics::SetConfig(line, key);
@@ -502,9 +551,21 @@ void TA2MyCaLib::PostInit()
         printf("     -> Random subtraction BG 1    : %8.2f to %8.2f ns\n", fCalib_CB_Walk_BG1_Min, fCalib_CB_Walk_BG1_Max);
         printf("     -> Random subtraction BG 2    : %8.2f to %8.2f ns\n", fCalib_CB_Walk_BG2_Min, fCalib_CB_Walk_BG2_Max);
     }
+    if (fCalib_CB_Walk_EPT)
+    {
+        printf("   - CB time walk for EPT\n");
+        printf("     -> pi0 invariant mass cut     : %8.2f to %8.2f MeV\n", fCalib_CB_Walk_EPT_Pi0_Min, fCalib_CB_Walk_EPT_Pi0_Max);
+        printf("     -> pi0/proton phi cut         : %8.2f to %8.2f Degree\n", fCalib_CB_Walk_EPT_Phi_Min, fCalib_CB_Walk_EPT_Phi_Max);
+        printf("     -> proton energy cut          : %8.2f to %8.2f MeV\n", fCalib_CB_Walk_EPT_ProtonE_Min, fCalib_CB_Walk_EPT_ProtonE_Max);
+    }
     if (fCalib_CB_Proton_ECorr) printf("   - CB proton energy correction\n");
     if (fCalib_CBTAPS_LED)  printf("   - CB-TAPS LED\n");
-    if (fCalib_TAPS_Energy) printf("   - TAPS energy\n");
+    if (fCalib_TAPS_Energy) {
+        printf("   - TAPS energy\n");
+        printf("   - Time Cut: %lf - %lf ns\n", taps_time_cut_min, taps_time_cut_max);
+        printf("     - for Ring Numbers smaller than %d\n", taps_time_cut_max_ring);
+    }
+
     if (fCalib_TAPS_Energy_BG_Subtr)         
     {
         printf("   - TAPS energy (BG. subtr.)\n");
@@ -615,8 +676,9 @@ void TA2MyCaLib::PostInit()
                                         2000, -100, 100, fNelemCB, 0, fNelemCB);
         fHCalib_CB_Time_Neut = new TH2F("CaLib_CB_Time_Neut", "CaLib_CB_Time_Neut;CB neutral cluster time [ns];CB element", 
                                         2000, -100, 100, fNelemCB, 0, fNelemCB);
+        // dt=0.11771 ns
         fHCalib_CB_Time_Ind = new TH2F("CaLib_CB_Time_Ind", "CaLib_CB_Time_Ind;CB neutral cluster time [ns];CB element", 
-                                                10000, -1000, 1000, fNelemCB, 0, fNelemCB);        
+                                        16990, -999.94645, 999.94645, fNelemCB, 0, fNelemCB);
     }
     
     // prepare for CB rise time calibration
@@ -645,7 +707,25 @@ void TA2MyCaLib::PostInit()
             fHCalib_CB_Walk_E_T[i] = new TH2F(name, title, 400, 0, 400, 300, -100, 200);
         }
     }
-    
+
+    // prepare for CB time walk for EPT calibration
+    if (fCalib_CB_Walk_EPT)
+    {
+        fHCalib_CB_Walk_EPT_IM           = new TH1F("CaLib_CB_Walk_EPT_IM", "CaLib_CB_Walk_EPT_IM;2#gamma invariant mass [MeV];Counts",
+                                                1000, 0, 1000);
+        fHCalib_CB_Walk_EPT_Phi          = new TH1F("CaLib_CB_Walk_EPT_Phi", "CaLib_CB_Walk_EPT_Phi;pi0/proton phi diff;Counts",
+                                                1080, 0, 360);
+
+        fHCalib_CB_Walk_EPT_E_T = new TH2*[fNelemCB];
+
+        for (Int_t i = 0; i < fNelemCB; i++)
+        {
+            sprintf(name, "CaLib_CB_Walk_EPT_E_T_%03d", i);
+            sprintf(title, "CaLib_CB_Walk_EPT_E_T_%03d;CB energy [MeV];CB time [ns]", i);
+            fHCalib_CB_Walk_EPT_E_T[i] = new TH2F(name, title, 400, 0, 400, 300, -100, 200);
+        }
+    }
+
     // prepare for CB proton energy correction
     if (fCalib_CB_Proton_ECorr)
     {
@@ -680,12 +760,17 @@ void TA2MyCaLib::PostInit()
     {
         fHCalib_TAPS_IM_Neut     = new TH2F("CaLib_TAPS_IM_Neut", "CaLib_TAPS_IM_Neut;2#gamma invariant mass [MeV];TAPS element", 
                                             500, 0, 1000, fNelemTAPS, 0, fNelemTAPS);
+        fHCalib_TOF_TAPS         = new TH3F("CaLib_TOF_TAPS", "CaLib_TOF_TAPS;TAPS element;Tagger Element",
+                                            2000, -10, 10, fNelemTAPS, 0, fNelemTAPS, fNelemTAGG, 0, fNelemTAGG);
+        fHCalib_TOF_TAPS_Neut         = new TH3F("CaLib_TOF_TAPS_Neut", "CaLib_TOF_TAPS_Neut; TAPS Element;Tagger element",
+                                            2000, -10, 10, fNelemTAPS, 0, fNelemTAPS, fNelemTAGG, 0, fNelemTAGG);
         fHCalib_TAPS_IM_Neut_1CB_1TAPS = new TH2F("CaLib_TAPS_IM_Neut_1CB_1TAPS", "CaLib_TAPS_IM_Neut_1CB_1TAPS;2#gamma invariant mass [MeV];TAPS element", 
                                                   500, 0, 1000, fNelemTAPS, 0, fNelemTAPS);
         fHCalib_TAPS_IM_TAPS      = new TH2F("CaLib_TAPS_IM_TAPS", "CaLib_TAPS_IM_TAPS;2#gamma invariant mass [MeV];TAPS element", 
                                              500, 0, 1000, fNelemTAPS, 0, fNelemTAPS);
         fHCalib_TAPS_IM_Neut_TAPS = new TH2F("CaLib_TAPS_IM_Neut_TAPS", "CaLib_TAPS_IM_Neut_TAPS;2#gamma invariant mass [MeV];TAPS element", 
                                              500, 0, 1000, fNelemTAPS, 0, fNelemTAPS);
+        fHCalib_TAPS_IM_Neut_TAPS_mult = new TH3F("CaLib_TAPS_IM_Neut_TAPS_mult", "IMgg vs TAPS det el vs nr CB + TAPS (in time)", 500, 0, 1000, fNelemTAPS, 0, fNelemTAPS, 10, 0, 10);
     }
     
     // prepare for TAPS energy calibration (BG subtr.)
@@ -709,7 +794,7 @@ void TA2MyCaLib::PostInit()
         fHCalib_TAPS_Time_Neut_IM_Cut = new TH2F("CaLib_TAPS_Time_Neut_IM_Cut", "CaLib_TAPS_Time_Neut_IM_Cut;TAPS neutral cluster time [ns];TAPS element", 
                                                  2000, -100, 100, fNelemTAPS, 0, fNelemTAPS);
         fHCalib_TAPS_Time_Ind = new TH2F("CaLib_TAPS_Time_Ind", "CaLib_TAPS_Time_Ind;TAPS time [ns];TAPS element", 
-                                                  10000, -1000.1, 1000.1, fNelemTAPS, 0, fNelemTAPS);
+                                         10000, -1000, 1000, fNelemTAPS, 0, fNelemTAPS);
     }
     
     // prepare for TAPS quadratic energy correction
@@ -837,7 +922,7 @@ void TA2MyCaLib::PostInit()
         fHCalib_PID_Time = new TH2F("CaLib_PID_Time", "CaLib_PID_Time;PID time [ns];PID element", 
 				    1000, -100, 100, fNelemPID, 0, fNelemPID);
         fHCalib_PID_Time_Ind = new TH2F("CaLib_PID_Time_Ind", "CaLib_PID_Time_Ind;PID time [ns];PID element", 
-                                           1700, -200.1, 200.1, fNelemPID, 0, fNelemPID);
+                                        1700, -200, 200, fNelemPID, 0, fNelemPID);
     }
     
     // prepare for PID efficiency calibration
@@ -880,7 +965,7 @@ void TA2MyCaLib::PostInit()
         fHCalib_Veto_Time = new TH2F("CaLib_Veto_Time", "CaLib_Veto_Time;Veto time [ns];Veto element", 
 				     1000, -100, 100, fNelemVeto, 0, fNelemVeto);
         fHCalib_Veto_Time_Ind = new TH2F("CaLib_Veto_Time_Ind", "CaLib_Veto_Time_Ind;Veto time [ns];Veto element", 
-                                     4000, -1000.1, 1000.1, fNelemVeto, 0, fNelemVeto);        
+                                         4000, -1000, 1000, fNelemVeto, 0, fNelemVeto);
     }
     
     // prepare for Veto efficiency calibration
@@ -906,8 +991,10 @@ void TA2MyCaLib::PostInit()
                                             8000, -1000, 1000, fNelemTAGG, 0, fNelemTAGG);
         fHCalib_Tagger_Time_Pi0 = new TH2F("CaLib_Tagger_Time_Pi0", "CaLib_Tagger_Time_Pi0;Tagger-TAPS time [ns];Tagger element", 
                                            8000, -1000, 1000, fNelemTAGG, 0, fNelemTAGG);
+//        fHCalib_Tagger_Time_Ind  = new TH2F("CaLib_Tagger_Time_Ind", "CaLib_Tagger_Time_Ind;Tagger time [ns];Tagger element",
+//                                            2200, -500, 500, fNelemTAGG, 0, fNelemTAGG);
         fHCalib_Tagger_Time_Ind  = new TH2F("CaLib_Tagger_Time_Ind", "CaLib_Tagger_Time_Ind;Tagger time [ns];Tagger element",
-                                            2200, -500.1, 500.1, fNelemTAGG, 0, fNelemTAGG);        
+                                            20000, -500, 500, fNelemTAGG, 0, fNelemTAGG);
     }
 
     // prepare for proton light attenuation correction
@@ -956,6 +1043,10 @@ void TA2MyCaLib::PostInit()
         fHCalib_BadScR_NaIHits     = new TH2F("CaLib_BadScR_NaIHits",     "CaLib_BadScR_NaIHits;Scaler reads;NaI hits",     
                                               maxReads, 0, maxReads, fNaI->GetNelement(),     0, fNaI->GetNelement());
         fHCalib_BadScR_BaF2PWOHits = new TH2F("CaLib_BadScR_BaF2PWOHits", "CaLib_BadScR_BaF2PWOHits;Scaler reads;BaF2PWO hits", 
+                                              maxReads, 0, maxReads, fBaF2PWO->GetNelement(), 0, fBaF2PWO->GetNelement());
+        fHCalib_BadScR_BaF2Hits    = new TH2F("CaLib_BadScR_BaF2Hits", "CaLib_BadScR_BaF2Hits;Scaler reads;BaF2 hits", 
+                                              maxReads, 0, maxReads, fBaF2PWO->GetNelement(), 0, fBaF2PWO->GetNelement());
+        fHCalib_BadScR_PWOHits     = new TH2F("CaLib_BadScR_PWOHits", "CaLib_BadScR_PWOHits;Scaler reads;PWO hits", 
                                               maxReads, 0, maxReads, fBaF2PWO->GetNelement(), 0, fBaF2PWO->GetNelement());
         fHCalib_BadScR_PIDHits     = new TH2F("CaLib_BadScR_PIDHits",     "CaLib_BadScR_PIDHits;Scaler reads;PID hits",
                                               maxReads, 0, maxReads, fPID->GetNelement(),     0, fPID->GetNelement());
@@ -1215,7 +1306,7 @@ void TA2MyCaLib::ReconstructPhysics()
             }
 
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_cb_risetime;
             TOA2DetParticle** decay_photons = pi0.GetDetectedProducts();
         
@@ -1256,7 +1347,7 @@ void TA2MyCaLib::ReconstructPhysics()
         if (fNNeutral == 2 && fCBNCluster == 2 && fNCharged == 0)
         {
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_cb_timewalk;
             TOA2DetParticle** decay_photons = pi0.GetDetectedProducts();
         
@@ -1273,27 +1364,12 @@ void TA2MyCaLib::ReconstructPhysics()
             UInt_t* g1_hits     = decay_photons[0]->GetClusterHits();
             Double_t* g1_energy = decay_photons[0]->GetClusterHitEnergies();
             Double_t* g1_time   = decay_photons[0]->GetClusterHitTimes();
-            
-            // photon 1 cluster properties
+
+            // photon 2 cluster properties
             Int_t g2_nhits      = decay_photons[1]->GetClusterSize();
             UInt_t* g2_hits     = decay_photons[1]->GetClusterHits();
             Double_t* g2_energy = decay_photons[1]->GetClusterHitEnergies();
             Double_t* g2_time   = decay_photons[1]->GetClusterHitTimes();
-            
-            // regard the tagger as "disabled" if Prompt_Min>Prompt_Max
-            // then just fill in the reconstructed two gamma event
-            // this is useful when using the Endpoint Tagger
-            if(fCalib_CB_Walk_Prompt_Min > fCalib_CB_Walk_Prompt_Max) {
-              // fill energies and times of all elements of the photon cluster 1
-              for (Int_t j = 0; j < g1_nhits; j++) 
-                  fHCalib_CB_Walk_E_T[g1_hits[j]]->Fill(g1_energy[j], g1_time[j]);
-          
-              // fill energies and times of all elements of the photon cluster 2
-              for (Int_t j = 0; j < g2_nhits; j++) 
-                  fHCalib_CB_Walk_E_T[g2_hits[j]]->Fill(g2_energy[j], g2_time[j]);              
-              
-              goto label_end_cb_timewalk;
-            }
             
             // target 4-vector
             TLorentzVector p4Target(0., 0., 0., TOGlobals::kProtonMass);
@@ -1347,10 +1423,83 @@ void TA2MyCaLib::ReconstructPhysics()
 
     } // end CB time walk
     label_end_cb_timewalk:
+
+    // ----------------------------------- CB time walk for EPT -----------------------------------
+
+    if (fCalib_CB_Walk_EPT)
+    {
+        // Clear the time walk parameters before analyzing
+        if (fEventCounter == 0) ClearCBTimeWalk();
+
+        // look for two neutral hits and one charged in CB
+        if (!(fNNeutral == 2 && fCBNCluster == 3 && fNCharged == 1))
+            goto label_end_cb_timewalk_ept;
+
+        // reconstruct pi0
+        TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
+        if (!pi0.Reconstruct(fNNeutral, fPartNeutral))
+            goto label_end_cb_timewalk_ept;
+
+        // get the invariant mass
+        TLorentzVector* p4Pi0 = pi0.Get4Vector();
+        Double_t im = p4Pi0->M();
+        fHCalib_CB_Walk_EPT_IM->Fill(im);
+
+        // invariant mass cut
+        if (im < fCalib_CB_Walk_EPT_Pi0_Min || im > fCalib_CB_Walk_EPT_Pi0_Max)
+            goto label_end_cb_timewalk_ept;
+
+        // assume the charged particle to be a proton
+        TOA2DetParticle* proton = fPartCharged[0];
+        TLorentzVector* p4proton = new TLorentzVector();
+        proton->Calculate4Vector(p4proton, TOGlobals::kProtonMass);
+
+        // phi difference cut
+        Double_t phi = TMath::Abs(p4proton->Phi() - p4Pi0->Phi())*TMath::RadToDeg();
+        fHCalib_CB_Walk_EPT_Phi->Fill(phi);
+        if(phi<fCalib_CB_Walk_EPT_Phi_Min || phi>fCalib_CB_Walk_EPT_Phi_Max)
+            goto label_end_cb_timewalk_ept;
+        
+        // use only high energetic protons to have minimal timewalk
+        // timewalk calibration could also be iterated to minimize bias
+        Double_t proton_energy = proton->GetEnergy();
+        if(proton_energy<fCalib_CB_Walk_EPT_ProtonE_Min || proton_energy>fCalib_CB_Walk_EPT_ProtonE_Max)
+            goto label_end_cb_timewalk_ept;
+        Double_t proton_time = proton->GetTime();
+        
+        // fill the timings of the two photons
+        TOA2DetParticle** decay_photons = pi0.GetDetectedProducts();        
+        
+        // photon 1 cluster properties
+        Int_t g1_nhits      = decay_photons[0]->GetClusterSize();
+        UInt_t* g1_hits     = decay_photons[0]->GetClusterHits();
+        Double_t* g1_energy = decay_photons[0]->GetClusterHitEnergies();
+        Double_t* g1_time   = decay_photons[0]->GetClusterHitTimes();
+
+        // photon 2 cluster properties
+        Int_t g2_nhits      = decay_photons[1]->GetClusterSize();
+        UInt_t* g2_hits     = decay_photons[1]->GetClusterHits();
+        Double_t* g2_energy = decay_photons[1]->GetClusterHitEnergies();
+        Double_t* g2_time   = decay_photons[1]->GetClusterHitTimes();    
+        
+        // use only first crystal (with highest energy) of both photons
+//        if(g1_nhits>1) g1_nhits=1;
+//        if(g2_nhits>1) g2_nhits=1;
+        
+        // fill energies and times of all elements of the photon cluster 1
+        for (Int_t j = 0; j < g1_nhits; j++) 
+            fHCalib_CB_Walk_EPT_E_T[g1_hits[j]]->Fill(g1_energy[j], g1_time[j] - proton_time);
     
-    
-    // --------------------------- CB proton energy correction ---------------------------- 
-    
+        // fill energies and times of all elements of the photon cluster 2
+        for (Int_t j = 0; j < g2_nhits; j++) 
+            fHCalib_CB_Walk_EPT_E_T[g2_hits[j]]->Fill(g2_energy[j], g2_time[j] - proton_time);
+
+    } // end CB time walk
+    label_end_cb_timewalk_ept:
+
+
+    // --------------------------- CB proton energy correction ----------------------------
+
     if (fCalib_CB_Proton_ECorr)
     {
         if (fCBNCluster == 1)
@@ -1505,6 +1654,16 @@ void TA2MyCaLib::ReconstructPhysics()
         // loop over TAPS clusters
         for (UInt_t i = 0; i < fTAPSNCluster; i++)
         {
+            for (UInt_t t = 0; t < fTaggerPhotonNhits; t++)
+            {
+                fHCalib_TOF_TAPS->Fill(fPartTAPS[i]->GetTime() - fTaggerPhotonTime[t], fPartTAPS[i]->GetCentralElement(), fTaggerPhotonHits[t]);
+                if (fPartTAPS[i]->GetVetoEnergy() == 0)
+                    fHCalib_TOF_TAPS_Neut->Fill(fPartTAPS[i]->GetTime() + fTaggerPhotonTime[t], fPartTAPS[i]->GetCentralElement(), fTaggerPhotonHits[t]);
+            }
+
+            if( !TAPSTimeCutOK(fPartTAPS[i]) && isInnerTAPSArea(fPartTAPS[i]))
+                continue;
+
             // calculate 4-vector assuming a photon
             TLorentzVector p4Gamma_1;
             fPartTAPS[i]->Calculate4Vector(&p4Gamma_1, 0);
@@ -1518,20 +1677,26 @@ void TA2MyCaLib::ReconstructPhysics()
 
                 // calculate invariant mass of hit combination
                 Double_t im = (p4Gamma_1 + p4Gamma_2).M();
-                
+
                 // fill invariant mass
                 if (fPartTAPS[i]->GetVetoEnergy() == 0 && fPartCB[j]->GetPIDEnergy() == 0)
                 {
                     fHCalib_TAPS_IM_Neut->Fill(im, fPartTAPS[i]->GetCentralElement());
 
-                    // fill invariant mass for exactly 1 cluster in CB and 1 cluster in TAPS
-                    if (fNNeutral == 2) fHCalib_TAPS_IM_Neut_1CB_1TAPS->Fill(im, fPartTAPS[i]->GetCentralElement());
+                    // if inner crystal OR 2 neutral hits
+                    if( isInnerTAPSArea(fPartTAPS[i]) || fNNeutral == 2 )
+                        // fill invariant mass for all combinations of 1 cluster in CB and 1 cluster in TAPS
+                        fHCalib_TAPS_IM_Neut_1CB_1TAPS->Fill(im, fPartTAPS[i]->GetCentralElement());
                 }
             }
             
             // loop over TAPS clusters
             for (UInt_t j = i+1; j < fTAPSNCluster; j++)
             {
+
+                if( !TAPSTimeCutOK(fPartTAPS[j]) && isInnerTAPSArea(fPartTAPS[i]))
+                    continue;
+
                 // calculate 4-vector assuming a photon
                 TLorentzVector p4Gamma_2;
                 fPartTAPS[j]->Calculate4Vector(&p4Gamma_2, 0);
@@ -1548,6 +1713,38 @@ void TA2MyCaLib::ReconstructPhysics()
                 {
                     fHCalib_TAPS_IM_Neut_TAPS->Fill(im, fPartTAPS[i]->GetCentralElement());
                     fHCalib_TAPS_IM_Neut_TAPS->Fill(im, fPartTAPS[j]->GetCentralElement());
+                }
+            }
+        }
+
+        UInt_t nneutrTAPS =  0;
+        for (UInt_t iTAPS = 0; iTAPS < fTAPSNCluster; iTAPS++)
+        {
+            if( TAPSTimeCutOK(fPartTAPS[iTAPS]) )
+                nneutrTAPS++;
+        }
+        
+        
+        UInt_t nNeutr = nneutrTAPS + fCBNCluster;
+        if(nneutrTAPS > 0)
+        {
+            for(UInt_t iTAPS = 0; iTAPS < fTAPSNCluster; iTAPS++ )
+            {
+                if( !TAPSTimeCutOK(fPartTAPS[iTAPS]) )
+                    continue;
+                if(fPartTAPS[iTAPS]->GetVetoEnergy() < 1.0)
+                {
+                    TLorentzVector p4Gamma_1;
+                    fPartTAPS[iTAPS]->Calculate4Vector(&p4Gamma_1, 0);
+                    for(UInt_t jCB = 0; jCB < fCBNCluster; jCB++)
+                    {
+                        TLorentzVector p4Gamma_2;
+                        fPartCB[jCB]->Calculate4Vector(&p4Gamma_2, 0);
+                        // calculate invariant mass of hit combination
+                        Double_t im = (p4Gamma_1 + p4Gamma_2).M();
+        
+                        fHCalib_TAPS_IM_Neut_TAPS_mult->Fill( im , fPartTAPS[iTAPS]->GetCentralElement(), nNeutr );
+                    }
                 }
             }
         }
@@ -1579,7 +1776,7 @@ void TA2MyCaLib::ReconstructPhysics()
             else goto label_end_taps_energy_bg_subtr;
 
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_taps_energy_bg_subtr;
             
             // reconstruct random background subtraction particle in CB
@@ -1907,7 +2104,7 @@ void TA2MyCaLib::ReconstructPhysics()
                 fPartCharged[0]->GetTheta()*TMath::RadToDeg() < 27) goto label_end_pid_energy;
         
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_pid_energy;
             
             // check software trigger
@@ -1954,22 +2151,6 @@ void TA2MyCaLib::ReconstructPhysics()
                 // skip useless background events (not belonging to the background windows)
                 if (subtr_weight == 0) continue;
                 
-//                // change tagger weight for MC
-//                if (fIsMC)
-//                {   
-//                    // calculate true center-of-mass energy (pi0 + proton)
-//                    TLorentzVector p4CMTrue = *fPartMC[3]->Get4Vector() + *fPartMC[2]->Get4Vector();
-//                    Double_t w_true_mc = p4CMTrue.M();
-
-//                    // pi0 4-vector in true c.m. frame
-//                    TLorentzVector p4Pi0CMTrue(*fPartMC[3]->Get4Vector());
-//                    p4Pi0CMTrue.Boost(-p4CMTrue.BoostVector());
-//                    Double_t cosThetaCMTrue_MC = p4Pi0CMTrue.CosTheta();
-                    
-//                    // change tagger weight for MC
-//                    fModel_Pi0_Proton->GetDCS()->Extract(w_true_mc, cosThetaCMTrue_MC, &subtr_weight);
-//                    subtr_weight /= fTaggerPhotonEnergy[i];
-//                }
  
                 // beam 4-vector
                 TLorentzVector p4Beam(0., 0., fTaggerPhotonEnergy[i], fTaggerPhotonEnergy[i]);
@@ -2093,7 +2274,7 @@ void TA2MyCaLib::ReconstructPhysics()
         if (fNNeutral >= 2 && fCBNCluster >= 3)
         {
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_pid_eff;
             
             // only photons in the ball
@@ -2152,22 +2333,6 @@ void TA2MyCaLib::ReconstructPhysics()
                 // fill missing mass
                 if (imOk) fHCalib_PID_Eff_MM->Fill(mm, tagg_element, subtr_weight);
                 
-//                // change tagger weight for MC
-//                if (fIsMC)
-//                {   
-//                    // calculate true center-of-mass energy (pi0 + proton)
-//                    TLorentzVector p4CMTrue = *fPartMC[2]->Get4Vector() + *fPartMC[1]->Get4Vector();
-//                    Double_t w_true_mc = p4CMTrue.M();
-
-//                    // pi0 4-vector in true c.m. frame
-//                    TLorentzVector p4Pi0CMTrue(*fPartMC[2]->Get4Vector());
-//                    p4Pi0CMTrue.Boost(-p4CMTrue.BoostVector());
-//                    Double_t cosThetaCMTrue_MC = p4Pi0CMTrue.CosTheta();
-                    
-//                    // change tagger weight for MC
-//                    fModel_Pi0_Proton->GetDCS()->Extract(w_true_mc, cosThetaCMTrue_MC, &subtr_weight);
-//                    subtr_weight /= fTaggerPhotonEnergy[i];
-//                }
           
                 // check PID coincidences
                 if (imOk && mmOk)
@@ -2288,7 +2453,7 @@ void TA2MyCaLib::ReconstructPhysics()
         if (fNNeutral >= 2 && fTAPSNCluster >= 1)
         {
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_veto_eff;
             
             // only photons in the ball
@@ -2504,7 +2669,7 @@ void TA2MyCaLib::ReconstructPhysics()
         if (fNNeutral >= 2 && fNCharged == 1)
         {
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_proton_lt_att;
             
             // get the invariant mass
@@ -2662,7 +2827,7 @@ void TA2MyCaLib::ReconstructPhysics()
         if (gAR->IsScalerRead())
         {
             for (Int_t i = 0; i < gAR->GetMaxScaler(); i++)
-                fHCalib_BadScR_Scalers->SetBinContent(fNScalerReads, i+1, (Double_t) fScaler[i]);
+                fHCalib_BadScR_Scalers->SetBinContent(fScalerReadCounter, i+1, (Double_t) fScaler[i]);
         }
 
         // fill NaI hits
@@ -2674,10 +2839,10 @@ void TA2MyCaLib::ReconstructPhysics()
 
             // loop over hits
             for (UInt_t i = 0; i < nhits; i++)
-                fHCalib_BadScR_NaIHits->Fill(fNScalerReads, hits[i]);
+                fHCalib_BadScR_NaIHits->Fill(fScalerReadCounter, hits[i]);
         }
 
-        // fill BaF2PWO hits
+        // fill BaF2PWO/BaF2/PWO hits
         if (fBaF2PWO)
         {
             // get number of hits
@@ -2686,7 +2851,11 @@ void TA2MyCaLib::ReconstructPhysics()
 
             // loop over hits
             for (UInt_t i = 0; i < nhits; i++)
-                fHCalib_BadScR_BaF2PWOHits->Fill(fNScalerReads, hits[i]);
+            {
+                fHCalib_BadScR_BaF2PWOHits->Fill(fScalerReadCounter, hits[i]);
+                if (TOA2Detector::IsTAPSPWO(hits[i], fTAPSType)) fHCalib_BadScR_PWOHits->Fill(fScalerReadCounter, hits[i]);
+                fHCalib_BadScR_BaF2Hits->Fill(fScalerReadCounter, hits[i]);
+            }
         }
 
         // fill PID hits
@@ -2698,7 +2867,7 @@ void TA2MyCaLib::ReconstructPhysics()
 
             // loop over CB ADC hits
             for (UInt_t i = 0; i < nhits; i++)
-                fHCalib_BadScR_PIDHits->Fill(fNScalerReads, hits[i]);
+                fHCalib_BadScR_PIDHits->Fill(fScalerReadCounter, hits[i]);
         }
 
         // fill Veto hits
@@ -2710,7 +2879,7 @@ void TA2MyCaLib::ReconstructPhysics()
 
             // loop over CB ADC hits
             for (UInt_t i = 0; i < nhits; i++)
-                fHCalib_BadScR_VetoHits->Fill(fNScalerReads, hits[i]);
+                fHCalib_BadScR_VetoHits->Fill(fScalerReadCounter, hits[i]);
         }
 
         // fill Ladder hits
@@ -2722,7 +2891,7 @@ void TA2MyCaLib::ReconstructPhysics()
 
             // loop over CB ADC hits
             for (UInt_t i = 0; i < nhits; i++)
-                fHCalib_BadScR_LadderHits->Fill(fNScalerReads, hits[i]);
+                fHCalib_BadScR_LadderHits->Fill(fScalerReadCounter, hits[i]);
         }
         
     }
@@ -2796,7 +2965,7 @@ void TA2MyCaLib::ReconstructPhysics()
             }
 
             // reconstruct pi0
-            TOA2RecPi02g pi0(fNNeutral);
+            TOA2RecMeson2g pi0(fNNeutral, TOGlobals::kPi0Mass);
             if (!pi0.Reconstruct(fNNeutral, fPartNeutral)) goto label_end_pwo_check;
             
             // reconstruct random background subtraction particle in CB
@@ -2872,21 +3041,6 @@ void TA2MyCaLib::ReconstructPhysics()
                 // skip useless background events (not belonging to the background windows)
                 if (subtr_weight == 0) continue;
                 
-                // change tagger weight for MC
-//                if (fIsMC)
-//                {   
-//                    // calculate true center-of-mass energy 
-//                    TLorentzVector p4CMTrue = *fPartMC[2]->Get4Vector();
-//                    Double_t w_true_mc = p4CMTrue.M();
-
-//                    // pi0 4-vector in true c.m. frame
-//                    TLorentzVector p4Pi0CMTrue(*fPartMC[3]->Get4Vector());
-//                    p4Pi0CMTrue.Boost(-p4CMTrue.BoostVector());
-//                    Double_t cosThetaCMTrue_MC = p4Pi0CMTrue.CosTheta();
-                    
-//                    // change tagger weight for MC
-//                    fModel_Pi0_Proton->GetDCS()->Extract(w_true_mc, cosThetaCMTrue_MC, &subtr_weight);
-//                }
  
                 // fill invariant mass
                 //if (mmOk) fHCalib_TAPS_IM_Neut_BG_Subtr->Fill(im, partTAPS->GetCentralElement(), subtr_weight);
@@ -3062,3 +3216,4 @@ Int_t TA2MyCaLib::GetPIDElementForPhi(Double_t phi)
     return id;
 }
 
+ClassImp(TA2MyCaLib)

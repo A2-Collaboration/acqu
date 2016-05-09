@@ -15,7 +15,6 @@
 
 #include "TCCalib.h"
 
-ClassImp(TCCalib)
 
 
 //______________________________________________________________________________
@@ -57,6 +56,7 @@ void TCCalib::Start(const Char_t* calibration, Int_t nSet, Int_t* set)
 
     fCanvasFit = 0;
     fCanvasResult = 0;
+    fExtraCanvas = 0;
     
     fAvr = 0;
     fAvrDiff = 0;
@@ -88,6 +88,16 @@ void TCCalib::Start(const Char_t* calibration, Int_t nSet, Int_t* set)
         Info("Start", "Calibrating set %d (Run %d to %d)", fSet[i], first_run, last_run);
     }
 
+    
+    // Read the convergence factor
+    Char_t tmp[256];
+    sprintf(tmp, "%s.ConvergenceFactor", GetName());
+    if (!TCReadConfig::GetReader()->GetConfigDouble(tmp)) {
+	    fConvergenceFactor = 1;
+    }
+    else fConvergenceFactor = TCReadConfig::GetReader()->GetConfigDouble(tmp);
+    Info("Init", "Using a Convergence Factor of %f", fConvergenceFactor);
+    
     // style options
     gStyle->SetPalette(1);
     gStyle->SetFrameBorderMode(0);
@@ -108,6 +118,8 @@ void TCCalib::Start(const Char_t* calibration, Int_t nSet, Int_t* set)
 
     // draw the result canvas
     fCanvasResult = new TCanvas("Result", "Result", gClient->GetDisplayWidth() - 900, 0, 900, 400);
+
+    fExtraCanvas = new TCanvas("extra_canvas","Extra");
     
     // init sub-class
     Init();
@@ -317,4 +329,4 @@ void TCCalib::SaveCanvas(TCanvas* c, const Char_t* name)
         c->SaveAs(tmp);
     }
 }
-
+ClassImp(TCCalib)

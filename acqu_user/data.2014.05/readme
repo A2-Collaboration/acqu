@@ -1,0 +1,8 @@
+October 16, 2014
+
+First, I had to setup the database, and username and password.
+then the calibration database had to be imported, or a new table be created using macros/AddBeamtime.C which needed macros/Install.c and config/config.cfg sorted out.
+
+I also had to import the run numbers through calib_manager.
+
+

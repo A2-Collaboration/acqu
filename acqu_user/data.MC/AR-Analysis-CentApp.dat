@@ -2,7 +2,8 @@
 ##
 ## Specify list of detectors which constitute the Crystal Ball apparatus
 ##	  Name       Class Name		Setup file
-Detector: NaI        TA2CalArray	AR-Analysis-CentApp-NaI.dat
+#Detector: NaI        TA2CalArray	AR-Analysis-CentApp-NaI.dat
+Detector: NaI        TA2CalArray	Detector-NaI.dat
 Detector: PID        TA2PlasticPID	AR-Analysis-CentApp-PID.dat
 Detector: MWPC       TA2CylMwpc		AR-Analysis-CentApp-MWPC.dat
 #

@@ -20,14 +20,19 @@ set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 # we add many additional files marked as "headers"
 # so they appear automatically in QtCreator
+# but sort out dead symlinks
 file(GLOB_RECURSE ADDITIONAL_FILES "root/macros/*" "data*/*")
 set_source_files_properties(${ADDITIONAL_FILES} PROPERTIES HEADER_FILE_ONLY TRUE)
-
+foreach(f ${ADDITIONAL_FILES})
+  if(EXISTS ${f})
+    list(APPEND ADDITIONAL_FILES_EXISTING ${f})
+  endif()
+endforeach()
 
 # build finally the two executables which many people need desperately ^-^
 # it's enough to add the addtional files to the commonly used AcquRoot
 set(MOD "AcquRoot")
-add_executable(${MOD} "root/src/Main${MOD}.cc" ${ADDITIONAL_FILES})
+add_executable(${MOD} "root/src/Main${MOD}.cc" ${ADDITIONAL_FILES_EXISTING})
 target_link_libraries(${MOD} libUserRoot)
 
 set(MOD "AcquHead")

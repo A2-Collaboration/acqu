@@ -91,7 +91,7 @@ private:
         if (f)
         {
             // read 6 bytes
-            fread(header, 1, 6, f);
+            if(fread(header, 1, 6, f));
             
             // close the file
             fclose(f);
@@ -185,7 +185,7 @@ public:
                              kMk2SizeRNote + kMk2SizeFName +
                              sizeof(UShort_t);
         Char_t header[maxHdrLength];
-        fread(header, 1, sizeof(header), file);
+        if(fread(header, 1, sizeof(header), file));
         
         // close file
         if (ftype == kFileUnComp) fclose(file);

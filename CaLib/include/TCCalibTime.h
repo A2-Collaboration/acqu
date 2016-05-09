@@ -23,15 +23,15 @@
 #include "TCCalib.h"
 #include "TCFileManager.h"
 
+#include "TIndicatorLine.h"
 
 class TCCalibTime : public TCCalib
 {
 
-private:
+protected:
     Double_t* fTimeGain;                // TDC gain array
     Double_t fMean;                     // mean time position
-    TLine* fLine;                       // indicator line
-    Double_t fConvergenceFactor;        // Used in offset calculation, to make convergence slower but more reliable 
+    TIndicatorLine* fLine;                       // indicator line
     
     virtual void Init();
     virtual void Fit(Int_t elem);
@@ -70,6 +70,8 @@ public:
                      "Data.CB.T0",
                      TCConfig::kMaxCB) { }
     virtual ~TCCalibCBTime() { }
+
+    virtual void Fit(Int_t elem);
     
     ClassDef(TCCalibCBTime, 0) // CB time calibration class
 };

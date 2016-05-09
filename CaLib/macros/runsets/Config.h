@@ -12,5 +12,10 @@
 //const Char_t* fLoc = "/Users/fulgur/Desktop/calib/May_09";
 
 // configuration (July 2014)
-const Char_t calibration[] = "2014-07_EPT_Prod_Neiser";
-const Char_t* fLoc = "analysis/CaLib_Full_Step134/root";
+//const Char_t calibration[] = "2014-07_EPT_Prod_Neiser";
+//const Char_t* fLoc = "analysis/CaLib_Full_Step134/root";
+
+// configuration (July 2015)
+const Char_t calibration[] = "2015-07-Compton-Carbon";
+const Char_t* fLoc = "/media/al/MainzBackup/CalibOutput";
+

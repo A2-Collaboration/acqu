@@ -5,6 +5,12 @@
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Set-up of branches in MC ROOT file as produced by GEANT4 A2 simulation
+#
+# NOTE: The branches MUST appear in the SAME ORDER as defined in the enum in
+#       MCBranchID.h. It is NOT possible to skip branches. You may omit
+#       branches at the end of this list though.
+#
+#
 #         Tree Name     No. of branches   Process Type
 Name:     h12           32                MC
 #         Branch Name   Buffer size (bytes)
@@ -40,22 +46,31 @@ Branch:   mposx         1024
 Branch:   mposy         1024
 Branch:   mposz         1024
 Branch:   emwpc         1024
+#Branch:   mc_evt_id     8
+#Branch:   mc_rnd_id     8
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #ROOT file(s) (GEANT4 output) to be analysed. Add more lines for more files
 #
-TreeFile: ~/a2Geant4/A2/out/acquMC/Pi0_g4_out_260.root
+#TreeFile: /home/al/analysis/a2geant/pi0/Jan11/A2G4_SAID.root
+#TreeFile: /home/al/results/MC/SAID_1.root
+#TreeFile: /home/al/results/MC/SAID_2.root
+#TreeFile: /home/al/results/MC/SAID_3.root
+TreeFile: /home/al/results/MC/SAID_4.root
+#TreeFile: /home/al/results/MC/SAID_5.root
+#TreeFile: /home/al/results/MC/SAID_6.root
+
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Batch mode operation...redirect output directory for log files etc.
-BatchDir: ./
+#BatchDir: /home/al/results/MC/
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Directory to save any created ROOT files (include final '/')
-Directory: ./
+Directory: /home/al/results/MC/Acqu/
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

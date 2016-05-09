@@ -16,7 +16,8 @@
 
 #include "THnSparse.h"
 
-#include "TOA2RecPi02g.h"
+#include "TOA2RecMeson2g.h"
+#include "TOA2DetParticle.h"
 #include "TOLoader.h"
 
 #include "TA2MyPhysics.h"
@@ -29,6 +30,7 @@ enum {
     ECALIB_CB_TIME,
     ECALIB_CB_RISETIME,
     ECALIB_CB_WALK,
+    ECALIB_CB_WALK_EPT,
     ECALIB_CBTAPS_LED,
     ECALIB_CB_PROTON_ECORR,
     ECALIB_TAPS_ENERGY,
@@ -54,7 +56,9 @@ enum {
     ECALIB_PARTICLE_RES,
     ECALIB_BADSCR,
     ECALIB_PWO_CHECK,
-    ECALIB_PWO_PED
+    ECALIB_PWO_PED,
+    ECALIB_TAPS_TIME_CUT,
+    ECALIB_TAPS_TIME_CUT_MAXRING
 };
 
 
@@ -66,6 +70,7 @@ static const Map_t myCaLibConfigKeys[] = {
     {"CaLib-CB-Time:"                 ,   ECALIB_CB_TIME              },        // CB time calibration
     {"CaLib-CB-RiseTime:"             ,   ECALIB_CB_RISETIME          },        // CB rise time calibration
     {"CaLib-CB-Walk:"                 ,   ECALIB_CB_WALK              },        // CB time walk calibration
+    {"CaLib-CB-Walk-EPT:"             ,   ECALIB_CB_WALK_EPT          },        // CB time walk calibration for EPT
     {"CaLib-CB-Proton-Energy-Corr:"   ,   ECALIB_CB_PROTON_ECORR      },        // CB proton energy correction
     {"CaLib-CB-TAPS-LED:"             ,   ECALIB_CBTAPS_LED           },        // CB-TAPS LED thresholds
     {"CaLib-TAPS-Energy:"             ,   ECALIB_TAPS_ENERGY          },        // TAPS energy calibration
@@ -92,6 +97,8 @@ static const Map_t myCaLibConfigKeys[] = {
     {"CaLib-BadScalerReads:"          ,   ECALIB_BADSCR               },        // bad scaler reads
     {"CaLib-PWO-Check:"               ,   ECALIB_PWO_CHECK            },        // PWO check
     {"CaLib-PWO-Ped:"                 ,   ECALIB_PWO_PED              },        // PWO pedestal calibration
+    {"CaLib-TAPS-Time-Cut:"           ,   ECALIB_TAPS_TIME_CUT        },        // TAPS Time Cut
+    {"CaLib-TAPS-Time-Cut-MaxRing:"   ,   ECALIB_TAPS_TIME_CUT_MAXRING    },        // Apply TAPS Time Cut for Sector Elements smaller than this
     // Termination
     {NULL        , -1           }
 };
@@ -155,8 +162,21 @@ private:
     TH2* fHCalib_CB_Walk_MM;                                // pi0 missing mass for g + p -> p + pi0 identification
     TH1* fHCalib_CB_Walk_Rand_Time_CB;                      // CB-tagger time difference for random subtraction
     TH2** fHCalib_CB_Walk_E_T;                              // time vs energy for all CB elements
-    
-    // --------------------------- CB proton energy correction ----------------------------- 
+
+    // ----------------------------------- CB time walk for EPT  ------------------------------------
+    Int_t fCalib_CB_Walk_EPT;                               // CB time walk calibration toggle
+    Double_t fCalib_CB_Walk_EPT_Pi0_Min;                    // lower bound of the pi0 invariant mass cut
+    Double_t fCalib_CB_Walk_EPT_Pi0_Max;                    // upper bound of the pi0 invariant mass cut
+    Double_t fCalib_CB_Walk_EPT_Phi_Min;                    // lower bound of the pi0/proton back2back phi cut
+    Double_t fCalib_CB_Walk_EPT_Phi_Max;                    // upper bound of the pi0/proton back2back phi cut
+    Double_t fCalib_CB_Walk_EPT_ProtonE_Min;                // lower bound of the proton energy
+    Double_t fCalib_CB_Walk_EPT_ProtonE_Max;                // upper bound of the proton energy
+    TH1* fHCalib_CB_Walk_EPT_IM;                            // 2 photon invariant mass for pi0 identification
+    TH1* fHCalib_CB_Walk_EPT_Phi;                           // angle between pi0 and proton
+    TH2** fHCalib_CB_Walk_EPT_E_T;                          // time vs energy for all CB elements
+
+
+    // --------------------------- CB proton energy correction -----------------------------
     Int_t fCalib_CB_Proton_ECorr;                           // CB proton energy correction
     TH2** fHCalib_CB_Proton_ECorr;                          // f_corr vs measured energy for every detector
     TH2** fHCalib_CB_Proton_ECorr_Inv;                      // f_corr vs vertex energy for every detector
@@ -171,11 +191,14 @@ private:
     TH2* fHCalib_TAPS_LED2_M2;                              // highest energy per TAPS sector for every detector
      
     // ------------------------------------ TAPS energy ------------------------------------ 
+    TH3* fHCalib_TOF_TAPS;
+    TH3* fHCalib_TOF_TAPS_Neut;
     Int_t fCalib_TAPS_Energy;                               // TAPS energy calibration toggle
     TH2* fHCalib_TAPS_IM_Neut;                              // CB-TAPS invariant mass (from neutral hits) vs element
     TH2* fHCalib_TAPS_IM_Neut_1CB_1TAPS;                    // CB-TAPS invariant mass (from exactly 2 neutral hits) vs element
     TH2* fHCalib_TAPS_IM_TAPS;                              // TAPS-TAPS invariant mass vs element
     TH2* fHCalib_TAPS_IM_Neut_TAPS;                         // TAPS-TAPS invariant mass (from neutral hits) vs element
+    TH3* fHCalib_TAPS_IM_Neut_TAPS_mult;                    // TAPS invariant mass vs element vs nr of multiplicities
     
     // ------------------------------ TAPS energy (BG subtr.) ------------------------------ 
     Int_t fCalib_TAPS_Energy_BG_Subtr;                      // TAPS energy calibration (BG subtr.) toggle
@@ -369,6 +392,8 @@ private:
     Int_t fCalib_BadScR;                                    // Bad scaler reads toggle
     TH2* fHCalib_BadScR_NaIHits;                            // NaI hits vs. scaler reads
     TH2* fHCalib_BadScR_BaF2PWOHits;                        // BaF2PWO hits vs. scaler reads
+    TH2* fHCalib_BadScR_BaF2Hits;                           // BaF2 hits vs. scaler reads
+    TH2* fHCalib_BadScR_PWOHits;                            // PWO hits vs. scaler reads
     TH2* fHCalib_BadScR_PIDHits;                            // PID hits vs. scaler reads
     TH2* fHCalib_BadScR_VetoHits;                           // Veto hits vs. scaler reads
     TH2* fHCalib_BadScR_LadderHits;                         // Ladder hits vs. scaler reads
@@ -401,6 +426,16 @@ private:
     TH1** fHCalib_PWO_Ped;                                  // raw energy histograms for PWO
     TH1** fHCalib_PWO_Veto_Ped;                             // raw energy histograms for PWO-veto
 
+    // ------------------------------------ TAPS Time Cut -------------------------------------------
+    Double_t taps_time_cut_min;                             // TAPS time cut low edge
+    Double_t taps_time_cut_max;                             // TAPS time cut high edge
+    Int_t    taps_time_cut_max_ring;                  // Max Sector Element for time cut
+
+    bool TAPSTimeCutOK(const TOA2DetParticle* particle) const;
+    bool isInnerTAPSArea(const TOA2DetParticle *particle) const;
+    static UInt_t GetTAPSSectorElement(const UInt_t elem);
+
+    // ------------------------------------           -------------------------------------------
     Int_t GetPIDElementForPhi(Double_t phi);
 
 public:

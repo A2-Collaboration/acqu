@@ -16,11 +16,9 @@
 
 #include "TA2AccessSQL.h"
 
-ClassImp(TA2AccessSQL)
 
 //______________________________________________________________________________
 TA2AccessSQL::TA2AccessSQL(const char* name, TA2Analysis* analysis)	: TA2Physics(name, analysis), 
-  CBEnergyPerRunCorrection(false),
   fCaLibReader(0)
 {
   // command-line recognition for SetConfig()
@@ -46,6 +44,7 @@ TA2AccessSQL::TA2AccessSQL(const char* name, TA2Analysis* analysis)	: TA2Physics
   fTOF              = 0;   
   fPbGlassApp       = 0;
   fPbGlass          = 0;  
+  fMoeller          = 0;
   
   fRunNumber = fIsMC ? 0 : TOSUtils::ExtractRunNumber(gAR->GetFileName());
 }
@@ -62,6 +61,11 @@ void TA2AccessSQL::SetConfig(Char_t* line, Int_t key)
   {
   case ESQL_USE_CALIB:
   {   
+    if(fIsMC) {
+      Error("SetConfig", "Ignoring Calib statements due to MC run");
+      return;
+    }
+      
     Char_t tmp[5][256];
     
     // read CaLib parameters
@@ -218,47 +222,6 @@ void TA2AccessSQL::SetConfig(Char_t* line, Int_t key)
     else Error("SetConfig", "CaLib Veto calibration could not be configured!");
     break;
   }
-  case ESQL_CALIB_CBENERGY_PER_RUN:
-  {  
-    Char_t tmp[128];
-    
-    printf("try to enable CBEnergy correction per Run\n");
-    
-    if (sscanf(line, "%s", tmp) == 1) 
-    {
-      FILE*	f = fopen(tmp,"r");	
-      if(!f)
-      {
-        Char_t tmp2[140];
-        sprintf(tmp2,"data/%s",tmp);
-        f = fopen(tmp2,"r");	
-      }
-      if(!f)
-      {
-        printf("\nERROR: could not open %s as calibration per Run file! --> exiting\n", tmp);
-        printf("   correct the filename after the 'Use-CaLib-CBEnergyPerRun:' keyword in the physics class config file\n");
-        printf("   or comment it out. Then no CBEnergy Calibration per Run is done.\n\n");
-        exit(1);
-      }
-      Int_t 		num;
-      Double_t 	val[4];
-      while(!feof(f))
-      {
-        if (fscanf(f, "%d %lf %lf %lf %lf\n", &num, &val[0], &val[1], &val[2], &val[3]) == 5) 
-        {
-          if(num == fRunNumber)
-          {
-            CBEnergyPerRunCorrection		= true;
-            CBEnergyPerRunCorrectionFactor	= val[0];
-            printf("CBEnergy correction factor for run %d is %lf with error %lf\n", fRunNumber, CBEnergyPerRunCorrectionFactor, val[1]);
-            break;
-          }
-        }
-      }
-      fclose(f);
-      break;
-    }
-  }
   default:
   {
     // default main apparatus SetConfig()
@@ -355,7 +318,12 @@ void TA2AccessSQL::LoadDetectors(TA2DataManager* parent, Int_t depth)
       fLinPol = (TA2LinearPolEpics*) obj;
       added = kTRUE;
     }
-    
+    else if (!strcmp(obj->ClassName(), "TA2Moeller"))
+    {
+      fMoeller = (TA2Moeller*) obj;
+      added = kTRUE;
+    }
+
     // print information if a detector was added
     if (added)
     {
@@ -467,17 +435,6 @@ void TA2AccessSQL::PostInit()
       for (;;) { gSystem->Sleep(1000); }
     }
   }
-  
-  if(fNaI && CBEnergyPerRunCorrection)
-  {
-    for(UInt_t i=0; i<fNaI->GetNelement(); i++)
-      fNaI->GetElement(i)->SetA1(CBEnergyPerRunCorrectionFactor * (fNaI->GetElement(i)->GetA1()));
-    printf("gain after calib:		%lf\n", fNaI->GetElement(10)->GetA1());
-    
-    for(UInt_t i=0; i<fNaI->GetNelement(); i++)
-      fNaI->GetElement(i)->SetA1(CBEnergyPerRunCorrectionFactor * (fNaI->GetElement(i)->GetA1()));
-    printf("gain after correction:	%lf\n", fNaI->GetElement(10)->GetA1());    
-  }
 }
 
 void TA2AccessSQL::LoadVariable()
@@ -489,3 +446,5 @@ void TA2AccessSQL::Reconstruct()
 {
   TA2Physics::Reconstruct();
 }
+
+ClassImp(TA2AccessSQL)

@@ -97,6 +97,8 @@ void PIDTime()
 
     // create histogram
     gHOverview = new TH1F("PIDTime", "PIDTime", 40000, 0, 40000);
+    gHOverview->SetXTitle("Run Number");
+    gHOverview->SetYTitle("PID time [ns]");
     TCanvas* cOverview = new TCanvas("PIDTime", "PIDTime");
     gHOverview->GetYaxis()->SetRangeUser(yMin, yMax);
     gHOverview->Draw("E1");
@@ -145,7 +147,10 @@ void PIDTime()
 
             // load histogram
             gH2 = (TH2*) gFile->Get(hName);
-            if (!gH2) continue;
+            if (!gH2) { 
+                printf("%d: TH2 \"%s\" not found\n", runs[j], hName);
+                continue;
+            }
             if (!gH2->GetEntries()) continue;
 
             // project histogram
@@ -188,9 +193,8 @@ void PIDTime()
     // adjust axis
     gHOverview->GetXaxis()->SetRangeUser(first_run-10, last_run+10);
 
-    TFile* fout = new TFile("runset_overview.root", "update");
-    cOverview->Write();
-    delete fout;
+    gHOverview->SaveAs("CaLib_Overview_PIDTime.root");
+
 
     printf("%d runs analyzed.\n", nTotRuns);
 

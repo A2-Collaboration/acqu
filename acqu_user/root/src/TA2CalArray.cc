@@ -18,6 +18,10 @@
 //
 
 #include "TA2CalArray.h"
+#include <string>
+#include <sstream>
+
+#include <TH2CB.h>
 
 enum
 {
@@ -39,7 +43,6 @@ static const Map_t kCalArrayKeys[] =
   {NULL,            -1}
 };
 
-ClassImp(TA2CalArray)
 
 //---------------------------------------------------------------------------
 TA2CalArray::TA2CalArray(const char* name, TA2System* apparatus)
@@ -69,6 +72,20 @@ TA2CalArray::TA2CalArray(const char* name, TA2System* apparatus)
   CurrentRun[0] = '\0';
 
   fRandom = new TRandom();
+
+  // defined in base class TA2ClusterDetector
+  std::string s_name(GetName());
+  std::string s_all = s_name + "_ClustersAll";
+  fDispClusterHitsAll = new TH2CB(s_all, s_all);
+  std::string s_energy = s_name + "_ClustersEnergy";
+  fDispClusterHitsEnergy = new TH2CB(s_energy, s_energy);
+  fDispClusterHitsSingle = new TH2Crystals*[MAX_DISP_CLUSTERS];
+  for(int i=0;i<MAX_DISP_CLUSTERS;i++) {
+    std::stringstream s_single; 
+    s_single << s_name << "_ClustersSingle_" << i;
+    fDispClusterHitsSingle[i] = new TH2CB(s_single.str(), s_single.str());
+  }
+
 
   AddCmdList(kCalArrayKeys);                  // for SetConfig()
 }
@@ -144,31 +161,31 @@ void TA2CalArray::SetConfig(char* line, int key)
     }
     if(fUseClusterDecodeUCLA)
       {
-	fUseClusterDecodeUCLA = 1;
-	fEthresh = fClEthresh;
-	fClusterUCLA = new HitClusterUCLA_t*[fNelement+1];
-	fCluster = (HitCluster_t**)fClusterUCLA;
-	fClustHit = new UInt_t[fMaxCluster+1];
-	fTryHits = new UInt_t[fNelement+1];
-	fTempHits = new UInt_t[fNelement+1];
-	fTempHits2 = new UInt_t[fNelement+1];
-	fNClustHitOR = new UInt_t[fNelement+1];
-	fTheta = new Double_t[fNelement+1];
-	fPhi = new Double_t[fNelement+1];
-	fClEnergyOR = new Double_t[fNelement+1];
-	fClTimeOR = new Double_t[fNelement+1];
-	fClCentFracOR = new Double_t[fNelement+1];
-	fClRadiusOR = new Double_t[fNelement+1];
-	fNCluster = 0;
+  fUseClusterDecodeUCLA = 1;
+  fEthresh = fClEthresh;
+  fClusterUCLA = new HitClusterUCLA_t*[fNelement+1];
+  fCluster = (HitCluster_t**)fClusterUCLA;
+  fClustHit = new UInt_t[fMaxCluster+1];
+  fTryHits = new UInt_t[fNelement+1];
+  fTempHits = new UInt_t[fNelement+1];
+  fTempHits2 = new UInt_t[fNelement+1];
+  fNClustHitOR = new UInt_t[fNelement+1];
+  fTheta = new Double_t[fNelement+1];
+  fPhi = new Double_t[fNelement+1];
+  fClEnergyOR = new Double_t[fNelement+1];
+  fClTimeOR = new Double_t[fNelement+1];
+  fClCentFracOR = new Double_t[fNelement+1];
+  fClRadiusOR = new Double_t[fNelement+1];
+  fNCluster = 0;
       } else TA2ClusterDetector::SetConfig(line, key);
     break;
   case EClustDetNeighbour:
     // Nearest neighbout input
     if(fUseClusterDecodeUCLA)
       {
-	if( fNCluster < fNelement )
-	  fClusterUCLA[fNCluster] = new HitClusterUCLA_t(line,fNCluster,fClustSizeFactor);
-	fNCluster++;
+  if( fNCluster < fNelement )
+    fClusterUCLA[fNCluster] = new HitClusterUCLA_t(line,fNCluster,fClustSizeFactor);
+  fNCluster++;
       }
     else TA2ClusterDetector::SetConfig(line, key);
     break;
@@ -224,3 +241,5 @@ void TA2CalArray::SaveDecoded()
 }
 
 //---------------------------------------------------------------------------
+
+ClassImp(TA2CalArray)

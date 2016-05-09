@@ -1,0 +1,49 @@
+##-----------------------------------------------------------------------
+##--Author	JRM Annand   13th Jan 2004
+##--Update	JRM Annand... 1st Dec 2004
+##############################################################################
+# Server setup file
+# ############################################################################
+#
+# Number of Input streams (sources of data), Record length to write data
+# and switch 0/1 = no/yes to control data write
+#
+#              Number streams	Record Len	Save Data
+Input-Streams:	1		32768		0
+#
+##############################################################################
+# Optional directory spec. 
+# If not specified File-Names must contain the full directory path
+#File-Directory:	~/analysis/raw_data/
+File-Directory: ~/analysis/raw_data_carbon/
+#
+##############################################################################
+# Now the list of data files to analyse normal mode
+##            	Source	Format	Save?	RecLen	Buffers	Swap	MarkID
+Stream-Spec:	File	Mk2	0	32768	32	0	400
+
+#
+##############################################################################
+# Specify files
+File-Name:             CBTaggTAPS_3444.dat.xz 0 0
+#File-Name:             CBTaggTAPS_3445.dat.xz 0 0
+#File-Name:             CBTaggTAPS_3446.dat.xz 0 0
+#File-Name:             CBTaggTAPS_3447.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3680.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3681.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3683.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3684.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3685.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3686.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3687.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3688.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3691.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3692.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3694.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3695.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3696.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3697.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3698.dat.xz 0 0
+#File-Name:     	CBTaggTAPS_3699.dat.xz 0 0
+#
+## END

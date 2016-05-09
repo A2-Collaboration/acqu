@@ -108,12 +108,14 @@ void CBEnergy()
     Bool_t watch = kTRUE;
     const Char_t* data = "Data.CB.E1";
     const Char_t* hName = "CaLib_CB_IM_Neut";
-    Double_t yMin = 110;
-    Double_t yMax = 160;   
+    Double_t yMin = 90;
+    Double_t yMax = 180;   
     
     
     // create histogram
     gHOverview = new TH1F("CBEnergy", "CBEnergy", 40000, 0, 40000);
+    gHOverview->SetXTitle("Run Number");
+    gHOverview->SetYTitle("#pi^{0} peak [MeV]");
     TCanvas* cOverview = new TCanvas("CBEnergy", "CBEnergy");
     gHOverview->GetYaxis()->SetRangeUser(yMin, yMax);
     gHOverview->Draw("E1");
@@ -154,7 +156,7 @@ void CBEnergy()
 
             
             // load ROOT file
-            sprintf(tmp, "%s/Hist_CBTaggTAPS_%d.root", fLoc, runs[j]);
+            sprintf(tmp, "%s/CaLib_CBTaggTAPS_%d.root", fLoc, runs[j]);
             TFile* gFile = new TFile(tmp);
 
             // check file
@@ -208,9 +210,7 @@ void CBEnergy()
     // adjust axis
     gHOverview->GetXaxis()->SetRangeUser(first_run-10, last_run+10);
 
-    TFile* fout = new TFile("runset_overview.root", "update");
-    cOverview->Write();
-    delete fout;
+    gHOverview->SaveAs("Calib_Overview_CBEnergy.root");
 
     printf("%d runs analyzed.\n", nTotRuns);
 

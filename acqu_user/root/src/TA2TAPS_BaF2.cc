@@ -14,6 +14,12 @@
 
 #include "TA2TAPS_BaF2.h"
 #include "HitClusterTAPS_t.h"
+#include <string>
+#include <sstream>
+
+
+#include <TH2TAPS.h>
+
 
 // constants for command-line maps below
 enum {
@@ -38,15 +44,14 @@ static const Map_t kTAPSClustDetKeys[] = {
   {NULL,          -1}
 };
 
-ClassImp(TA2TAPS_BaF2)
 
 //---------------------------------------------------------------------------
 
 TA2TAPS_BaF2::TA2TAPS_BaF2(const char* name, TA2System* apparatus)
              :TA2ClusterDetector(name, apparatus)
 {
-  fType = ENoType;	
-	
+  fType = ENoType;
+
   fUseEnergyResolution    = 0;
   fUseTimeResolution      = 0;
   fEnergyResolutionFactor = -1.0;
@@ -65,6 +70,22 @@ TA2TAPS_BaF2::TA2TAPS_BaF2(const char* name, TA2System* apparatus)
   fSGEnergy = NULL;
   fLGEnergy = NULL;
   fMaxSGElements = 0;
+
+
+  // defined in base class TA2ClusterDetector
+  std::string s_name(GetName());
+  std::string s_all = s_name + "_ClustersAll";
+  fDispClusterHitsAll = new TH2TAPS(s_all, s_all);
+  std::string s_energy = s_name + "_ClustersEnergy";
+  fDispClusterHitsEnergy = new TH2TAPS(s_energy, s_energy);  
+  fDispClusterHitsSingle = new TH2Crystals*[MAX_DISP_CLUSTERS];
+  for(int i=0;i<MAX_DISP_CLUSTERS;i++) {
+    std::stringstream s_single; 
+    s_single << s_name << "_ClustersSingle_" << i;
+    fDispClusterHitsSingle[i] = new TH2TAPS(s_single.str(), s_single.str());
+  }
+
+
   // Do not allocate any "new" memory here...Root will wipe
   // Set private variables to zero/false/undefined state
   AddCmdList( kTAPSClustDetKeys );
@@ -152,7 +173,9 @@ void TA2TAPS_BaF2::SetConfig(Char_t* line, Int_t key)
       PrintError(line,"<Too many detector elements input>");
       break;
     }
-    fSGEnergy[fNSG] = new HitD2A_t( line, fNSG, this );
+    // last kTRUE signals to ignore the given positions
+    // workaround for this pretty ugly design feature...
+    fSGEnergy[fNSG] = new HitD2A_t( line, fNSG, this, kTRUE );
     fNSG++;
     break;
    case EClustDetMaxTAPSCluster:
@@ -322,7 +345,8 @@ inline void TA2TAPS_BaF2::ReadDecoded()
     //Use following line for cbsim since 2006-06-22!
     j--; //For reasons Stefan won't tell...
     E = energy[i] * fEnergyScale;                                   //G3/4 output in GeV
-    if(fUseEnergyResolution) E+=pRandoms->Gaus(0.0, GetEnergyResolutionGeV(E));
+//    if(fUseEnergyResolution) E+=pRandoms->Gaus(0.0, GetEnergyResolutionGeV(E));
+    if(fUseEnergyResolution) E+=pRandoms->Gaus(0.0, GetSigmaEnergyGeV(E));
     E*=1000.0;                                                      //G3/4 output in MeV
     EnergyAll[j] = E;
     GammaToF = (Z_c[j] * TMath::Cos(theta_c[j]))/30.0;
@@ -406,3 +430,5 @@ inline void TA2TAPS_BaF2::ReadDecoded()
 }
 
 //-----------------------------------------------------------------------------
+
+ClassImp(TA2TAPS_BaF2)

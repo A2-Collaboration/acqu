@@ -57,7 +57,6 @@ Double_t GausOnBase(Double_t *x, Double_t *par) {
    return fitval;
 }
 
-ClassImp(TA2LinearPolEpics)
 
 //-----------------------------------------------------------------------------
 TA2LinearPolEpics::TA2LinearPolEpics( const char* name, TA2System* fAnalysis  )
@@ -191,14 +190,19 @@ TA2LinearPolEpics::TA2LinearPolEpics( const char* name, TA2System* fAnalysis  )
 TA2LinearPolEpics::~TA2LinearPolEpics()
 {
   // Free up allocated memory
-  if(fPolLookupEnergies) delete fPolLookupEnergies; //delete if it exists
-  if(fPolLookupEdges) delete fPolLookupEdges; //delete if it exists
+  // (Note: It is safe to delete NULL pointers)
+  delete [] fPolLookupEnergies;
+
+  for(int i=0; i<2; ++i) {
+      delete fPolLookupEdges[i];
+  }
+
   for(int m=0;m<2;m++){
     if(fPolLookupPolarisations[m]){	
       for(int n=0;n<fNPolLookupEdges[m];n++){
-	if(fPolLookupPolarisations[m][n]) delete fPolLookupPolarisations[m][n];
+        delete fPolLookupPolarisations[m][n];
       }
-      delete fPolLookupPolarisations[m];
+      delete [] fPolLookupPolarisations[m];
     }
   }
 }
@@ -1288,3 +1292,5 @@ void  TA2LinearPolEpics::enhFromParams(){
       fCurrentEnhTable_TC[fTaggerChannels-n]=fHistE->GetBinContent(n+1);
     }
 }
+
+ClassImp(TA2LinearPolEpics)

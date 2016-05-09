@@ -61,7 +61,9 @@
 #include <iomanip>
 #include <string>
 #include <fstream>
+#ifdef WITH_LIBLZMA
 #include <lzma.h>
+#endif
 #include <stdint.h>
 
 using namespace std;
@@ -109,8 +111,6 @@ static const Map_t ARProcessType[] = {
 };
 
 
-ClassImp(TAcquRoot)
-
 void* A2RunThread( void* arg )
 {
   //  Threaded running of analyser
@@ -132,7 +132,7 @@ void* A2RunThread( void* arg )
 }
 
 //-----------------------------------------------------------------------------
-TAcquRoot::TAcquRoot( const char* name, Bool_t batch )
+TAcquRoot::TAcquRoot( const char* name, Bool_t batch, Bool_t logfiles )
   :TA2System( name, ConfigMap )
 {
   // Default contructor....don't allocate "new" memory here. Root will wipe
@@ -198,7 +198,12 @@ TAcquRoot::TAcquRoot( const char* name, Bool_t batch )
   fIsEpicsRead = EFalse;             // no epics read yet
   fIsFinished = EFalse;              // flag to show sort finished
   fIsBatch = batch;                  // save batch flag
-  if( !batch ) SetLogFile( "AcquRoot.log" );
+  fIsLogFile = logfiles;
+  if( !batch ) 
+  {
+    if (fIsLogFile) SetLogFile( "AcquRoot.log" );
+    else SetLogFile(NULL);
+  }
   fIsLocalDAQ = kFALSE;              // default no local DAQ
   fIsMk2Format = kFALSE;             // default not Mk2 format
   fIsPrintError = kFALSE;            // default no error printout
@@ -313,6 +318,8 @@ void TAcquRoot::LinkDataServer( )
   if( maxscaler < fMaxScaler ) maxscaler = fMaxScaler;;
   fprintf(fLogStream," %d ADC channels and %d Scaler channels in data.\n\n",
 	 maxadc, fMaxScaler );
+
+  maxadc++; // In case the ADC list is counting from zero, and needs the last index
 
   // Create storage areas for ADC and scaler info
   fADCdefined = new Int_t[maxadc];
@@ -598,10 +605,11 @@ void TAcquRoot::SetConfig( char* line, int key )
     if( fBatchDir == NULL ){
       fBatchDir = BuildName( name );;
       logfile = BuildName( fBatchDir, "AcquRoot.log" );
-      SetLogFile( logfile );
-      delete logfile;
-      fprintf(fLogStream," Batch-mode log files stored in directory: %s\n\n",
-	      fBatchDir );
+      if (fIsLogFile) SetLogFile( logfile );
+      else SetLogFile(NULL);
+      delete[] logfile;
+      if (fIsLogFile) fprintf(fLogStream," Batch-mode log files stored in directory: %s\n\n",
+	                      fBatchDir );
     }
     break;
   case ERootSplitScaler:
@@ -1008,28 +1016,32 @@ void TAcquRoot::DataLoopDirectIO( )
            << endl
            << " Filename: " << filename 
            << endl;
+      if(start != 0) {
+        PrintError("","DirectIO mode does not support skipping data blocks.", 
+                   EErrFatal);
+      }
       if(filename.size()<4) {
         PrintError("","Unkown file extension, filename too short. Skipping.", 
-                   EErrNonFatal);
-        continue;
+                   EErrFatal);
       }
       Bool_t success = kFALSE;
       // check filename ending
       if(filename.compare(filename.size()-4, 4, ".dat") == 0) {
-        success = DataLoopDirectIOWorker(filename, start, stop);
+        success = DataLoopDirectIOWorker(filename, stop);
       }
+#ifdef WITH_LIBLZMA
       else if(filename.compare(filename.size()-7, 7, ".dat.xz") == 0) {
-        success = DataLoopDirectIOWorkerXZ(filename, start, stop);
+        success = DataLoopDirectIOWorkerXZ(filename, stop);
       }
+#endif
       else {
-        PrintError("","Unkown file extension, only .dat and .dat.xz supported. Skipping.", 
-                   EErrNonFatal);
-        continue;
+        PrintError("","Unkown file extension, only .dat and .dat.xz (if liblzma found) supported.", 
+                   EErrFatal);
       }
       
       if(!success) {
-        PrintError("","Something went wrong processing the file...see above", 
-                   EErrNonFatal);        
+        PrintError("","Something went wrong processing the file...", 
+                   EErrFatal);        
       }
       
       fprintf(fLogStream," End file %s, %d events sorted, last event #%d\n",
@@ -1045,8 +1057,8 @@ void TAcquRoot::DataLoopDirectIO( )
   
 }
 
-Bool_t TAcquRoot::DataLoopDirectIOWorkerXZ(const string& filename, 
-                                         UInt_t start, UInt_t stop) {
+#ifdef WITH_LIBLZMA
+Bool_t TAcquRoot::DataLoopDirectIOWorkerXZ(const string& filename, const UInt_t stop) {
   ifstream file(filename.c_str(), ios::in|ios::binary);
   if(!file.is_open()) {
     return kFALSE;
@@ -1077,9 +1089,14 @@ Bool_t TAcquRoot::DataLoopDirectIOWorkerXZ(const string& filename,
       strm->next_in = inbuf;
       
       if(!file.read((char*)inbuf, fRecLen)) {
-        PrintError("","File read error.", 
-                   EErrNonFatal); 
-        return false;
+        // since we're reading compressed data 
+	// with some arbitrary fRecLen, it might be
+	// that we reached the end of file
+	if(!file.eof()) {
+	  PrintError("","File read error.", 
+		     EErrNonFatal); 
+	  return false;
+	}
       }
       strm->avail_in = file.gcount();
     
@@ -1175,9 +1192,10 @@ Bool_t TAcquRoot::DataLoopDirectIOWorkerXZ(const string& filename,
   
   return kFALSE;
 }
+#endif
 
 Bool_t TAcquRoot::DataLoopDirectIOWorker(const string& filename, 
-                                         UInt_t start, UInt_t stop) {
+                                         const UInt_t stop) {
   ifstream file(filename.c_str(), ios::in|ios::binary);
   if(!file.is_open()) {
     PrintError("","Cannot open file.", 
@@ -1256,6 +1274,7 @@ void TAcquRoot::Mk1EventLoop( UInt_t* startdata )
   // loop until end of buffer
   do{
     if( *datum == EBufferEnd ) return;	// end-of-buffer marker
+    else if( *datum == EDataBuff ) return;	// somehow reached next buffer
     fCurrEvent = *datum++;              // event number recorded in data
     nhit = 0;
     fHardError = 0;
@@ -1263,7 +1282,7 @@ void TAcquRoot::Mk1EventLoop( UInt_t* startdata )
     *hit++ = fCurrEvent;                // save DAQ event# (for saved data)
     hit++;                              // space for TA2Analysis event # 
     // transfer event's worth of data into fEvent buffer
-    while( *datum != EEndEvent ){
+    while( *datum != EEndEvent && *datum != EDataBuff ){
       switch( *(UInt_t*)datum ){
       case EScalerBuffer:			     // scaler array
 	datum = StoreScalers( datum );
@@ -1287,6 +1306,7 @@ void TAcquRoot::Mk1EventLoop( UInt_t* startdata )
     fNEvent++;					     // event counter
     fAnalysis->Process();			     // analyse the event
     fIsScalerRead = EFalse;                          // reset scaler flag
+    if( *datum == EDataBuff ) return;	// somehow reached next buffer
     datum++;                                         // start next event
   }while( datum < end );                             // don't overrun buffer
 }
@@ -1403,3 +1423,4 @@ void TAcquRoot::SetDataServer( TA2DataServer* dataserver )
   return;
 }
 
+ClassImp(TAcquRoot)

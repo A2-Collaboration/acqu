@@ -68,7 +68,7 @@ private:
   Bool_t fIsIgnored;            // ignore this element
   Double_t* fEnergyScalePtr;    // DO NOT MOVE THIS DECLARATION!
 public:
-  HitD2A_t( char*, UInt_t, TA2Detector* );
+  HitD2A_t( char*, UInt_t, TA2Detector*, Bool_t ignorePosition = kFALSE );
   virtual ~HitD2A_t();
   Bool_t Calibrate();
   Bool_t CheckEnergy();

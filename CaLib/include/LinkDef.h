@@ -100,5 +100,8 @@
 #pragma link C++ class TCCalibVetoTime+;
 #pragma link C++ class TCCalibVetoLED+;
 
+// Misc
+#pragma link C++ class TIndicatorLine+;
+
 #endif
 

@@ -64,7 +64,6 @@ static const Map_t kCBKeys[] = {
   TPolyLine *contourPID[25], *contourCB[32], *contourCB_yz[13], *contourCB2_yz[13];
   TPolyLine *contourCB_xz[13], *contourCB2_xz[13];
 
-ClassImp(TA2CentralApparatus)
 //_________________________________________________________________________________________
 // TA2CentralApparatus
 //
@@ -1187,7 +1186,7 @@ void TA2CentralApparatus::AddParticleInfo(const TA2CentralTrack &track)
   fParticleInfo[fNparticle].SetSigmaTheta(track.GetSigmaThetaNaI());
   fParticleInfo[fNparticle].SetParticleIDA(fType[fNparticle]);
   fParticleInfo[fNparticle].SetVetoTime(track.GetThitPid());
-  fParticleInfo[fNparticle].SetVetoEnergy(track.GetEhitPid());
+  fParticleInfo[fNparticle].SetVetoEnergy(track.GetEhitPidCorr());
   fParticleInfo[fNparticle].SetVetoIndex(iPid);
   fParticleInfo[fNparticle].SetDetectorA( fDet[fNparticle] - fParticleInfo[fNparticle].GetDetectors() );
 //  fParticleInfo[fNparticle].SetIintersMwpc(track.GetIinterMwpc(0),track.GetIinterMwpc(1));
@@ -2307,3 +2306,5 @@ void TA2CentralApparatus::InitGeometry()
   c3->Modified();
 
 }
+
+ClassImp(TA2CentralApparatus)

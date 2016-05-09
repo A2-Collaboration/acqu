@@ -3,8 +3,12 @@
 
 
 
-const char fFileDir[] = "analysis/CaLib_Full_Step134/root/";
-const char fHistName[] = "CaLib_CB_Time";
+const char fFileDir[] = "analysis";
+//const char fHistName[] = "CaLib_CB_Time_Ind";
+const char fHistName[] = "CaLib_TAPS_Time_Ind";
+//const char fHistName[] = "CaLib_Veto_Time_Ind";
+//const char fHistName[] = "CaLib_PID_Time_Ind";
+//const char fHistName[] = "CaLib_Tagger_Time_Ind";
 
 TList* histograms = 0;
 TList* saved = 0;
@@ -120,10 +124,12 @@ void BrowseHistograms() {
 
 	TSystemDirectory dir(fFileDir,fFileDir);
 	TList *files = dir.GetListOfFiles();
+	if (!files) {
+		cerr << "Error: No files found in " << fFileDir << endl;
+		return;
+	}
 	files->Sort();
 	
-	if (!files)
-		return;
 
 	histograms = new TList();
 	saved = new TList();

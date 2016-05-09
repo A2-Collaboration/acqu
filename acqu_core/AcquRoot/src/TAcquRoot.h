@@ -146,6 +146,7 @@ private:
   Bool_t fIsBatch;              // running batch mode?
   Bool_t fIsLocalDAQ;           // local DAQ thread?
   Bool_t fIsMk2Format;          // flag Mk2 data format
+  Bool_t fIsLogFile;            // log files or stdout?
   Bool_t fIsPrintError;         // flag printout of hardware errors
   Bool_t fUseDirectIO;         // use direct FileIO for reading
   
@@ -168,7 +169,7 @@ private:
   UInt_t* Mk2ErrorCheck( UInt_t* );    // Mk2 data..store error block
 
 public:
-   TAcquRoot( const Char_t*, Bool_t=EFalse );
+   TAcquRoot( const Char_t*, Bool_t=EFalse, Bool_t=kTRUE );
    virtual ~TAcquRoot();
    void SetConfig( Char_t*, int );
    void SaveTreeFile( Char_t* );
@@ -177,8 +178,10 @@ public:
    void Start( );
    void DataLoop();
    void DataLoopDirectIO();   
-   Bool_t DataLoopDirectIOWorker(const std::string& filename, UInt_t start, UInt_t stop);
-   Bool_t DataLoopDirectIOWorkerXZ(const std::string& filename, UInt_t start, UInt_t stop);   
+   Bool_t DataLoopDirectIOWorker(const std::string& filename, const UInt_t stop);
+#ifdef WITH_LIBLZMA
+   Bool_t DataLoopDirectIOWorkerXZ(const std::string& filename, const UInt_t stop); 
+#endif
    void OfflineLoop();
    void Clear( );
    void Reset( );
@@ -290,6 +293,7 @@ public:
    Bool_t IsFinished(){ return fIsFinished; }
    Bool_t IsBatch(){ return fIsBatch; }
    Bool_t IsLocalDAQ(){ return fIsLocalDAQ; }
+   Bool_t IsLogFile(){ return fIsLogFile; }
    Bool_t IsPrintError(){ return fIsPrintError; }
    Bool_t UseDirectIO() { return fUseDirectIO; }
    
