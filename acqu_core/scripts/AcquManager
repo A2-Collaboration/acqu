@@ -131,6 +131,10 @@ $runsets->{TAPSPulser} = dclone($runsets->{TAPS});
 $runsets->{TAPSPulser}->{Description} .= ', Pulser only';
 $runsets->{TAPSPulser}->{Hosts}->[0]->[1] = 'MasterP';
 
+$runsets->{Veto} = dclone($runsets->{TAPS});
+$runsets->{Veto}->{Description} = 'Veto standalone for calibration';
+$runsets->{Veto}->{Hosts}->[0]->[1] = 'MasterV';
+
 # define runset Timepix with new FPD
 $runsets->{Timepix} =
   {
