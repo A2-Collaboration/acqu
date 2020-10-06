@@ -1,5 +1,5 @@
 ####
-Description: TAPS Pulser
+Description: Veto Trigger
 File-Name: scratch/TAPS  32	500000	32768	ENet  32768  5000
 #File-Name: scratch/TAPS  32	500000	32768	No-Store  32768  5000
 # Frequency            Scaler	Slow-Control
@@ -14,7 +14,7 @@ Control:   GUI-Local	    0 0
 #	module	   Name		configFile
 Module:	KPH_I686   kphi686_0	kphi686.dat		0	 0
 Module: KPH_VITEC   vit0        vitec_0.dat     0000    0       0
-Module: GSI_VUPROMT vup0        vuprom.masterP		0a000000 1000 96 32 
+Module: GSI_VUPROMT vup0        vuprom.masterV		0a000000 1000 96 32 
 Module: GSI_VUPROMT vup1        vuprom.bafA     	01000000 10010 6 8
 Module: GSI_VUPROMT vup2        vuprom.bafB     	02000000 10020 6 8
 Module: GSI_VUPROMT vup3        vuprom.bafC     	03000000 10030 6 8
