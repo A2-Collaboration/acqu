@@ -321,8 +321,8 @@ void MyFinishMacro()
         // the CB DAQ, respectively.
         // On September 24 2008 a new pair of scalers was installed for this purpose
         // (after run 19000 (September 25 2008) this should work).
-        CorrectTaggerScalers(kFALSE);
-        if (run > 19000) CorrectTaggerScalers(kTRUE);
+        //CorrectTaggerScalers(kFALSE);
+        //if (run > 19000) CorrectTaggerScalers(kTRUE);
  
         // Check if output file is already open
         TFile* f;
