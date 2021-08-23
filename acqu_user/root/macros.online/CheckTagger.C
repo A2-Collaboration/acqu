@@ -68,7 +68,7 @@ CheckTagger(TCanvas* canv){
     if( cname.Contains("TH1") ){
       h1->SetLineColor( 1 );
       h1->SetFillColor( col[i] );
-      if( i == 4 || i == 5 ) h1->GetXaxis()->SetRangeUser(90,368);
+      //if( i == 4 || i == 5 ) h1->GetXaxis()->SetRangeUser(90,368);
       if( log[i] ) canv->GetPad(i+1)->SetLogy();
       h1->Draw();
     }
