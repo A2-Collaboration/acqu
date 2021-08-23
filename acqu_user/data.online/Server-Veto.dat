@@ -1,0 +1,36 @@
+##-----------------------------------------------------------------------
+##--Author	JRM Annand   13th Jan 2004
+##--Update	JRM Annand...
+##--Description
+##                *** Acqu++ <-> Root ***
+## Online/Offline Analysis of Sub-Atomic Physics Experimental Data
+##
+## Parameter File: ServerSetup.dat
+## Default master parameter file for DataServer (data input for analysis)
+## Online data taking, merged ACQU & TAPS
+##
+##-----------------------------------------------------------------------
+## Number of Input streams (sources of data), Record length to write data
+## and switch 0/1 = no/yes to control data write
+##              Number streams	Record Len	Save Data
+Input-Streams:	4		524288		1
+##
+## Optional directory spec. If not specified File-Names must contain the full
+## directory path
+File-Directory:	scratch/
+##
+## Specify each network-socket input stream
+##            	Source	Format	Save?	Node	   Port	Buffers MkID	Swap
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-trigger 5000 64	400
+File-Name:	tapstrig	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-veto-ab 5016 128 400
+File-Name:	tapsvab 	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-veto-cd 5017 128 400
+File-Name:	tapsvcd	0	0
+#
+Stream-Spec:	Network	Mk2	0	vme-taps-veto-ef 5018 128 400
+File-Name:	tapsvef	0	0
+#

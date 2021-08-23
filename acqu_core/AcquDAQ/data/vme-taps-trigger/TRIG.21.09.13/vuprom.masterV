@@ -7,8 +7,7 @@
 ##              Hex Base	#Registers	Module type	MapSize  <-- Baya Added MapSize
 BaseSetup:	0		0		Scaler		4000
 Hardware-ID: 1311120b
-#Enable-CPU: 7ff
-Enable-CPU: 27fe
+Enable-CPU: 2380
 Int-Delay:  0 1
 Int-Delay:  1 1200
 Int-Delay:  2 1200

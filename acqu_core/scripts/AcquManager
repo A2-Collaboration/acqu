@@ -131,9 +131,21 @@ $runsets->{TAPSPulser} = dclone($runsets->{TAPS});
 $runsets->{TAPSPulser}->{Description} .= ', Pulser only';
 $runsets->{TAPSPulser}->{Hosts}->[0]->[1] = 'MasterP';
 
-$runsets->{Veto} = dclone($runsets->{TAPS});
-$runsets->{Veto}->{Description} = 'Veto standalone for calibration';
-$runsets->{Veto}->{Hosts}->[0]->[1] = 'MasterV';
+#$runsets->{Veto} = dclone($runsets->{TAPS});
+#$runsets->{Veto}->{Description} = 'Veto standalone for calibration';
+#$runsets->{Veto}->{Hosts}->[0]->[1] = 'MasterV';
+$runsets->{Veto} =
+  {
+   'Description' => 'Veto standalone for calibration',
+   'DefaultTriggerId' => undef, # TAPS does not have a trigger ID
+   'Hosts' => [
+               ['vme-taps-trigger', 'MasterV'], # first, the host where the AcquDAQ GUI is started
+               ['vme-taps-veto-ab', 'VetoAB'],
+               ['vme-taps-veto-cd', 'VetoCD' ],
+               ['vme-taps-veto-ef', 'VetoEF'],
+              ],
+   'TCS' => undef # TAPS does not know about TCS...
+  };
 
 # define runset Timepix with new FPD
 $runsets->{Timepix} =
