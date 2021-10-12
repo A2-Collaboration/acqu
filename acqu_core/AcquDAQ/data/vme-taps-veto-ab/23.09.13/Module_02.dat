@@ -27,9 +27,9 @@ V-Set: 43
 ## TDC time offset, 240=300ns, 165=400ns, 131=500ns
 V-Off: 190
 ## Veto QDC pedestal set
-Ped-VG: 715 1800 1908 1997 1328 1243 1651 1995
+Ped-VG: 753 1796 1904 1998 1330 1259 1635 1990
 ## Veto LED thresholds in mV
-Thr-VLED: 80 80 80 80 80 80 80 80
+Thr-VLED: 122 91 87 97 118 91 80 107
 #
 # Global data ready signal
 Data-Ready: 2

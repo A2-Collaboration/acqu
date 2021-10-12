@@ -6,7 +6,7 @@
 ##
 ##              Hex Base	#Registers	Module type	MapSize
 BaseSetup:	0		0		ADC		4000
-Hardware-ID: 0404
+Hardware-ID: 0406
 ###
 Enable-Thresholds:
 #Suppress-Overflow:
@@ -27,9 +27,9 @@ V-Set: 43
 ## TDC time offset, 240=300ns, 165=400ns, 131=500ns
 V-Off: 190
 ## Veto QDC pedestal set
-Ped-VG: 3509 6202 1745 1444 1697 6202 3903 6202
+Ped-VG: 2128 2092 2241 1923 1844 2199 2085 1858
 ## Veto LED thresholds in mV
-Thr-VLED: 80 80 80 80 80 80 80 80
+Thr-VLED: 90 92 87 85 86 88 95 100
 #
 # Global data ready signal
 Data-Ready: 2
