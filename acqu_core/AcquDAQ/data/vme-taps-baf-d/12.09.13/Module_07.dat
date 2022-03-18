@@ -28,19 +28,19 @@ V-Set: 43
 ## TDC time offset, 240=300ns, 165=400ns, 131=500ns
 V-Off: 165
 ## Long gate QDC pedestal set
-Ped-LG: 5336 5368 5322 5242
+Ped-LG: 5332 5364 5318 5238
 ## Long gate sensitive QDC pedestal set
-Ped-LGS: 5970 5944 5823 5717
+Ped-LGS: 5969 5941 5819 5711
 ## Short gate QDC pedestal set
-Ped-SG: 5330 5250 5216 5210
+Ped-SG: 5325 5249 5216 5206
 ## Short gate sensitive QDC pedestal set
-Ped-SGS: 6157 5941 5687 5420
+Ped-SGS: 6154 5945 5687 5414
 ## CFD thresholds in raw values for piggy back
 Thr-CFD-Raw: 8014 8128 8105 8119
 ## LED1 thresholds in mV
-Thr-LED1: 98 61 90 62
+Thr-LED1: 51 64 69 64
 ## LED2 thresholds in mV
-Thr-LED2: 99 60 88 63
+Thr-LED2: 160 194 194 194
 #
 # Global data ready signal
 Data-Ready: 2
