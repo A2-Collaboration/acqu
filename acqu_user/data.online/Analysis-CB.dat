@@ -52,7 +52,7 @@ Initialise:
 ## Macros
 Period:  5000	PeriodMacro.C	PeriodMacro()
 #EndFile:   	EndFileMacro.C  EndFileMacro()
-#Finish:	FinishMacro.C	FinishMacro()
+Finish:	FinishMacro.C	FinishMacro()
 ##
 ########################################################################
 ## Display Histograms
