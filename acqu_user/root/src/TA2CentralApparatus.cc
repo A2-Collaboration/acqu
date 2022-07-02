@@ -1031,7 +1031,7 @@ void TA2CentralApparatus::CountNotUsedPid()
   for (Int_t i=0; i<fNhitsPid; ++i)
   {
     if (IsUsedHitPid(i)) continue;
-    fIhitsPidNotUsed[i]++;
+    fIhitsPidNotUsed[i] = fIhitsPidNotUsed[i]+1;
     ++fNhitsPidNotUsed;
   }
   
