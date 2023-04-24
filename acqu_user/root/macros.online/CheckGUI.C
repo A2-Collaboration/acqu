@@ -92,12 +92,11 @@ void OnBtnSaveAllClicked() {
 	// prepare elog command, note the blank space at every line!
 	stringstream elog_cmd;
 	Long_t runNum = gROOT->ProcessLine("gAR->GetRunNumber()");
-	elog_cmd << "echo Run " << runNum << " Online Spectra | ";
-	elog_cmd << "elog -h elog.online.a2.kph -u a2online a2messung ";
-	elog_cmd << "-l 'Main Logbook 2022' -a Experiment='2022-06_LD2' ";
-	elog_cmd << "-a Author='PLEASE FILL IN' -a Type=Routine ";
-	elog_cmd << "-a Subject='Online Spectra Run " << runNum << "' ";
-
+	//elog_cmd << "echo Run " << runNum << " Online Spectra | ";
+	//elog_cmd << "elog -h elog.online.a2.kph -u a2online a2messung ";
+	//elog_cmd << "-l 'Main Logbook 2022' -a Experiment='2022-06_LD2' ";
+	//elog_cmd << "-a Author='PLEASE FILL IN' -a Type=Routine ";
+	//elog_cmd << "-a Subject='Online Spectra Run " << runNum << "' ";
 	
 	Int_t i_save = fCbxItems->GetSelected();
         // update CB spectra before saving if previously selected
@@ -116,12 +115,13 @@ void OnBtnSaveAllClicked() {
 		img->WriteImage(filename.str().c_str());
 		delete img;
 
-		elog_cmd << "-f " << filename.str() << " ";
+		//elog_cmd << "-f " << filename.str() << " ";
 	}
 	
-	printf("\nPosting all PNG images to the Elog...Please Wait...\n");
+	printf("\nCopying all PNG images to macrobusy.\n");
+	elog_cmd << "scp -p ~/acqu/OnlineSpectra/*.png a2-macrobusy:~/Pictures/Elog/";
 	system(elog_cmd.str().c_str());
-	printf("\nPLEASE EDIT THE ELOG ENTRY TO MAKE IT COMPLETE!\n\n");
+	printf("\nPLEASE ADD IMAGES TO THE ELOG ENTRY TO MAKE IT COMPLETE!\n\n");
 	
 	// restore previously selected item
 	fCbxItems->Select(i_save);
@@ -138,6 +138,7 @@ void CheckGUI()
 	Int_t isTagg = gROOT->ProcessLine("TString s1 = gAR->GetFileName();s1.Contains(\"Tagg\")");
 	Int_t isTAPS = gROOT->ProcessLine("TString s1 = gAR->GetFileName();s1.Contains(\"TAPS\")");
 	Int_t isScalers = gROOT->ProcessLine("TString s1 = gAR->GetFileName();s1.Contains(\"Scalers\")");
+	Int_t isCATS = gROOT->ProcessLine("TString s1 = gAR->GetFileName();s1.Contains(\"CATS\")");
 	// init the list of macros to be called
 	items = new TObjArray();
 	if(isCB){
@@ -160,6 +161,11 @@ void CheckGUI()
 	  // items->Add(MacroEntry::Make("CheckActiveTDC.C","Active_TDC"));	
 	}
 	if(isScalers) items->Add(MacroEntry::Make("CheckTagger.C","Tagger"));
+	if(isCATS){
+	  items->Add(MacroEntry::Make("CheckCATSCore.C","CATS_Core"));
+	  items->Add(MacroEntry::Make("CheckCATSAnnulus.C","CATS_Annulus"));
+	  items->Add(MacroEntry::Make("CheckCATSShield.C","CATS_Shield"));
+	}
 
 	// main frame
 	fMainFrame = new TGMainFrame(gClient->GetRoot(), 1240, 890, kMainFrame | kVerticalFrame);
