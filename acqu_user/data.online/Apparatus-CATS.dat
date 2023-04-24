@@ -1,0 +1,13 @@
+########################################################################
+#
+##	  	  Name    		Class Name   			Setup file
+Detector:         CATS_Core             TA2GenericDetector              Detector-CATS-Core.dat
+Detector:         CATS_Annulus          TA2GenericDetector              Detector-CATS-Annulus.dat
+Detector:         CATS_Shield           TA2GenericDetector              Detector-CATS-Shield.dat
+##
+## Turn on apparatus reconstruction 
+#Reconstruct:
+##
+## Do some post-initialisation.
+Initialise:
+##

@@ -1,0 +1,183 @@
+# Analysis setup file for running Tagger + CB + TAPS
+########################################################################
+#
+## Catch-TDC, where a reference TDC channel has to be specified
+## The reference TDC channel contains the trigger time which is subtracted
+## from the other specified channels
+MultiADC:       8       800     909     910
+MultiADC:       8       912     927     910
+MultiADC:       8       928     1037    1038
+MultiADC:       8       1040    1055    1038
+MultiADC:       8       1056    1165    1166
+MultiADC:       8       1168    1183    1166
+##
+## TAPS Multihit
+MultiADC:       3       29193   29319   29192
+##
+# speed TAPS readout bitpatterns
+MultiADC:       1       410    493
+MultiADC:       1       10000    10100
+## Stuff to monitor time dependence of counting rates and the hit pattern
+## coming from the trigger box....the parameter is the setup file name
+RateMonitor: ./data/monitor/Rate-CBTaggTAPS.dat
+BitPattern:  ./data/monitor/Trig-Pattern.dat
+##
+## Apparatus setup....
+##              Name            Class           	Setup file
+Apparatus:      TAGG            TA2Tagger   		Apparatus-Tagger855.dat
+Apparatus:      CATSApp         TA2GenericApp           Apparatus-CATS.dat
+##
+## Turn on apparatus-level reconstruction
+Reconstruct-Analysis:
+##
+## Specify physics analysis
+##			Name	Class		        Config File
+#Physics-Analysis:	EtaM	TA2BasePhysics	        Physics-CBTaggTAPS.dat
+#Physics-Analysis:	Pi0	TA2PhotoPhysics	        CBTaggPi0Physics.dat
+#Physics-Analysis:	PHYS	TA2OnlinePhys	Physics-Online.dat
+##
+## Do some post initialisation...usually necessary
+Initialise:
+##
+## Macros
+Period:  5000	PeriodMacro.C	PeriodMacro()
+#EndFile:	EndFileMacro.C  EndFileMacro()
+#Finish:	FinishMacro.C	FinishMacro()
+##
+########################################################################
+## Display Histograms
+########################################################################
+##
+## Histogram ALL defined single value ADCs
+#Display: All
+##
+########################################################################
+##
+## Tagger - ADCs
+#Display: ADC 800 1151
+##
+## Tagger - TDCs
+#Display: MultiHit 1432 1783 2000 -1000 1000 0
+#Display: MultiHit 1432 1783 2000 -1000 1000 1
+#Display: MultiHit 1432 1783 2000 -1000 1000 2
+## EPT - TDCs, Microscope Sector E, D, C
+#Display: MultiHit 1817 1863 6000 -4000 -2000 0
+#Display: MultiHit 1817 1863 6000 -4000 -2000 1
+#Display: MultiHit 1817 1863 6000 -4000 -2000 2
+##
+########################################################################
+##
+## CATS
+Display: ADC 29032 29063
+Display: MultiHit 29240 29255 12000 -10000  2000 0
+Display: ADC 27000 27015
+##
+########################################################################
+## Display Scalers
+########################################################################
+##
+Display: Scaler 0 175
+Display: SumScaler 0 175
+Display: Scaler 176 191
+Display: SumScaler 176 191
+Display: Scaler 192 195
+Display: SumScaler 192 195
+#Display: Scaler 192 203
+#Display: SumScaler 192 203
+#Display: Scaler 204 555
+#Display: SumScaler 204 555
+Display: Scaler 300 311
+Display: SumScaler 300 311
+Display: Scaler 1000 1095
+Display: SumScaler 1000 1095
+# PairSpec scalers for EPT only 
+# the tagger-specific TA2PairSpec detector class 
+# not really needed since scalers are in one single block
+# However, they are not ordered by energy here
+# see Detector-EPT.dat for scaler number ordering by energy
+Display: Scaler 3100 3163
+Display: SumScaler 3100 3163
+Display: Scaler 3164 3227
+Display: SumScaler 3164 3227
+Display: Scaler 3228 3292
+Display: SumScaler 3228 3292
+##
+########################################################################
+## Display Rates
+########################################################################
+##
+Display: Rate	0	500
+Display: Rate	1	500
+Display: Rate	2	500
+Display: Rate	3	500
+Display: Rate	4	500
+Display: Rate	5	500
+Display: Rate	6	500
+Display: Rate	7	500
+Display: Rate	8	500
+Display: Rate	9	500
+Display: Rate	10	500
+Display: Rate	11	500
+Display: Rate	12	500
+Display: Rate	13	500
+Display: Rate	14	500
+Display: Rate	15	500
+Display: Rate	16	500
+Display: Rate	17	500
+Display: Rate	18	500
+Display: Rate	19	500
+Display: Rate	20	500
+Display: Rate	21	500
+Display: Rate	22	500
+Display: Rate	23	500
+Display: Rate	24	500
+Display: Rate	25	500
+Display: Rate	26	500
+Display: Rate	27	500
+Display: Rate	28	500
+Display: Rate	29	500
+Display: Rate	30	500
+Display: Rate	31	500
+Display: Rate	32	500
+Display: Rate	33	500
+Display: Rate	34	500
+Display: Rate	35	500
+Display: Rate	36	500
+Display: Rate	37	500
+##
+########################################################################
+## Display Trigger Patterns (and e-beam polarization bit)
+########################################################################
+##
+Display: Pattern	0 48 0 48
+Display: Pattern	1 64 0 64
+Display: Pattern	2 16 0 16
+Display: Pattern	3 16 0 16
+Display: Pattern-N	1 32 0 32
+##
+## TAPS discriminator pattern (CFD, LED1, LED2, VLED)
+Display: Pattern        5 384 0 384 
+Display: Pattern        6 384 0 384 
+Display: Pattern        7 384 0 384 
+Display: Pattern        8 384 0 384 
+##
+#Display: 2D 1000 100 0 4000 2112M0 100 -1000 -400
+##
+#Display: 2D 1098 200 0 4000 2010M0 200 -2600 -2200
+#Display: 2D 1098 200 0 4000 1096   200  0     4000
+#Display: 2D 1164 200 0 4000 2043M0 200 -2500 -500
+##
+########################################################################
+## CB-TAPS synchronisation monitors
+########################################################################
+##
+#Display: 2D 20401 100 1800 2800 2005M0 100 -20000 2800
+#Display: 2D 2000 200 0 10000  1400   200 0 10000
+##
+########################################################################
+## Error Block monitor
+########################################################################
+##
+Display: 1D NHardwareError 100 0 100
+##
+## END OF FILE

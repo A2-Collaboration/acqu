@@ -1,0 +1,38 @@
+#########################################################################
+##
+## Total # Elements in array, Pulse-Height info? Time info? Position info?
+## Info switch is off/on = 0/1
+##	Total	Energy?	Time?	Position?
+Size:   6       1       1       1
+RawHits:
+##
+Element:  29049  -1  4097  132.0  0.0023    29241M0  -1000  1000  -4250.0  0.1   -11.739455  -4.666667   145.700000
+Element:  29050  -1  4097  140.0  0.0034    29242M0  -1000  1000  -4210.0  0.1    -9.045154  -7.333333   145.700000
+Element:  29051  -1  4097   87.5  0.0021    29243M0  -1000  1000  -4200.0  0.1   -11.739455  -7.333333   145.700000
+Element:  29052  -1  4097  125.0  0.0054    29244M0  -1000  1000  -4320.0  0.1    -3.849002  -7.666667   145.700000
+Element:  29053  -1  4097   70.0  0.0049    29245M0  -1000  1000  -4350.0  0.1    -6.543303  -7.666667   145.700000
+Element:  29054  -1  4097  122.5  0.0022    29246M0  -1000  1000  -4210.0  0.1    -3.849002 -10.333333   145.700000
+##
+## Do some post-initialisation.
+########################################################################
+## Display histograms of detector-level variables
+########################################################################
+##
+Initialise:
+##
+Display: 1D	NADChits    7 0 7
+Display: 1D	NTDChits    7 0 7
+Display: 1D     Nhits       7 0 7
+Display: 1D	ADCHits	    6 0 6 
+Display: 1D	TDCHits	    6 0 6 
+Display: 1D     Hits        6 0 6 
+Display: 1D     EnergyOR    500  0 500
+Display: 1D     TimeOR      200 -1000 1000
+Display: 2D     TimeOR      200 -1000 1000 -1 EnergyOR        500  0 500 -1
+Display: 2D     EnergyOR    250 0 500 -1    Hits   6  0 6 -1
+Display: 2D     TimeOR      200 -1000 1000 -1    Hits   6  0 6 -1
+Display: 2D	 ClTheta     100 0 25 -1    ClPhi  180 -180 180 -1
+Display: 1D	 Etot        400 0 800
+Display: 1D      Energy      400    0   20    0   5
+Display: 1D      Time        200    -100   100    0   5
+##

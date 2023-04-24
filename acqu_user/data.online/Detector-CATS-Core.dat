@@ -1,0 +1,40 @@
+#########################################################################
+##
+## Total # Elements in array, Pulse-Height info? Time info? Position info?
+## Info switch is off/on = 0/1
+##	Total	Energy?	Time?	Position?
+Size:   7       1       1       1
+RawHits:
+##
+Element:  29048  -1  4097    99.0  0.036    29240M0  -1000  1000  -4499.0  0.1    -9.045154  -4.666667   145.700000
+Element:  29056  -1  4097   130.0  0.036    29248M0  -1000  1000  -4465.0  0.1    -9.045154  -4.666667   145.700000
+#Element: 29057  -1  4097   110.0  0.036    29249M0  -1000  1000  -4422.0  0.1    -9.045154  -4.666667   145.700000
+Element:  29062  -1  4097   132.0  0.036    29254M0  -1000  1000  -4492.0  0.1    -9.045154  -4.666667   145.700000
+Element:  29058  -1  4097   142.0  0.036    29250M0  -1000  1000  -4500.0  0.1    -9.045154  -4.666667   145.700000
+Element:  29059  -1  4097    97.0  0.036    29251M0  -1000  1000  -4496.0  0.1    -9.045154  -4.666667   145.700000
+Element:  29060  -1  4097   132.0  0.036    29252M0  -1000  1000  -4497.0  0.1    -9.045154  -4.666667   145.700000
+Element:  29061  -1  4097   144.0  0.036    29253M0  -1000  1000  -4486.0  0.1    -9.045154  -4.666667   145.700000
+##
+## Do some post-initialisation.
+########################################################################
+## Display histograms of detector-level variables
+########################################################################
+##
+Initialise:
+##
+Display: 1D	NADChits    8 0 8
+Display: 1D	NTDChits    8 0 8
+Display: 1D     Nhits       8 0 8
+Display: 1D	ADCHits	    7 0 7 
+Display: 1D	TDCHits	    7 0 7 
+Display: 1D     Hits        7 0 7 
+Display: 1D     EnergyOR    500  0 500
+Display: 1D     TimeOR      200 -1000 1000
+Display: 2D     TimeOR      200 -1000 1000 -1 EnergyOR        500  0 500 -1
+Display: 2D     EnergyOR    250 0 500 -1    Hits   7  0 7 -1
+Display: 2D     TimeOR      200 -1000 1000 -1    Hits   7  0 7 -1
+Display: 2D	 ClTheta     100 0 25 -1    ClPhi  180 -180 180 -1
+Display: 1D	 Etot        1000 0 1000
+Display: 1D      Energy      145    0   145    0   6
+Display: 1D      Time        200    -100   100    0   6
+##
