@@ -147,6 +147,36 @@ $runsets->{Veto} =
    'TCS' => undef # TAPS does not know about TCS...
   };
 
+$runsets->{CATS} =
+  {
+   'Description' => 'CATS standalone for calibration',
+   'DefaultTriggerId' => undef, # TAPS does not have a trigger ID
+   'Hosts' => [
+               ['vme-taps-trigger', 'MasterC'], # first, the host where the AcquDAQ GUI is started
+               ['vme-taps-veto-cd', 'VetoCATS' ],
+               ['vme-taps-pwo',     'CATS'],
+              ],
+   'TCS' => undef # TAPS does not know about TCS...
+  };
+
+# define runset CATS with new FPD
+$runsets->{CATSTagg} =
+  {
+   'Description' => 'CATS including Tagger',
+   'DefaultTriggerId' => 74,
+   'Hosts' => [
+               ['vme-exptrigger',   'CATSTagg'], # first, the host where the AcquDAQ GUI is started
+               ['vme-tagg-tdc-c',   'TAGGC'],
+               ['vme-tagg-tdc-d',   'TAGGD'],
+               ['vme-tagg-tdc-e',   'TAGGE'],
+               ['vme-taps-trigger', 'SlaveC'], # TAPS is in slave mode
+               ['vme-taps-veto-cd', 'VetoCATS' ],
+               ['vme-taps-pwo',     'CATS'],
+               ['vme-beampolmon',   'BEAM']
+              ],
+   'TCS' => undef # a bit unnecessary for the whole system
+  };
+
 # define runset Timepix with new FPD
 $runsets->{Timepix} =
   {
@@ -220,7 +250,10 @@ $runsets->{CBTaggTAPSPed}
   = MakePedRunset($runsets->{CBTaggTAPS});
 $runsets->{CBTaggPed}
   = MakePedRunset($runsets->{CBTagg});
-
+$runsets->{CATSTaggPed}
+  = MakePedRunset($runsets->{CATSTagg});
+$runsets->{CATSPed}
+  = MakePedRunset($runsets->{CATS});
 
 
 # register a cleanup handler for signals
